@@ -62,7 +62,7 @@ const firebaseConfig = {
   measurementId: "G-MX2B76PCD6"
 };
 
-// Inicialización
+// Inicialización de Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -90,6 +90,24 @@ const BADGE_LEVELS = [
   { id: 19, min: 220, name: "Leyenda Eterna" },
   { id: 20, min: 250, name: "Omnisciente" }
 ];
+
+// Función utilitaria para reintentar peticiones a la API (Fix 429)
+const fetchWithRetry = async (url, retries = 5, backoff = 1000) => {
+  try {
+    const response = await fetch(url);
+    if (response.status === 429 && retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      return fetchWithRetry(url, retries - 1, backoff * 2);
+    }
+    return response;
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      return fetchWithRetry(url, retries - 1, backoff * 2);
+    }
+    throw error;
+  }
+};
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -164,7 +182,6 @@ export default function App() {
     return () => { unsubMyBooks(); unsubProfiles(); unsubComments(); unsubFollows(); };
   }, [user]);
 
-  // --- LÓGICA DE IMAGEN ---
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -174,7 +191,6 @@ export default function App() {
     }
   };
 
-  // --- BÚSQUEDA ROBUSTA ---
   const performSearch = async (forcedQuery = null, forcedType = null) => {
     const q = (forcedQuery !== null ? forcedQuery : searchQuery).trim();
     const type = forcedType || searchType;
@@ -186,7 +202,6 @@ export default function App() {
     setSearchResults([]);
 
     try {
-      // Detectar si es un ISBN (solo números, largo 10 o 13)
       const isISBN = /^\d+$/.test(q) && (q.length === 10 || q.length === 13);
       let queryParam = q;
 
@@ -198,21 +213,21 @@ export default function App() {
         queryParam = `inauthor:${q}`;
       }
 
-      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(queryParam)}&maxResults=20&printType=books`;
-      const response = await fetch(url);
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(queryParam)}&maxResults=15&printType=books`;
       
-      if (!response.ok) throw new Error("Error en la conexión con la base de datos");
+      const response = await fetchWithRetry(url);
+      
+      if (!response.ok) throw new Error("API Limit Reached");
       
       const data = await response.json();
       
       if (!data.items || data.items.length === 0) {
-        // Intento de respaldo: si falló con filtro, probar búsqueda general
         if (type !== 'all') {
            const retryUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10`;
-           const retryRes = await fetch(retryUrl);
+           const retryRes = await fetchWithRetry(retryUrl);
            const retryData = await retryRes.json();
            setSearchResults(retryData.items || []);
-           if (!retryData.items) setSearchError("No se encontraron resultados para esta búsqueda.");
+           if (!retryData.items) setSearchError("No se encontraron resultados.");
         } else {
           setSearchError("No se encontraron resultados.");
         }
@@ -220,8 +235,7 @@ export default function App() {
         setSearchResults(data.items);
       }
     } catch (err) {
-      setSearchError("Hubo un error al buscar. Revisa tu conexión.");
-      console.error(err);
+      setSearchError("Demasiadas peticiones. Espera un momento y vuelve a intentar.");
     } finally {
       setIsSearching(false);
     }
@@ -231,8 +245,7 @@ export default function App() {
     setShowScanner(true);
     setTimeout(() => {
       const html5QrCode = new window.Html5Qrcode("reader");
-      const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-      html5QrCode.start({ facingMode: "environment" }, config, 
+      html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
         (res) => { 
           html5QrCode.stop().then(() => {
             setShowScanner(false); 
@@ -317,7 +330,7 @@ export default function App() {
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-100">
+          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg">
             <BookOpen size={20} strokeWidth={3} />
           </div>
           <h1 className="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-tighter">Sandbook</h1>
@@ -337,7 +350,7 @@ export default function App() {
         <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95">
             <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
-              <h3 className="font-black text-lg flex items-center gap-2"><ListChecks /> Plan de Checkpoints</h3>
+              <h3 className="font-black text-lg flex items-center gap-2"><ListChecks /> Planificar Lectura</h3>
               <button onClick={() => setEditingPlanBook(null)} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
             </div>
             <div className="p-6 space-y-4">
@@ -349,7 +362,7 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              <button onClick={() => setTempCheckpoints([...tempCheckpoints, { title: `Checkpoint ${tempCheckpoints.length + 1}`, completed: false }])} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-xs">+ Agregar Checkpoint</button>
+              <button onClick={() => setTempCheckpoints([...tempCheckpoints, { title: `Capítulo ${tempCheckpoints.length + 1}`, completed: false }])} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-xs">+ Agregar Checkpoint</button>
               <button onClick={saveReadingPlan} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs">Guardar Plan</button>
             </div>
           </div>
@@ -359,14 +372,14 @@ export default function App() {
       {showScanner && (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6">
           <div className="w-full max-w-md aspect-square bg-slate-900 rounded-3xl overflow-hidden border-2 border-indigo-500" id="reader"></div>
-          <p className="mt-8 text-white font-bold">Escaneando código de barras...</p>
+          <p className="mt-8 text-white font-bold">Encuadra el código ISBN</p>
           <button onClick={() => setShowScanner(false)} className="absolute top-10 right-10 text-white p-3 bg-white/10 rounded-full"><X size={24} /></button>
         </div>
       )}
 
       <main className="max-w-xl mx-auto p-4 space-y-6">
         
-        {/* VISTA: MURO */}
+        {/* VISTA: BIBLIOTECA */}
         {activeTab === 'library' && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-[2.5rem] text-white shadow-xl">
@@ -377,11 +390,11 @@ export default function App() {
                   ) : (
                     <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center text-3xl">🥚</div>
                   )}
-                  <div><p className="text-[10px] font-black uppercase tracking-widest opacity-60">Rango Actual</p><h2 className="text-2xl font-black">{currentBadge?.name || "Lector"}</h2></div>
+                  <div><p className="text-[10px] font-black uppercase tracking-widest opacity-60">Rango Sandbook</p><h2 className="text-2xl font-black">{currentBadge?.name || "Lector Novato"}</h2></div>
                 </div>
               </div>
               <div className="h-3 bg-black/20 rounded-full overflow-hidden border border-white/10"><div className="h-full bg-white transition-all duration-1000" style={{ width: `${Math.min((readBooksCount/goal)*100, 100)}%` }} /></div>
-              <div className="mt-2 flex justify-between text-[10px] font-bold"><span>MIS LOGROS</span><span>{readBooksCount} Libros leídos</span></div>
+              <div className="mt-2 flex justify-between text-[10px] font-bold"><span>META ANUAL</span><span>{readBooksCount} / {goal} libros</span></div>
             </div>
 
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -393,34 +406,41 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-              {filteredBooks.map((book, i) => {
-                const done = book.checkpoints?.filter(c => c.completed).length || 0;
-                const total = book.checkpoints?.length || 0;
-                const perc = total > 0 ? (done / total) * 100 : (book.status === 'read' ? 100 : 0);
-                return (
-                  <div key={i} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-4">
-                    <div className="flex gap-4 mb-4">
-                      <img src={book.thumbnail} className="w-16 h-24 object-cover rounded-xl shadow-sm" />
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <div><h4 className="font-bold text-slate-800 line-clamp-1">{book.title}</h4><p className="text-xs text-slate-400">{book.authors[0]}</p></div>
-                          <button onClick={() => toggleFavorite(book.bookId)}><Star className={book.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-slate-200"} size={20} /></button>
+              {filteredBooks.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200">
+                  <BookOpen className="mx-auto text-slate-100 mb-4" size={48} />
+                  <p className="text-slate-400 font-bold">No hay libros en esta sección.</p>
+                </div>
+              ) : (
+                filteredBooks.map((book, i) => {
+                  const done = book.checkpoints?.filter(c => c.completed).length || 0;
+                  const total = book.checkpoints?.length || 0;
+                  const perc = total > 0 ? (done / total) * 100 : (book.status === 'read' ? 100 : 0);
+                  return (
+                    <div key={i} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-4">
+                      <div className="flex gap-4 mb-4">
+                        <img src={book.thumbnail} className="w-16 h-24 object-cover rounded-xl shadow-sm" />
+                        <div className="flex-1 flex flex-col justify-between py-1">
+                          <div className="flex justify-between items-start">
+                            <div><h4 className="font-bold text-slate-800 line-clamp-1">{book.title}</h4><p className="text-xs text-slate-400">{book.authors[0]}</p></div>
+                            <button onClick={() => toggleFavorite(book.bookId)}><Star className={book.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-slate-200"} size={20} /></button>
+                          </div>
+                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden mt-2"><div className="h-full bg-indigo-500" style={{width: `${perc}%`}} /></div>
                         </div>
-                        <div className="mt-3"><div className="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500" style={{width: `${perc}%`}} /></div></div>
                       </div>
+                      {book.checkpoints?.length > 0 && (
+                        <div className="space-y-2 pt-2 border-t border-slate-50">
+                          {book.checkpoints.map((cp, idx) => (
+                            <button key={idx} onClick={() => toggleCheckpoint(book.bookId, idx)} className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-2xl transition-all">
+                              <div className="flex items-center gap-3"><div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${cp.completed ? 'bg-green-500 border-green-500 text-white' : 'border-slate-200 bg-white'}`}>{cp.completed && <CheckCircle size={14} />}</div><span className={`text-xs font-bold ${cp.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{cp.title}</span></div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {book.checkpoints?.length > 0 && (
-                      <div className="space-y-2 pt-2">
-                        {book.checkpoints.map((cp, idx) => (
-                          <button key={idx} onClick={() => toggleCheckpoint(book.bookId, idx)} className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-2xl active:scale-95 transition-all text-left">
-                            <div className="flex items-center gap-3"><div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${cp.completed ? 'bg-green-500 border-green-500 text-white' : 'border-slate-200 bg-white'}`}>{cp.completed && <CheckCircle size={14} />}</div><span className={`text-xs font-bold ${cp.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{cp.title}</span></div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  )
+                })
+              )}
             </div>
           </div>
         )}
@@ -443,25 +463,18 @@ export default function App() {
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <input 
-                    type="text" 
-                    placeholder={searchType === 'isbn' ? "Escribe el número ISBN..." : searchType === 'inauthor' ? "Nombre del autor..." : "Título del libro..."}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-[1.5rem] outline-none focus:ring-4 focus:ring-indigo-500/10 font-medium" 
-                    value={searchQuery} 
-                    onChange={(e) => setSearchQuery(e.target.value)} 
-                    onKeyDown={(e) => e.key === 'Enter' && performSearch()} 
-                  />
+                  <input type="text" placeholder="Busca libros..." className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-[1.5rem] outline-none font-medium" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && performSearch()} />
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 </div>
-                <button onClick={startScanner} className="bg-indigo-100 text-indigo-600 p-4 rounded-[1.25rem] hover:bg-indigo-200 transition-all"><Camera size={24} /></button>
+                <button onClick={startScanner} className="bg-indigo-100 text-indigo-600 p-4 rounded-[1.25rem]"><Camera size={24} /></button>
               </div>
-              <button onClick={() => performSearch()} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+              <button onClick={() => performSearch()} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg flex items-center justify-center gap-2">
                 {isSearching ? <Loader2 size={16} className="animate-spin" /> : "Buscar en Sandbook"}
               </button>
             </div>
 
             {searchError && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-2 text-xs font-bold border border-red-100">
+              <div className="bg-amber-50 text-amber-600 p-4 rounded-2xl flex items-center gap-2 text-xs font-bold border border-amber-100 animate-in fade-in">
                 <AlertCircle size={16} /> {searchError}
               </div>
             )}
@@ -478,52 +491,23 @@ export default function App() {
                         <div>
                           <h3 className="font-bold text-sm leading-tight line-clamp-2">{book.volumeInfo.title}</h3>
                           <p className="text-xs text-indigo-500 font-bold mt-1">{book.volumeInfo.authors?.join(', ')}</p>
-                          <p className="text-[10px] text-slate-400 mt-2 line-clamp-3 leading-relaxed">{book.volumeInfo.description}</p>
                         </div>
                         <div className="flex gap-2 mt-4">
                           <button onClick={() => handleAddBook(book, 'reading')} className="flex-1 bg-indigo-600 text-white py-2.5 rounded-[1rem] text-[9px] font-black uppercase">Planificar</button>
-                          <button onClick={() => handleAddBook(book, 'want')} className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-[1rem] text-[9px] font-black uppercase">Para leer</button>
+                          <button onClick={() => handleAddBook(book, 'want')} className="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-[1rem] text-[9px] font-black uppercase">Para leer</button>
                           <button onClick={() => handleAddBook(book, 'want', true)} className="p-2 bg-yellow-50 text-yellow-600 rounded-xl"><Star size={18} /></button>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-slate-50 border-t border-slate-100">
-                      <button onClick={() => setExpandedComments(exp ? null : book.id)} className="w-full px-4 py-3 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400"><div className="flex items-center gap-2"><MessageSquare size={14} /> {coms.length} Reseñas</div>{exp ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
-                      {exp && (
-                        <div className="p-4 pt-0 space-y-4">
-                          <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
-                            {coms.map(c => (
-                              <div key={c.id} className="bg-white p-3 rounded-2xl border border-slate-100 flex gap-3">
-                                {c.userPic ? <img src={c.userPic} className="w-7 h-7 rounded-full object-cover" /> : <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-[9px] font-bold">{c.userName?.charAt(0)}</div>}
-                                <div className="flex-1"><div className="flex items-center gap-2 mb-0.5"><span className="text-[10px] font-bold text-slate-700">{c.userName}</span>{c.isWriter && <span className="text-[8px] bg-amber-100 text-amber-700 px-1 rounded font-black">✍️</span>}</div><p className="text-xs text-slate-600 leading-tight">{c.text}</p></div>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="relative mt-2"><input type="text" placeholder="Tu opinión..." className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs pr-12 outline-none" value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && postComment(book.id)} /><button onClick={() => postComment(book.id)} className="absolute right-2 top-1/2 -translate-y-1/2 text-indigo-600 p-2"><Send size={16} /></button></div>
-                        </div>
-                      )}
+                    {/* Comentarios simplificados */}
+                    <div className="bg-slate-50 border-t border-slate-100 px-4 py-2">
+                       <button onClick={() => setExpandedComments(exp ? null : book.id)} className="text-[9px] font-black uppercase text-slate-400 flex items-center gap-1">
+                          <MessageSquare size={12}/> {coms.length} Opiniones
+                       </button>
                     </div>
                   </div>
                 );
               })}
-            </div>
-          </div>
-        )}
-
-        {/* VISTA: RED */}
-        {activeTab === 'social' && (
-          <div className="space-y-4 animate-in fade-in">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2">Lectores de Sandbook</h3>
-            <div className="grid grid-cols-1 gap-3">
-              {publicData.filter(p => p.userId !== user?.uid).map(p => (
-                <div key={p.userId} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {p.profilePic ? <img src={p.profilePic} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" /> : <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center font-black text-indigo-600 text-lg shadow-inner">{p.name?.charAt(0)}</div>}
-                    <div><div className="flex items-center gap-2"><h4 className="font-bold text-slate-800 text-sm">{p.name}</h4>{p.isWriter && <PenTool size={12} className="text-amber-500" />}</div><p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{p.readCount || 0} Libros leídos</p></div>
-                  </div>
-                  <button onClick={async () => { const r = doc(db, 'users', user.uid, 'following', p.userId); if (follows.includes(p.userId)) await deleteDoc(r); else await setDoc(r, { followedAt: serverTimestamp() }); }} className={`p-3 rounded-2xl transition-all ${follows.includes(p.userId) ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>{follows.includes(p.userId) ? <UserCheck size={20} /> : <UserPlus size={20} />}</button>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -533,38 +517,35 @@ export default function App() {
           <div className="space-y-6 animate-in fade-in">
             <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center relative">
               <button onClick={() => setIsEditingProfile(true)} className="absolute top-6 right-6 p-2 bg-slate-50 rounded-full text-slate-400 hover:text-indigo-600 transition-all"><Edit3 size={18} /></button>
-              <div className="relative w-28 h-28 mx-auto mb-4">{profilePic ? <img src={profilePic} className="w-full h-full rounded-full object-cover border-4 border-white shadow-xl shadow-indigo-100" /> : <div className="w-full h-full bg-indigo-100 rounded-full flex items-center justify-center text-4xl border-4 border-white shadow-xl">{userName?.charAt(0)}</div>}{isWriter && <div className="absolute -bottom-1 -right-1 bg-amber-400 p-2.5 rounded-full border-4 border-white text-white shadow-lg"><PenTool size={16} strokeWidth={3} /></div>}</div>
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight">{userName}</h2>
+              <div className="relative w-28 h-28 mx-auto mb-4">{profilePic ? <img src={profilePic} className="w-full h-full rounded-full object-cover border-4 border-white shadow-xl" /> : <div className="w-full h-full bg-indigo-100 rounded-full flex items-center justify-center text-4xl border-4 border-white shadow-xl">{userName?.charAt(0)}</div>}</div>
+              <h2 className="text-2xl font-black text-slate-800">{userName}</h2>
             </div>
 
             {isEditingProfile && (
               <div className="bg-white p-6 rounded-[2.5rem] border-2 border-indigo-500 shadow-xl space-y-4">
-                <h3 className="font-black text-sm uppercase flex items-center gap-2"><Settings size={18} /> Ajustes</h3>
-                <div className="space-y-4">
-                  <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre Público</label><input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 outline-none" /></div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Foto de Perfil</label>
-                    <label className="w-full flex items-center justify-center gap-2 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl py-4 cursor-pointer hover:border-indigo-300 transition-all text-slate-400 hover:text-indigo-600">
-                      <Upload size={18} /> <span className="text-xs font-bold">Seleccionar archivo</span>
-                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    </label>
-                  </div>
-                  <div className="flex gap-2"><button onClick={() => setIsEditingProfile(false)} className="flex-1 py-3 text-xs font-bold text-slate-500">Cancelar</button><button onClick={async () => { await updateDoc(doc(db, 'profiles', user.uid), { name: userName, profilePic: profilePic, isWriter: isWriter }); setIsEditingProfile(false); }} className="flex-1 bg-indigo-600 text-white py-3 rounded-2xl text-xs font-black shadow-lg shadow-indigo-100">Guardar</button></div>
+                <h3 className="font-black text-sm uppercase">Perfil</h3>
+                <div className="space-y-3">
+                  <input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} className="w-full bg-slate-50 border rounded-2xl px-4 py-3 outline-none" placeholder="Nombre..." />
+                  <label className="w-full flex items-center justify-center gap-2 bg-slate-50 border-2 border-dashed rounded-2xl py-4 cursor-pointer text-slate-400 hover:text-indigo-600">
+                    <Upload size={18} /> <span className="text-xs font-bold">Cambiar Foto</span>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  </label>
+                  <button onClick={async () => { await updateDoc(doc(db, 'profiles', user.uid), { name: userName, profilePic: profilePic }); setIsEditingProfile(false); }} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-black text-xs">Guardar</button>
                 </div>
               </div>
             )}
 
             <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
-              <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2"><Trophy size={18} className="text-amber-500" /> Logros Sandbook</h3>
+              <h3 className="text-sm font-black text-slate-800 uppercase flex items-center gap-2"><Trophy size={18} className="text-amber-500" /> Logros</h3>
               <div className="grid grid-cols-4 gap-4">
                 {BADGE_LEVELS.map((b) => {
                   const unlocked = readBooksCount >= b.min;
                   return (
-                    <div key={b.id} className="flex flex-col items-center gap-2 group relative">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${unlocked ? 'bg-indigo-50 shadow-md scale-100' : 'bg-slate-100 scale-90 opacity-40'}`}>
+                    <div key={b.id} className="flex flex-col items-center gap-2">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${unlocked ? 'bg-indigo-50 shadow-md' : 'bg-slate-100 opacity-30'}`}>
                         {unlocked ? <img src={`/${b.id}.png`} className="w-full h-full object-contain p-1" onError={(e) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/5971/5971593.png"; }} /> : <Lock size={20} className="text-slate-300" />}
                       </div>
-                      <span className={`text-[8px] font-black text-center uppercase leading-tight ${unlocked ? 'text-indigo-600' : 'text-slate-400'}`}>{unlocked ? b.name : "???"}</span>
+                      <span className="text-[7px] font-black uppercase text-center">{unlocked ? b.name : "???"}</span>
                     </div>
                   );
                 })}
@@ -573,19 +554,28 @@ export default function App() {
           </div>
         )}
 
+        {/* VISTA: RED (Simplificada por espacio) */}
+        {activeTab === 'social' && (
+           <div className="space-y-4 animate-in fade-in">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2">Lectores</h3>
+              {publicData.filter(p => p.userId !== user?.uid).map(p => (
+                 <div key={p.userId} className="bg-white p-4 rounded-3xl border flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                       {p.profilePic ? <img src={p.profilePic} className="w-10 h-10 rounded-full" /> : <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-600">{p.name?.charAt(0)}</div>}
+                       <div><h4 className="font-bold text-sm">{p.name}</h4><p className="text-[9px] text-slate-400">{p.readCount || 0} libros</p></div>
+                    </div>
+                    <button onClick={async () => { const r = doc(db, 'users', user.uid, 'following', p.userId); if (follows.includes(p.userId)) await deleteDoc(r); else await setDoc(r, { followedAt: serverTimestamp() }); }} className={`p-2 rounded-xl ${follows.includes(p.userId) ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>{follows.includes(p.userId) ? <UserCheck size={18}/> : <UserPlus size={18}/>}</button>
+                 </div>
+              ))}
+           </div>
+        )}
+
       </main>
 
-      {/* NAV BAR */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-slate-100 px-8 py-4 flex justify-between items-center z-40 shadow-2xl">
-        {[
-          {id: 'library', icon: Layout, label: 'Biblioteca'},
-          {id: 'search', icon: Search, label: 'Planear'},
-          {id: 'social', icon: Globe, label: 'Red'},
-          {id: 'profile', icon: User, label: 'Yo'}
-        ].map(t => (
+        {[{id: 'library', icon: Layout}, {id: 'search', icon: Search}, {id: 'social', icon: Globe}, {id: 'profile', icon: User}].map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === t.id ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}>
             <t.icon size={22} strokeWidth={activeTab === t.id ? 2.5 : 2} />
-            <span className="text-[8px] font-black uppercase tracking-widest">{t.label}</span>
           </button>
         ))}
       </nav>
