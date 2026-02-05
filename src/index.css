@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Opcional: Para que las imágenes de insignias no se vean gigantes */
+img {
+  max-width: 100%;
+  height: auto;
+}
