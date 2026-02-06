@@ -25,7 +25,7 @@ import {
   arrayRemove
 } from 'firebase/firestore';
 import { 
-  BookOpen, Search, Trophy, Plus, CheckCircle, Layout, User, Award, Loader2, PenTool, Globe, Camera, MessageSquare, Send, X, ChevronDown, ChevronUp, Settings, Edit3, ListChecks, Lock, Flag, Sparkles, Star, Upload, Book as BookIcon, AlertCircle, Calendar, FileText, Info, Maximize2, Minimize2, UserPlus, UserCheck, Users, Trash2, Facebook, Languages, Share2, UserX
+  BookOpen, Search, Trophy, Plus, CheckCircle, Layout, User, Award, Loader2, PenTool, Globe, Camera, MessageSquare, Send, X, ChevronDown, ChevronUp, Settings, Edit3, ListChecks, Lock, Flag, Sparkles, Star, Upload, Book as BookIcon, AlertCircle, Calendar, FileText, Info, Maximize2, Minimize2, UserPlus, UserCheck, Users, Trash2, Facebook, Languages, Share2, UserX, MessageCircle, StickyNote
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN DE FIREBASE ---
@@ -54,22 +54,24 @@ const i18n = {
     search_p: "Busca libros, autores o ISBN...", pages: "Páginas", days: "Días",
     start: "Comenzar", cancel: "Cancelar", delete_q: "¿Eliminar libro?",
     delete_desc: "Esta acción no se puede deshacer.", delete_btn: "Eliminar",
-    invite: "Invitar amigos", read: "Leído", pending: "Pendiente", favorites: "Favoritos ⭐",
-    all: "Todo", level: "Rango", followers: "Seguidores", search_now: "Buscar en Sandbook",
+    invite: "INVITAR", read: "Leído", pending: "Pendiente", favorites: "Favoritos ⭐",
+    in_plan: "En plan", all: "Todos", level: "Rango", followers: "Seguidores", search_now: "Buscar en Sandbook",
     manual_p: "Páginas totales", scan_msg: "Escaneando código...",
     title_f: "Título", author_f: "Autor", isbn_f: "ISBN", global_f: "Global",
-    dismiss_user: "Usuario ocultado", reviews: "Reseñas"
+    dismiss_user: "Usuario ocultado", reviews: "Reseñas", my_review: "Mi Reseña",
+    daily_notes: "Notas del día", rate_book: "Calificar libro", save: "Guardar"
   },
   en: {
     library: "Library", plan: "Plan", social: "Social", profile: "Me",
     search_p: "Search books, authors or ISBN...", pages: "Pages", days: "Days",
     start: "Start", cancel: "Cancel", delete_q: "Delete book?",
     delete_desc: "This action cannot be undone.", delete_btn: "Delete",
-    invite: "Invite friends", read: "Read", pending: "Pending", favorites: "Favorites ⭐",
-    all: "All", level: "Rank", followers: "Followers", search_now: "Search Sandbook",
+    invite: "INVITE", read: "Read", pending: "Pending", favorites: "Favorites ⭐",
+    in_plan: "In plan", all: "All", level: "Rank", followers: "Followers", search_now: "Search Sandbook",
     manual_p: "Total pages", scan_msg: "Scanning code...",
     title_f: "Title", author_f: "Author", isbn_f: "ISBN", global_f: "Global",
-    dismiss_user: "User hidden", reviews: "Reviews"
+    dismiss_user: "User hidden", reviews: "Reviews", my_review: "My Review",
+    daily_notes: "Daily notes", rate_book: "Rate book", save: "Save"
   }
 };
 
@@ -108,7 +110,6 @@ const VerificationCheck = ({ count = 0 }) => {
 };
 
 const getLevelTitle = (count = 0, lang = 'es') => {
-  const t = i18n[lang];
   if (count >= 100000) return "Legendario";
   if (count >= 10000) return "Experto Superior";
   if (count >= 1000) return "Experto";
@@ -116,6 +117,19 @@ const getLevelTitle = (count = 0, lang = 'es') => {
   if (count >= 10) return "Nivel 1 Novato";
   return "Principiante";
 };
+
+const StarRating = ({ rating, onRate, interactive = true }) => (
+  <div className="flex gap-1">
+    {[1, 2, 3, 4, 5].map((s) => (
+      <Star 
+        key={s} 
+        size={interactive ? 24 : 14} 
+        onClick={() => interactive && onRate(s)}
+        className={`${interactive ? 'cursor-pointer transition-all' : ''} ${s <= rating ? 'fill-yellow-400 text-yellow-400 scale-110' : 'text-slate-200'}`}
+      />
+    ))}
+  </div>
+);
 
 const SliderLeido = ({ onToggle, isRead, lang }) => (
   <div onClick={onToggle} className={`relative w-24 h-9 rounded-full cursor-pointer transition-all p-1 ${isRead ? 'bg-green-500' : 'bg-slate-200'}`}>
@@ -156,9 +170,12 @@ export default function App() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [filterType, setFilterType] = useState('all');
 
+  // Estados para detalles de libro
+  const [selectedBookForReview, setSelectedBookForReview] = useState(null);
+  const [tempReviewText, setTempReviewText] = useState("");
+
   const victoryAudio = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"));
 
-  // Reintento para 429
   const fetchWithRetry = async (url, retries = 3, delay = 2000) => {
     const res = await fetch(url);
     if (res.status === 429 && retries > 0) {
@@ -209,7 +226,12 @@ export default function App() {
     try { await signInWithPopup(auth, facebookProvider); } catch (e) { console.error(e); }
   };
 
-  const inviteFriends = () => {
+  const inviteWhatsApp = () => {
+    const message = `¡Hola! Únete a Sandbook para organizar tus lecturas y ganar logros: ${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const inviteFacebook = () => {
     const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
     window.open(url, '_blank', 'width=600,height=400');
   };
@@ -221,7 +243,7 @@ export default function App() {
     setSearchError(null);
     try {
       let queryParam = q;
-      if (searchType === 'isbn' || /^\d+$/.test(q.replace(/\D/g, ''))) queryParam = `isbn:${q.replace(/\D/g, '')}`;
+      if (searchType === 'isbn') queryParam = `isbn:${q.replace(/\D/g, '')}`;
       else if (searchType === 'intitle') queryParam = `intitle:${q}`;
       else if (searchType === 'inauthor') queryParam = `inauthor:${q}`;
 
@@ -260,7 +282,7 @@ export default function App() {
       title: book.volumeInfo.title,
       authors: book.volumeInfo.authors || ['Anónimo'],
       thumbnail: book.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || 'https://via.placeholder.com/150',
-      status, isFavorite: isFav, checkpoints: [], addedAt: new Date().toISOString()
+      status, isFavorite: isFav, checkpoints: [], rating: 0, review: "", addedAt: new Date().toISOString()
     };
     await setDoc(doc(db, 'users', user.uid, 'myBooks', book.id), info);
     if (status === 'read') await updateDoc(doc(db, 'profiles', user.uid), { readCount: increment(1) });
@@ -275,9 +297,11 @@ export default function App() {
     const pPerDay = Math.ceil(pages / days);
     const checkpoints = [];
     for (let i = 1; i <= days; i++) {
-      checkpoints.push({ title: `Día ${i}: aprox. ${pPerDay} págs`, completed: false });
+      checkpoints.push({ title: `Día ${i}: aprox. ${pPerDay} págs`, completed: false, note: "" });
     }
-    await updateDoc(doc(db, 'users', user.uid, 'myBooks', planningBook.id), { checkpoints, status: 'reading', totalPages: pages });
+    await updateDoc(doc(db, 'users', user.uid, 'myBooks', planningBook.id), { 
+      checkpoints, status: 'reading', totalPages: pages, rating: 0, review: "" 
+    });
     setPlanningBook(null);
     setActiveTab('library');
   };
@@ -292,6 +316,18 @@ export default function App() {
       victoryAudio.current.play().catch(() => {});
       await updateDoc(doc(db, 'profiles', user.uid), { readCount: increment(1) });
     }
+  };
+
+  const updateCheckpointNote = async (bookId, idx, note) => {
+    const book = myBooks.find(b => b.bookId === bookId);
+    const nCP = [...book.checkpoints];
+    nCP[idx].note = note;
+    await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), { checkpoints: nCP });
+  };
+
+  const updateBookReview = async (bookId, rating, review) => {
+    await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), { rating, review });
+    setSelectedBookForReview(null);
   };
 
   const dismissUser = async (targetId) => {
@@ -317,7 +353,8 @@ export default function App() {
   const filteredBooks = myBooks.filter(b => {
     if (filterType === 'favorite') return b.isFavorite;
     if (filterType === 'read') return b.status === 'read';
-    if (filterType === 'want') return b.status !== 'read';
+    if (filterType === 'want') return b.status === 'want';
+    if (filterType === 'in_plan') return b.status === 'reading';
     return true;
   });
 
@@ -327,7 +364,7 @@ export default function App() {
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg"><BookOpen size={20} strokeWidth={3} /></div>
+          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-100"><BookOpen size={20} strokeWidth={3} /></div>
           <h1 className="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-tight">Sandbook</h1>
         </div>
         <div className="flex items-center gap-3">
@@ -342,13 +379,46 @@ export default function App() {
         </div>
       </header>
 
+      {/* MODAL RESEÑA PERSONAL (Al hacer clic en portada) */}
+      {selectedBookForReview && (
+        <div className="fixed inset-0 z-[250] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in">
+           <div className="bg-white w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95">
+              <div className="relative h-32 bg-indigo-600">
+                 <img src={selectedBookForReview.thumbnail} className="absolute -bottom-10 left-8 w-24 h-36 object-cover rounded-xl shadow-2xl border-4 border-white" />
+                 <button onClick={() => setSelectedBookForReview(null)} className="absolute top-4 right-4 p-2 bg-white/10 text-white rounded-full"><X size={20}/></button>
+              </div>
+              <div className="p-8 pt-12">
+                 <h3 className="font-black text-lg leading-tight mt-2">{selectedBookForReview.title}</h3>
+                 <p className="text-xs text-slate-400 font-bold mb-6">{selectedBookForReview.authors[0]}</p>
+                 
+                 <div className="space-y-6">
+                    <div>
+                       <label className="text-[10px] font-black uppercase text-slate-400 block mb-2">{t.rate_book}</label>
+                       <StarRating rating={selectedBookForReview.rating || 0} onRate={(val) => setSelectedBookForReview({...selectedBookForReview, rating: val})} />
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-black uppercase text-slate-400 block mb-2">{t.my_review}</label>
+                       <textarea 
+                          className="w-full bg-slate-50 border rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px]"
+                          value={selectedBookForReview.review}
+                          onChange={(e) => setSelectedBookForReview({...selectedBookForReview, review: e.target.value})}
+                          placeholder="..."
+                       />
+                    </div>
+                    <button onClick={() => updateBookReview(selectedBookForReview.bookId, selectedBookForReview.rating, selectedBookForReview.review)} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg">{t.save}</button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* CONFIRMACIÓN ELIMINAR */}
       {bookToDelete && (
         <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
           <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 text-center shadow-2xl scale-in-center">
             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={32} /></div>
-            <h3 className="font-black text-xl mb-2">{t.delete_confirm}</h3>
-            <p className="text-slate-400 text-sm mb-8 leading-relaxed">{t.delete_desc}</p>
+            <h3 className="font-black text-xl mb-2">{t.delete_q}</h3>
+            <p className="text-slate-400 text-sm mb-8">{t.delete_desc}</p>
             <div className="flex gap-3">
               <button onClick={() => setBookToDelete(null)} className="flex-1 py-4 rounded-2xl bg-slate-100 font-bold text-slate-500">{t.cancel}</button>
               <button onClick={async () => { await deleteDoc(doc(db, 'users', user.uid, 'myBooks', bookToDelete)); setBookToDelete(null); }} className="flex-1 py-4 rounded-2xl bg-red-500 text-white font-black uppercase text-xs">{t.delete_btn}</button>
@@ -364,22 +434,13 @@ export default function App() {
             <h3 className="font-black text-xl mb-6 text-indigo-600 flex items-center gap-2"><Calendar /> {t.plan}</h3>
             <div className="space-y-4">
                <div><label className="text-[10px] font-black text-slate-400 uppercase ml-1">{t.manual_p}</label>
-               <input type="number" value={manualPages} onChange={(e) => setManualPages(e.target.value)} className="w-full bg-slate-50 border rounded-2xl p-4 font-bold outline-none focus:ring-2 focus:ring-indigo-500" /></div>
+               <input type="number" value={manualPages} onChange={(e) => setManualPages(e.target.value)} className="w-full bg-slate-50 border rounded-2xl p-4 font-bold outline-none" /></div>
                <div><label className="text-[10px] font-black text-slate-400 uppercase ml-1">{t.days}</label>
-               <input type="number" value={planDays} onChange={(e) => setPlanDays(e.target.value)} className="w-full bg-slate-50 border rounded-2xl p-4 font-bold outline-none focus:ring-2 focus:ring-indigo-500" /></div>
-               <button onClick={saveAutomaticPlan} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg mt-4">{t.start}</button>
+               <input type="number" value={planDays} onChange={(e) => setPlanDays(e.target.value)} className="w-full bg-slate-50 border rounded-2xl p-4 font-bold outline-none" /></div>
+               <button onClick={saveReadingPlan} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg mt-4">{t.start}</button>
                <button onClick={() => setPlanningBook(null)} className="w-full text-slate-400 font-bold text-xs mt-3">{t.cancel}</button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ESCÁNER */}
-      {showScanner && (
-        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 text-white text-center">
-          <div className="w-full max-w-md aspect-square bg-slate-900 rounded-3xl overflow-hidden border-2 border-indigo-500" id="reader"></div>
-          <p className="mt-8 font-bold animate-pulse text-xs uppercase tracking-widest">{t.scan_msg}</p>
-          <button onClick={() => setShowScanner(false)} className="mt-8 p-4 bg-white/10 rounded-full"><X size={24} /></button>
         </div>
       )}
 
@@ -388,56 +449,78 @@ export default function App() {
         {/* VISTA BIBLIOTECA */}
         {activeTab === 'library' && (
           <div className="space-y-6 animate-in fade-in">
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
-               <div className="relative z-10">
-                  <div className="flex justify-between items-start mb-6">
-                     <div>
-                        <div className="flex items-center gap-1.5 mb-1"><p className="text-[10px] font-black uppercase tracking-widest opacity-60">{t.level}</p><VerificationCheck count={userProfile.followersCount} /></div>
-                        <h2 className="text-2xl font-black uppercase">{getLevelTitle(userProfile.readCount, lang)}</h2>
-                        <p className="text-[10px] font-bold opacity-80 mt-2">{userProfile.readCount} {t.read}</p>
-                     </div>
-                     <Sparkles className="opacity-30" size={32} />
+            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-[2.5rem] text-white shadow-xl relative">
+               <div className="relative z-10 flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1"><p className="text-[10px] font-black uppercase tracking-widest opacity-60">{t.level}</p><VerificationCheck count={userProfile.followersCount} /></div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">{getLevelTitle(userProfile.readCount, lang)}</h2>
+                    <p className="text-[10px] font-bold opacity-80 mt-2 tracking-widest">{userProfile.readCount} {t.read.toUpperCase()}</p>
                   </div>
-                  <div className="h-2 bg-black/20 rounded-full overflow-hidden mb-2"><div className="h-full bg-white transition-all duration-1000" style={{ width: `${Math.min((userProfile.readCount/100)*100, 100)}%` }} /></div>
+                  <Sparkles className="opacity-30" size={32} />
                </div>
             </div>
 
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {['all', 'read', 'want', 'favorite'].map(type => (
-                <button key={type} onClick={() => setFilterType(type)} className={`px-4 py-2 rounded-full text-[10px] font-black uppercase border transition-all ${filterType === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-400'}`}>{t[type]}</button>
+              {['all', 'read', 'want', 'in_plan', 'favorite'].map(type => (
+                <button key={type} onClick={() => setFilterType(type)} className={`px-4 py-2 rounded-full text-[10px] font-black uppercase border transition-all whitespace-nowrap ${filterType === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-400'}`}>
+                  {t[type]}
+                </button>
               ))}
             </div>
 
             <div className="space-y-4">
               {filteredBooks.map((book, i) => {
                 const isExp = expandedBooks.has(book.bookId);
-                const perc = book.checkpoints?.length > 0 ? Math.round((book.checkpoints.filter(c => c.completed).length / book.checkpoints.length) * 100) : (book.status === 'read' ? 100 : 0);
+                const doneCount = book.checkpoints?.filter(c => c.completed).length || 0;
+                const totalCount = book.checkpoints?.length || 1;
+                const perc = Math.round((doneCount / totalCount) * 100);
                 return (
-                  <div key={i} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm animate-in fade-in overflow-hidden">
+                  <div key={i} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in">
                     <div className="flex gap-4">
-                      <img src={book.thumbnail} className="w-14 h-20 object-cover rounded-xl shadow-sm" />
+                      <img 
+                        src={book.thumbnail} 
+                        onClick={() => setSelectedBookForReview(book)}
+                        className="w-16 h-24 object-cover rounded-xl shadow-sm cursor-pointer hover:opacity-80 active:scale-95 transition-all" 
+                      />
                       <div className="flex-1 flex flex-col justify-center">
                         <div className="flex justify-between items-start">
-                          <h4 className="font-bold text-slate-800 text-sm line-clamp-1">{book.title}</h4>
+                          <div>
+                            <h4 className="font-bold text-slate-800 text-sm line-clamp-1">{book.title}</h4>
+                            <div className="mt-1"><StarRating rating={book.rating || 0} interactive={false} /></div>
+                          </div>
                           <button onClick={() => setBookToDelete(book.bookId)} className="p-1 text-slate-200 hover:text-red-400"><X size={16}/></button>
                         </div>
-                        <div className="flex items-center gap-2 mt-3">
-                           <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 transition-all duration-700" style={{width: `${perc}%`}} /></div>
+                        <div className="flex items-center gap-2 mt-4">
+                           <div className="flex-1 h-1.5 bg-slate-50 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 transition-all duration-700" style={{width: `${perc}%`}} /></div>
                            <span className="text-[10px] font-black text-indigo-600">{perc}%</span>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
                         <button onClick={async () => await updateDoc(doc(db, 'users', user.uid, 'myBooks', book.bookId), { isFavorite: !book.isFavorite })}><Star size={18} className={book.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-slate-200"} /></button>
-                        <button onClick={() => { const n = new Set(expandedBooks); if(n.has(book.bookId)) n.delete(book.bookId); else n.add(book.bookId); setExpandedBooks(n); }} className="p-2 bg-slate-50 rounded-xl text-slate-400">{isExp ? <Minimize2 size={16}/> : <Maximize2 size={16}/>}</button>
+                        <button onClick={() => { const n = new Set(expandedBooks); if(n.has(book.bookId)) n.delete(book.bookId); else n.add(book.bookId); setExpandedBooks(n); }} className="p-2 text-slate-300">
+                          {isExp ? <Minimize2 size={16}/> : <Maximize2 size={16}/>}
+                        </button>
                       </div>
                     </div>
                     {isExp && book.checkpoints?.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-slate-50 mt-4 animate-in slide-in-from-top-2">
+                      <div className="space-y-3 pt-4 border-t border-slate-50 mt-4 animate-in slide-in-from-top-2">
                         {book.checkpoints.map((cp, idx) => (
-                          <button key={idx} onClick={() => toggleCheckpoint(book.bookId, idx)} className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all ${cp.completed ? 'bg-green-50 border-green-100 text-green-700' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
-                            <span className="text-xs font-bold">{cp.title}</span>
-                            {cp.completed && <CheckCircle size={14}/>}
-                          </button>
+                          <div key={idx} className="space-y-2">
+                            <button onClick={() => toggleCheckpoint(book.bookId, idx)} className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all ${cp.completed ? 'bg-green-50 border-green-100 text-green-700 opacity-60' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
+                               <span className="text-[11px] font-bold">{cp.title}</span>
+                               {cp.completed && <CheckCircle size={14}/>}
+                            </button>
+                            <div className="flex items-start gap-2 px-2">
+                               <StickyNote size={12} className="text-slate-300 mt-1" />
+                               <input 
+                                  type="text" 
+                                  className="flex-1 bg-transparent border-none text-[10px] outline-none text-slate-400 placeholder:opacity-30" 
+                                  placeholder={t.daily_notes + "..."}
+                                  value={cp.note || ""}
+                                  onChange={(e) => updateCheckpointNote(book.bookId, idx, e.target.value)}
+                               />
+                            </div>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -453,31 +536,30 @@ export default function App() {
           <div className="space-y-4 animate-in fade-in">
             <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-4">
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {[{id:'all',l:t.global_f},{id:'intitle',l:t.title_f},{id:'inauthor',l:t.author_f},{id:'isbn',l:t.isbn_f}].map(m => (
-                  <button key={m.id} onClick={() => setSearchType(m.id)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border transition-all ${searchType === m.id ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>{m.l}</button>
+                {['all','intitle','inauthor','isbn'].map(m => (
+                  <button key={m} onClick={() => setSearchType(m)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border ${searchType === m ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-400'}`}>{m === 'all' ? t.all : m}</button>
                 ))}
               </div>
               <div className="flex gap-2">
                 <input type="text" placeholder={t.search_p} className="flex-1 bg-slate-50 border rounded-[1.5rem] px-6 py-4 outline-none font-medium" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && performSearch()} />
-                <button onClick={startScanner} className="bg-indigo-100 text-indigo-600 p-4 rounded-[1.25rem]"><Camera size={24} /></button>
+                <button onClick={() => performSearch()} className="bg-indigo-600 text-white p-4 rounded-[1.25rem] shadow-lg"><Search size={24} /></button>
               </div>
               <button onClick={() => performSearch()} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">{t.search_now}</button>
             </div>
 
             <div className="space-y-4">
               {searchResults.map((book) => {
-                const coms = bookComments[book.id] || [];
                 const alreadyHave = myBooks.find(b => b.bookId === book.id);
                 return (
-                  <div key={book.id} className="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <div className="flex gap-5">
+                  <div key={book.id} className="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm animate-in zoom-in-95">
+                    <div className="flex gap-5 mb-4">
                       <img src={book.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || 'https://via.placeholder.com/150'} className="w-24 h-36 object-cover rounded-2xl shadow-md" />
                       <div className="flex-1 flex flex-col">
                         <h3 className="font-bold text-sm leading-tight line-clamp-2">{book.volumeInfo.title}</h3>
                         <p className="text-xs text-indigo-500 font-bold mt-1 mb-2">{book.volumeInfo.authors?.join(', ')}</p>
                         
                         <div className="mt-auto space-y-3">
-                          <div className="flex items-center justify-between bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                          <div className="flex items-center justify-between bg-slate-50 p-2 rounded-2xl">
                              <span className="text-[9px] font-black uppercase text-slate-400 ml-2">{t.read}?</span>
                              <SliderLeido lang={lang} isRead={alreadyHave?.status === 'read'} onToggle={() => handleAddBook(book, alreadyHave?.status === 'read' ? 'want' : 'read')} />
                           </div>
@@ -487,25 +569,6 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                    </div>
-                    {/* Reseñas comunitarias */}
-                    <div className="border-t border-slate-50 pt-4 mt-4">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1"><MessageSquare size={12}/> {t.reviews} ({coms.length})</p>
-                       <div className="space-y-3">
-                          {coms.slice(0,3).map(c => (
-                            <div key={c.id} className="bg-slate-50 p-3 rounded-2xl text-[10px]">
-                               <div className="flex items-center gap-2 mb-1">
-                                  {c.userPic ? <img src={c.userPic} className="w-4 h-4 rounded-full" /> : <div className="w-4 h-4 bg-indigo-200 rounded-full text-[6px] font-black flex items-center justify-center">{c.userName?.charAt(0)}</div>}
-                                  <span className="font-bold text-slate-700">{c.userName}</span>
-                               </div>
-                               <p className="text-slate-600 leading-tight">{c.text}</p>
-                            </div>
-                          ))}
-                          <div className="relative mt-2">
-                             <input type="text" placeholder="..." className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-[10px] outline-none" value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && postComment(book.id)} />
-                             <button onClick={() => postComment(book.id)} className="absolute right-2 top-1/2 -translate-y-1/2 text-indigo-600"><Send size={14}/></button>
-                          </div>
-                       </div>
                     </div>
                   </div>
                 );
@@ -517,10 +580,18 @@ export default function App() {
         {/* RED SOCIAL */}
         {activeTab === 'social' && (
            <div className="space-y-4 animate-in fade-in">
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center justify-between">
-                <div><h3 className="font-black text-lg">{t.social}</h3><p className="text-[10px] text-slate-400 font-bold uppercase">{t.invite}</p></div>
-                <button onClick={inviteFriends} className="p-3 bg-[#1877F2] text-white rounded-2xl flex items-center gap-2 shadow-lg active:scale-95 transition-all"><Facebook size={20} /> <span className="text-xs font-black uppercase">Invitit</span></button>
+              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                <h3 className="font-black text-lg mb-4 text-center">{t.social}</h3>
+                <div className="flex gap-3">
+                  <button onClick={inviteWhatsApp} className="flex-1 py-4 bg-green-500 text-white rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95 transition-all">
+                    <MessageCircle size={20} /> <span className="text-xs font-black uppercase">{t.invite}</span>
+                  </button>
+                  <button onClick={inviteFacebook} className="flex-1 py-4 bg-[#1877F2] text-white rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-100 active:scale-95 transition-all">
+                    <Facebook size={20} /> <span className="text-xs font-black uppercase">{t.invite}</span>
+                  </button>
+                </div>
               </div>
+
               <div className="grid grid-cols-1 gap-3">
                  {publicData.filter(p => p.userId !== user?.uid && !userProfile.dismissedUsers?.includes(p.userId)).map(p => (
                     <div key={p.userId} className="bg-white p-4 rounded-3xl border shadow-sm flex items-center justify-between animate-in zoom-in-95 group">
@@ -592,7 +663,7 @@ export default function App() {
                   return (
                     <div key={id} className="flex flex-col items-center gap-1 group relative">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 transform ${unlocked ? 'bg-indigo-50 shadow-md scale-100' : 'bg-slate-50 opacity-20 scale-90'}`}>
-                        {unlocked ? <img src={`/${id}.png`} className="w-full h-full object-contain p-1 animate-in zoom-in" onError={(e) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/5971/5971593.png"; }} /> : <Lock size={20} className="text-slate-300" />}
+                        {unlocked ? <img src={`/${id}.png`} className="w-full h-full object-contain p-1 animate-in zoom-in" onError={(e) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/5971/5971593.png"} } /> : <Lock size={20} className="text-slate-300" />}
                       </div>
                       <span className={`text-[7px] font-black text-center uppercase ${unlocked ? 'text-indigo-600' : 'text-slate-300'}`}>{unlocked ? BADGE_DEFS[id].name : "???"}</span>
                     </div>
