@@ -45,7 +45,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const facebookProvider = new FacebookAuthProvider();
-const appId = 'sandbook-v1';
 
 // --- TRADUCCIONES ---
 const i18n = {
@@ -58,9 +57,9 @@ const i18n = {
     in_plan: "En Plan", all: "Todos", level: "Rango", followers: "Seguidores", search_now: "Buscar en Sandbook",
     manual_p: "Páginas totales", scan_msg: "Escaneando código...",
     title_f: "Título", author_f: "Autor", isbn_f: "ISBN", global_f: "Todo",
-    dismiss_user: "Usuario ocultado", reviews: "Reseñas", my_review: "Escribir reseña",
-    daily_notes: "Notas del día", rate_book: "Tu calificación", save: "Guardar",
-    who_read: "Lectores en Sandbook", no_reviews: "Sin reseñas aún", global_rating: "Calificación Global"
+    dismiss_user: "Ocultar", reviews: "Reseñas", my_review: "Tu Opinión",
+    daily_notes: "Notas del día", rate_book: "Calificar", save: "Guardar",
+    who_read: "Lectores en Sandbook", global_rating: "Promedio Global"
   },
   en: {
     library: "Library", plan: "Plan", social: "Social", profile: "Me",
@@ -71,9 +70,9 @@ const i18n = {
     in_plan: "In Plan", all: "All", level: "Rank", followers: "Followers", search_now: "Search Sandbook",
     manual_p: "Total pages", scan_msg: "Scanning code...",
     title_f: "Title", author_f: "Author", isbn_f: "ISBN", global_f: "All",
-    dismiss_user: "User hidden", reviews: "Reviews", my_review: "Write a review",
-    daily_notes: "Daily notes", rate_book: "Your rating", save: "Save",
-    who_read: "Sandbook Readers", no_reviews: "No reviews yet", global_rating: "Global Rating"
+    dismiss_user: "Hide", reviews: "Reviews", my_review: "Your Review",
+    daily_notes: "Daily notes", rate_book: "Rate", save: "Save",
+    who_read: "Sandbook Readers", global_rating: "Global Rating"
   }
 };
 
@@ -100,7 +99,16 @@ const BADGE_DEFS = {
   20: { name: "Maestro", desc: "Cumplir 19 insignias" }
 };
 
-// --- COMPONENTES AUXILIARES ---
+// --- FUNCIONES Y COMPONENTES GLOBALES (FIJAN EL ERROR DE DEFINICIÓN) ---
+
+const getLevelTitle = (count = 0, lang = 'es') => {
+  if (count >= 100000) return lang === 'es' ? "Legendario" : "Legendary";
+  if (count >= 10000) return lang === 'es' ? "Experto Superior" : "Master Expert";
+  if (count >= 1000) return lang === 'es' ? "Experto" : "Expert";
+  if (count >= 100) return lang === 'es' ? "Amateur" : "Amateur";
+  if (count >= 10) return lang === 'es' ? "Nivel 1 Novato" : "Level 1 Novice";
+  return lang === 'es' ? "Principiante" : "Beginner";
+};
 
 const VerificationCheck = ({ count = 0, size = 14 }) => {
   if (count >= 100000) return <CheckCircle size={size} className="text-yellow-500 fill-yellow-50" />;
@@ -153,12 +161,21 @@ export default function App() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [filterType, setFilterType] = useState('all');
 
-  // Estado para Modal Detalle de Libro
   const [viewingBook, setViewingBook] = useState(null);
   const [userComment, setUserComment] = useState("");
   const [userRating, setUserRating] = useState(0);
 
   const victoryAudio = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"));
+
+  // Reintento contra 429
+  const fetchWithRetry = async (url, retries = 3, delay = 2000) => {
+    const res = await fetch(url);
+    if (res.status === 429 && retries > 0) {
+      await new Promise(r => setTimeout(r, delay));
+      return fetchWithRetry(url, retries - 1, delay * 2);
+    }
+    return res;
+  };
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -195,7 +212,17 @@ export default function App() {
     return () => { unsubBooks(); unsubProfile(); unsubPublic(); unsubComments(); };
   }, [user]);
 
-  // --- BUSCADOR ---
+  // --- ACCIONES ---
+
+  const handleFacebookLogin = async () => {
+    try { await signInWithPopup(auth, facebookProvider); } catch (e) { console.error(e); }
+  };
+
+  const inviteWhatsApp = () => {
+    const msg = `¡Únete a Sandbook y seamos amigos lectores! ${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
   const performSearch = async (forcedQ = null) => {
     const q = (forcedQ || searchQuery).trim();
     if (!q) return;
@@ -210,7 +237,7 @@ export default function App() {
       let url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(queryParam)}&maxResults=15`;
       if (GOOGLE_BOOKS_API_KEY) url += `&key=${GOOGLE_BOOKS_API_KEY}`;
 
-      const res = await fetch(url);
+      const res = await fetchWithRetry(url);
       const data = await res.json();
       if (data.items) setSearchResults(data.items);
       else setSearchError(lang === 'es' ? "Sin resultados" : "No results");
@@ -313,10 +340,10 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
           <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg"><BookOpen size={20} strokeWidth={3} /></div>
-          <h1 className="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-tighter">Sandbook</h1>
+          <h1 className="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-tight">Sandbook</h1>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setLang(lang === 'es' ? 'en' : 'es')} className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-indigo-50"><Languages size={18} /></button>
+          <button onClick={() => setLang(lang === 'es' ? 'en' : 'es')} className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-indigo-50 transition-colors"><Languages size={18} /></button>
           <button onClick={() => setActiveTab('profile')} className="flex items-center gap-2 bg-slate-100 p-1 rounded-full border border-slate-200 pr-3">
             {userProfile.profilePic ? <img src={userProfile.profilePic} className="w-8 h-8 rounded-full object-cover border-2 border-white" /> : <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold">{userProfile.name?.charAt(0)}</div>}
             <VerificationCheck count={userProfile.followersCount} />
@@ -324,7 +351,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* MODAL DETALLE DE LIBRO (PORTADA CLICADA) */}
+      {/* MODAL DETALLE DE LIBRO (PORTADA) */}
       {viewingBook && (
         <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
            <div className="bg-white w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95">
@@ -336,7 +363,6 @@ export default function App() {
                  <h2 className="font-black text-2xl leading-tight">{viewingBook.volumeInfo?.title || viewingBook.title}</h2>
                  <p className="text-sm text-indigo-600 font-bold mb-4">{viewingBook.volumeInfo?.authors?.join(', ') || viewingBook.authors?.join(', ')}</p>
                  
-                 {/* Rating Global */}
                  <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl mb-6">
                     <div>
                        <p className="text-[10px] font-black uppercase text-slate-400">{t.global_rating}</p>
@@ -359,42 +385,21 @@ export default function App() {
                     </div>
                  </div>
 
-                 {/* Descripción */}
-                 <div className="mb-8">
-                    <p className="text-sm text-slate-600 leading-relaxed italic">
-                       {viewingBook.volumeInfo?.description?.replace(/<[^>]*>?/gm, '') || viewingBook.description || "Sin descripción disponible."}
-                    </p>
-                 </div>
+                 <div className="mb-8"><p className="text-sm text-slate-600 leading-relaxed italic">{viewingBook.volumeInfo?.description?.replace(/<[^>]*>?/gm, '') || viewingBook.description || "Sin descripción."}</p></div>
 
-                 {/* Reseñas */}
                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b pb-2">
-                       <h3 className="font-black text-sm uppercase tracking-widest">{t.reviews}</h3>
-                       <span className="text-xs font-bold text-slate-400">{bookComments[viewingBook.id || viewingBook.bookId]?.length || 0}</span>
-                    </div>
-                    
-                    {/* Formulario */}
+                    <h3 className="font-black text-sm uppercase tracking-widest border-b pb-2">{t.reviews}</h3>
                     <div className="bg-indigo-50 p-6 rounded-[2rem] border border-indigo-100 space-y-4">
                        <p className="text-xs font-bold text-indigo-900">{t.my_review}</p>
                        <StarRating rating={userRating} onRate={setUserRating} />
-                       <textarea 
-                          value={userComment} onChange={(e) => setUserComment(e.target.value)}
-                          className="w-full bg-white rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-300 min-h-[80px]"
-                          placeholder="..."
-                       />
-                       <button onClick={submitGlobalReview} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-black text-xs uppercase shadow-md flex items-center justify-center gap-2">
-                          <Send size={14}/> {t.save}
-                       </button>
+                       <textarea value={userComment} onChange={(e) => setUserComment(e.target.value)} className="w-full bg-white rounded-xl p-3 text-sm outline-none min-h-[80px]" placeholder="..." />
+                       <button onClick={submitGlobalReview} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-black text-xs uppercase shadow-md flex items-center justify-center gap-2"><Send size={14}/> {t.save}</button>
                     </div>
-
                     <div className="space-y-4">
                        {bookComments[viewingBook.id || viewingBook.bookId]?.map(c => (
                           <div key={c.id} className="bg-slate-50 p-4 rounded-2xl">
                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                   <img src={c.userPic || 'https://via.placeholder.com/30'} className="w-6 h-6 rounded-full" />
-                                   <span className="text-[10px] font-black">{c.userName}</span>
-                                </div>
+                                <div className="flex items-center gap-2"><img src={c.userPic || 'https://via.placeholder.com/30'} className="w-6 h-6 rounded-full" /><span className="text-[10px] font-black">{c.userName}</span></div>
                                 <StarRating rating={c.rating} interactive={false} size={10} />
                              </div>
                              <p className="text-xs text-slate-600">{c.text}</p>
@@ -410,7 +415,7 @@ export default function App() {
       {/* CONFIRMACIÓN ELIMINAR */}
       {bookToDelete && (
         <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
-          <div className="bg-white w-full max-sm rounded-[2.5rem] p-8 text-center shadow-2xl scale-in-center">
+          <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl">
             <Trash2 size={40} className="text-red-500 mx-auto mb-4" />
             <h3 className="font-black text-xl mb-2">{t.delete_q}</h3>
             <p className="text-slate-400 text-sm mb-8">{t.delete_desc}</p>
@@ -439,28 +444,34 @@ export default function App() {
         </div>
       )}
 
+      {/* ESCÁNER */}
+      {showScanner && (
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 text-white text-center">
+          <div className="w-full max-w-md aspect-square bg-slate-900 rounded-3xl overflow-hidden border-2 border-indigo-500" id="reader"></div>
+          <p className="mt-8 font-bold animate-pulse text-xs uppercase">{t.scan_msg}</p>
+          <button onClick={() => setShowScanner(false)} className="mt-8 p-4 bg-white/10 rounded-full"><X size={24} /></button>
+        </div>
+      )}
+
       <main className="max-w-xl mx-auto p-4 space-y-6">
         
         {/* VISTA BIBLIOTECA */}
         {activeTab === 'library' && (
           <div className="space-y-6 animate-in fade-in">
             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
-               <div className="relative z-10">
-                  <div className="flex justify-between items-start mb-6">
-                     <div>
-                        <div className="flex items-center gap-1.5 mb-1"><p className="text-[10px] font-black uppercase tracking-widest opacity-60">{t.level}</p></div>
-                        <h2 className="text-2xl font-black uppercase tracking-tight">{getLevelTitle(userProfile.readCount, lang)}</h2>
-                        <p className="text-[10px] font-bold opacity-80 mt-2">{userProfile.readCount} {t.read.toUpperCase()}</p>
-                     </div>
-                     <Sparkles className="opacity-30" size={32} />
+               <div className="relative z-10 flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1"><p className="text-[10px] font-black uppercase tracking-widest opacity-60">{t.level}</p></div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">{getLevelTitle(userProfile.readCount, lang)}</h2>
+                    <p className="text-[10px] font-bold opacity-80 mt-2 tracking-widest">{userProfile.readCount} {t.read.toUpperCase()}</p>
                   </div>
-                  <div className="h-2 bg-black/20 rounded-full overflow-hidden mb-2"><div className="h-full bg-white transition-all duration-1000" style={{ width: `${Math.min((userProfile.readCount/100)*100, 100)}%` }} /></div>
+                  <Sparkles className="opacity-30" size={32} />
                </div>
             </div>
 
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {['all', 'read', 'want', 'in_plan', 'favorite'].map(type => (
-                <button key={type} onClick={() => setFilterType(type)} className={`px-4 py-2 rounded-full text-[10px] font-black uppercase border transition-all whitespace-nowrap ${filterType === type ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400'}`}>
+                <button key={type} onClick={() => setFilterType(type)} className={`px-4 py-2 rounded-full text-[10px] font-black uppercase border transition-all whitespace-nowrap ${filterType === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-400'}`}>
                   {t[type]}
                 </button>
               ))}
@@ -469,9 +480,11 @@ export default function App() {
             <div className="space-y-4">
               {filteredBooks.map((book, i) => {
                 const isExp = expandedBooks.has(book.bookId);
-                const perc = book.checkpoints?.length > 0 ? Math.round((book.checkpoints.filter(c => c.completed).length / book.checkpoints.length) * 100) : (book.status === 'read' ? 100 : 0);
+                const doneCount = book.checkpoints?.filter(c => c.completed).length || 0;
+                const totalCount = book.checkpoints?.length || 1;
+                const perc = Math.round((doneCount / totalCount) * 100);
                 return (
-                  <div key={i} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in">
+                  <div key={i} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm animate-in fade-in overflow-hidden">
                     <div className="flex gap-4">
                       <img 
                         src={book.thumbnail} onClick={() => setViewingBook(book)}
@@ -483,7 +496,7 @@ export default function App() {
                           <button onClick={() => setBookToDelete(book.bookId)} className="p-1 text-slate-200 hover:text-red-400"><X size={16}/></button>
                         </div>
                         <div className="flex items-center gap-2 mt-4">
-                           <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 transition-all duration-700" style={{width: `${perc}%`}} /></div>
+                           <div className="flex-1 h-1.5 bg-slate-50 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 transition-all duration-700" style={{width: `${perc}%`}} /></div>
                            <span className="text-[10px] font-black text-indigo-600">{perc}%</span>
                         </div>
                       </div>
@@ -496,16 +509,13 @@ export default function App() {
                       <div className="space-y-3 pt-4 border-t border-slate-50 mt-4">
                         {book.checkpoints.map((cp, idx) => (
                           <div key={idx} className="space-y-2">
-                             <button onClick={() => toggleCheckpoint(book.bookId, idx)} className={`w-full flex items-center justify-between p-3 rounded-2xl border ${cp.completed ? 'bg-green-50 border-green-100 text-green-700' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
+                             <button onClick={() => toggleCheckpoint(book.bookId, idx)} className={`w-full flex items-center justify-between p-3 rounded-2xl border ${cp.completed ? 'bg-green-50 border-green-100 text-green-700 opacity-60' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
                                 <span className="text-[11px] font-bold">{cp.title}</span>
                                 {cp.completed && <CheckCircle size={14}/>}
                              </button>
                              <div className="flex items-start gap-2 px-2">
                                 <StickyNote size={12} className="text-slate-300 mt-1" />
-                                <input 
-                                   className="flex-1 bg-transparent border-none text-[10px] outline-none text-slate-400" 
-                                   placeholder={t.daily_notes + "..."}
-                                   value={cp.note || ""}
+                                <input className="flex-1 bg-transparent border-none text-[10px] outline-none text-slate-400" placeholder={t.daily_notes + "..."} value={cp.note || ""}
                                    onChange={async (e) => {
                                       const nCP = [...book.checkpoints]; nCP[idx].note = e.target.value;
                                       await updateDoc(doc(db, 'users', user.uid, 'myBooks', book.bookId), { checkpoints: nCP });
@@ -533,7 +543,7 @@ export default function App() {
                 ))}
               </div>
               <div className="flex gap-2">
-                <input type="text" placeholder={t.search_p} className="flex-1 bg-slate-50 border rounded-[1.5rem] px-6 py-4 outline-none font-medium" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && performSearch()} />
+                <input type="text" placeholder={t.search_p} className="flex-1 bg-slate-50 border rounded-[1.5rem] px-6 py-4 outline-none font-medium text-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && performSearch()} />
                 <button onClick={startScanner} className="bg-indigo-100 text-indigo-600 p-4 rounded-[1.25rem] active:scale-95 transition-all"><Barcode size={24} /></button>
               </div>
               <button onClick={() => performSearch()} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">{t.search_now}</button>
@@ -543,13 +553,9 @@ export default function App() {
               {searchResults.map((book) => {
                 const alreadyHave = myBooks.find(b => b.bookId === book.id);
                 return (
-                  <div key={book.id} className="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                  <div key={book.id} className="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm animate-in zoom-in-95">
                     <div className="flex gap-5">
-                      <img 
-                        src={book.volumeInfo?.imageLinks?.thumbnail?.replace('http:','https:') || 'https://via.placeholder.com/150'} 
-                        onClick={() => setViewingBook(book)}
-                        className="w-24 h-36 object-cover rounded-2xl shadow-md cursor-pointer hover:scale-105 transition-all" 
-                      />
+                      <img src={book.volumeInfo?.imageLinks?.thumbnail?.replace('http:','https:') || 'https://via.placeholder.com/150'} onClick={() => setViewingBook(book)} className="w-24 h-36 object-cover rounded-2xl shadow-md cursor-pointer hover:scale-105 transition-all" />
                       <div className="flex-1 flex flex-col">
                         <h3 className="font-bold text-sm leading-tight line-clamp-2">{book.volumeInfo.title}</h3>
                         <p className="text-xs text-indigo-500 font-bold mb-4">{book.volumeInfo.authors?.join(', ')}</p>
@@ -580,12 +586,8 @@ export default function App() {
               <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
                 <h3 className="font-black text-lg mb-4 text-center">{t.social}</h3>
                 <div className="flex gap-3">
-                  <button onClick={() => window.open(`https://wa.me/?text=Seamos amigos en Sandbook: ${window.location.href}`)} className="flex-1 py-4 bg-green-500 text-white rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95 transition-all">
-                    <MessageCircle size={20} /> <span className="text-xs font-black uppercase tracking-widest">{t.invite}</span>
-                  </button>
-                  <button onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`)} className="flex-1 py-4 bg-[#1877F2] text-white rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-100 active:scale-95 transition-all">
-                    <Facebook size={20} /> <span className="text-xs font-black uppercase tracking-widest">{t.invite}</span>
-                  </button>
+                  <button onClick={inviteWhatsApp} className="flex-1 py-4 bg-green-500 text-white rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95 transition-all"><MessageCircle size={20}/> <span className="text-xs font-black uppercase">{t.invite}</span></button>
+                  <button onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`)} className="flex-1 py-4 bg-[#1877F2] text-white rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-100 active:scale-95 transition-all"><Facebook size={20}/> <span className="text-xs font-black uppercase">{t.invite}</span></button>
                 </div>
               </div>
 
@@ -600,7 +602,7 @@ export default function App() {
                           <div>
                              <h4 className="font-bold text-slate-800 text-sm">{p.name}</h4>
                              <p className="text-[9px] font-black text-indigo-500 uppercase">{getLevelTitle(p.readCount, lang)}</p>
-                             <p className="text-[9px] font-bold text-slate-400 uppercase">{p.followersCount || 0} {t.followers}</p>
+                             <p className="text-[9px] font-bold text-slate-400 uppercase">{p.followersCount || 0} Fans</p>
                           </div>
                        </div>
                        <div className="flex items-center gap-2">
@@ -619,11 +621,11 @@ export default function App() {
            </div>
         )}
 
-        {/* VISTA PERFIL */}
+        {/* PERFIL */}
         {activeTab === 'profile' && (
           <div className="space-y-6 animate-in fade-in">
             <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm text-center relative overflow-hidden">
-              <button onClick={() => setIsEditingProfile(true)} className="absolute top-6 right-6 p-2 bg-slate-50 rounded-full text-slate-400 hover:text-indigo-600 shadow-sm transition-all active:rotate-12"><Edit3 size={18} /></button>
+              <button onClick={() => setIsEditingProfile(true)} className="absolute top-6 right-6 p-2 bg-slate-50 rounded-full text-slate-400 hover:text-indigo-600 shadow-sm"><Edit3 size={18} /></button>
               <div className="relative w-32 h-32 mx-auto mb-4">
                 {userProfile.profilePic ? <img src={userProfile.profilePic} className="w-full h-full rounded-full object-cover border-4 border-white shadow-xl" /> : <div className="w-full h-full bg-indigo-100 rounded-full flex items-center justify-center text-5xl border-4 border-white shadow-xl">{userProfile.name?.charAt(0)}</div>}
                 <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-full shadow-lg border border-slate-50"><VerificationCheck count={userProfile.followersCount} size={28} /></div>
@@ -631,6 +633,10 @@ export default function App() {
               <h2 className="text-2xl font-black text-slate-800 tracking-tight">{userProfile.name}</h2>
               <p className="text-[10px] font-black text-indigo-600 uppercase mb-6 tracking-widest">{getLevelTitle(userProfile.readCount, lang)}</p>
               
+              {!auth.currentUser?.providerData.some(p => p.providerId === 'facebook.com') && (
+                <button onClick={handleFacebookLogin} className="mb-6 w-full py-3 bg-[#1877F2] text-white rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 active:scale-95 transition-all"><Facebook size={16} /> Login Facebook</button>
+              )}
+
               <div className="flex justify-center gap-8 text-[10px] font-black text-slate-400 uppercase bg-slate-50 p-4 rounded-3xl border border-slate-100 shadow-inner">
                  <div className="text-center"><span className="text-indigo-600 text-lg block">{userProfile.readCount}</span>{t.read}</div>
                  <div className="w-px h-8 bg-slate-200"></div>
@@ -643,11 +649,11 @@ export default function App() {
             {isEditingProfile && (
               <div className="bg-white p-6 rounded-[2.5rem] border-2 border-indigo-500 shadow-xl space-y-4 animate-in slide-in-from-top-4">
                 <input type="text" value={userProfile.name} onChange={(e) => setUserProfile({...userProfile, name: e.target.value})} className="w-full bg-slate-50 border rounded-2xl p-4 outline-none font-bold" />
-                <label className="w-full flex items-center justify-center gap-2 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl py-4 cursor-pointer text-slate-400">
+                <label className="w-full flex items-center justify-center gap-2 bg-slate-50 border-2 border-dashed rounded-2xl py-4 cursor-pointer text-slate-400">
                   <Upload size={18} /> <span className="text-xs font-bold">Cambiar Foto</span>
                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                 </label>
-                <button onClick={async () => { await updateDoc(doc(db, 'profiles', user.uid), { name: userProfile.name, profilePic: userProfile.profilePic }); setIsEditingProfile(false); }} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs shadow-lg">Guardar</button>
+                <button onClick={async () => { await updateDoc(doc(db, 'profiles', user.uid), { name: userProfile.name, profilePic: userProfile.profilePic }); setIsEditingProfile(false); }} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs">Guardar</button>
               </div>
             )}
 
@@ -660,7 +666,7 @@ export default function App() {
                   return (
                     <div key={id} className="flex flex-col items-center gap-1 group relative">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 transform ${unlocked ? 'bg-indigo-50 shadow-md scale-100' : 'bg-slate-50 opacity-20 scale-90'}`}>
-                        {unlocked ? <img src={`/${id}.png`} className="w-full h-full object-contain p-1 animate-in zoom-in" onError={(e) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/5971/5971593.png"; }} /> : <Lock size={20} className="text-slate-300" />}
+                        {unlocked ? <img src={`/${id}.png`} className="w-full h-full object-contain p-1 animate-in zoom-in" onError={(e) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/5971/5971593.png"} } /> : <Lock size={20} className="text-slate-300" />}
                       </div>
                       <span className={`text-[7px] font-black text-center uppercase ${unlocked ? 'text-indigo-600' : 'text-slate-300'}`}>{unlocked ? BADGE_DEFS[id].name : "???"}</span>
                     </div>
@@ -672,7 +678,6 @@ export default function App() {
         )}
       </main>
 
-      {/* NAV BAR */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-slate-100 px-8 py-4 flex justify-between items-center z-40 shadow-2xl">
         {[{id:'library',icon:Layout,l:t.library},{id:'search',icon:Search,l:t.plan},{id:'social',icon:Globe,l:t.social},{id:'profile',icon:User,l:t.profile}].map(t_nav => (
           <button key={t_nav.id} onClick={() => setActiveTab(t_nav.id)} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === t_nav.id ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}>
