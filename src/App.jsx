@@ -28,7 +28,7 @@ import {
   limit
 } from 'firebase/firestore';
 import { 
-  BookOpen, Search, Trophy, Plus, CheckCircle, Layout, User, Award, Loader2, PenTool, Globe, Camera, MessageSquare, Send, X, ChevronDown, ChevronUp, Settings, Edit3, ListChecks, Lock, Flag, Sparkles, Star, Upload, Book as BookIcon, AlertCircle, Calendar, FileText, Info, Maximize2, Minimize2, UserPlus, UserCheck, Users, Trash2, Facebook, Languages, Share2, UserX, MessageCircle, StickyNote, Barcode, Library, Heart, ArrowLeft, Moon, Sun, Sunset, LogIn, LogOut, MessageSquarePlus, Eye, EyeOff, Bell, ThumbsUp, ThumbsDown, Bookmark, Quote, PenLine, TrendingUp, Clock, Flame, Target, Hash, Mic, Filter, MapPin
+  BookOpen, Search, Trophy, Plus, CheckCircle, Layout, User, Award, Loader2, PenTool, Globe, Camera, MessageSquare, Send, X, ChevronDown, ChevronUp, ChevronRight, Settings, Edit3, ListChecks, Lock, Flag, Sparkles, Star, Upload, Book as BookIcon, AlertCircle, Calendar, FileText, Info, Maximize2, Minimize2, UserPlus, UserCheck, Users, Trash2, Facebook, Languages, Share2, UserX, MessageCircle, StickyNote, Barcode, Library, Heart, ArrowLeft, Moon, Sun, Sunset, LogIn, LogOut, MessageSquarePlus, Eye, EyeOff, Bell, ThumbsUp, ThumbsDown, Bookmark, Quote, PenLine, TrendingUp, Clock, Flame, Target, Hash, Mic, Filter, MapPin
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN DE FIREBASE ---
@@ -82,7 +82,8 @@ const i18n = {
     select_book: "Seleccionar libro", write_quote: "Escribe una frase del libro...",
     posts: "Publicaciones", no_posts: "No hay publicaciones aún",
     authors: "Autores", author_details: "Detalles del autor",
-    books_by_author: "Libros del autor", loading_more: "Cargando más..."
+    books_by_author: "Libros del autor", loading_more: "Cargando más...",
+    search: "Buscar"
   },
   en: {
     library: "Library", plan: "Plan", social: "Social", profile: "Me",
@@ -114,7 +115,8 @@ const i18n = {
     select_book: "Select book", write_quote: "Write a quote from the book...",
     posts: "Posts", no_posts: "No posts yet",
     authors: "Authors", author_details: "Author details",
-    books_by_author: "Author's books", loading_more: "Loading more..."
+    books_by_author: "Author's books", loading_more: "Loading more...",
+    search: "Search"
   }
 };
 
