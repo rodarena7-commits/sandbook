@@ -25,10 +25,17 @@ import {
   arrayUnion,
   arrayRemove,
   orderBy,
-  limit
+  limit,
+  writeBatch
 } from 'firebase/firestore';
 import { 
-  BookOpen, Search, Trophy, Plus, CheckCircle, Layout, User, Award, Loader2, PenTool, Globe, Camera, MessageSquare, Send, X, ChevronDown, ChevronUp, ChevronRight, Settings, Edit3, ListChecks, Lock, Flag, Sparkles, Star, Upload, Book as BookIcon, AlertCircle, Calendar, FileText, Info, Maximize2, Minimize2, UserPlus, UserCheck, Users, Trash2, Facebook, Languages, Share2, UserX, MessageCircle, StickyNote, Barcode, Library, Heart, ArrowLeft, Moon, Sun, Sunset, LogIn, LogOut, MessageSquarePlus, Eye, EyeOff, Bell, ThumbsUp, ThumbsDown, Bookmark, Quote, PenLine, TrendingUp, Clock, Flame, Target, Hash, Mic, Filter, MapPin, UserMinus, Shield, Mail, Phone, Home, HelpCircle
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from 'firebase/storage';
+import { 
+  BookOpen, Search, Trophy, Plus, CheckCircle, Layout, User, Award, Loader2, PenTool, Globe, Camera, MessageSquare, Send, X, ChevronDown, ChevronUp, ChevronRight, Settings, Edit3, ListChecks, Lock, Flag, Sparkles, Star, Upload, Book as BookIcon, AlertCircle, Calendar, FileText, Info, Maximize2, Minimize2, UserPlus, UserCheck, Users, Trash2, Facebook, Languages, Share2, UserX, MessageCircle, StickyNote, Barcode, Library, Heart, ArrowLeft, Moon, Sun, Sunset, LogIn, LogOut, MessageSquarePlus, Eye, EyeOff, Bell, ThumbsUp, ThumbsDown, Bookmark, Quote, PenLine, TrendingUp, Clock, Flame, Target, Hash, Mic, Filter, MapPin, UserMinus, Shield, Mail, Phone, Home, HelpCircle, Download
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN DE FIREBASE ---
@@ -48,6 +55,7 @@ const GOOGLE_LENS_API_KEY = import.meta.env.VITE_GOOGLE_LENS_API_KEY || "";
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const facebookProvider = new FacebookAuthProvider();
 const googleProvider = new GoogleAuthProvider();
 
@@ -288,15 +296,15 @@ const getLevelSymbol = (count = 0) => {
 };
 
 const VerificationCheck = ({ count = 0, size = 14 }) => {
-  if (count >= 2100) return <img src="/btc.png" className="w-5 h-5" />;
-  if (count >= 1000) return <img src="/diamante.png" className="w-5 h-5" />;
-  if (count >= 500) return <img src="/oro.png" className="w-5 h-5" />;
-  if (count >= 100) return <img src="/plata.png" className="w-5 h-5" />;
-  if (count >= 50) return <img src="/cobre.png" className="w-5 h-5" />;
-  if (count >= 25) return <img src="/vidrio.png" className="w-5 h-5" />;
-  if (count >= 10) return <img src="/madera.png" className="w-5 h-5" />;
-  if (count >= 1) return <img src="/piedra.png" className="w-5 h-5" />;
-  return <img src="/papel.png" className="w-5 h-5" />;
+  if (count >= 2100) return <img src="/btc.png" className="w-5 h-5 object-contain" />;
+  if (count >= 1000) return <img src="/diamante.png" className="w-5 h-5 object-contain" />;
+  if (count >= 500) return <img src="/oro.png" className="w-5 h-5 object-contain" />;
+  if (count >= 100) return <img src="/plata.png" className="w-5 h-5 object-contain" />;
+  if (count >= 50) return <img src="/cobre.png" className="w-5 h-5 object-contain" />;
+  if (count >= 25) return <img src="/vidrio.png" className="w-5 h-5 object-contain" />;
+  if (count >= 10) return <img src="/madera.png" className="w-5 h-5 object-contain" />;
+  if (count >= 1) return <img src="/piedra.png" className="w-5 h-5 object-contain" />;
+  return <img src="/papel.png" className="w-5 h-5 object-contain" />;
 };
 
 const StarRating = ({ rating, onRate, interactive = true, size = 20 }) => (
@@ -493,6 +501,9 @@ export default function App() {
 
   // Estado para requerir login con Google
   const [requireGoogleLogin, setRequireGoogleLogin] = useState(false);
+
+  // Estado para las portadas subidas por la comunidad
+  const [communityCovers, setCommunityCovers] = useState({});
 
   const victoryAudio = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"));
   const videoRef = useRef(null);
@@ -706,6 +717,12 @@ export default function App() {
     const unsubscribe = onSnapshot(conversationsQuery, (snapshot) => {
       const convos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setConversations(convos);
+    }, (error) => {
+      console.error("Error cargando conversaciones:", error);
+      // Crear índice manualmente si es necesario
+      if (error.code === 'failed-precondition') {
+        console.log("Por favor crea el índice en Firebase Console");
+      }
     });
     
     return unsubscribe;
@@ -750,14 +767,13 @@ export default function App() {
     return unsubscribe;
   };
 
-  // Cargar publicaciones guardadas
+  // Cargar publicaciones guardadas - CORREGIDA SIN ÍNDICE
   const loadSavedPosts = () => {
     if (!user) return;
     
     const savedQuery = query(
       collection(db, 'savedPosts'),
-      where('userId', '==', user.uid),
-      orderBy('savedAt', 'desc')
+      where('userId', '==', user.uid)
     );
     
     const unsubscribe = onSnapshot(savedQuery, (snapshot) => {
@@ -766,6 +782,21 @@ export default function App() {
       
       // Actualizar perfil local
       setUserProfile(prev => ({ ...prev, savedPosts: savedPostIds }));
+    }, (error) => {
+      console.error("Error cargando posts guardados:", error);
+      // Cargar sin el orden para evitar el error de índice
+      const simpleQuery = query(
+        collection(db, 'savedPosts'),
+        where('userId', '==', user.uid)
+      );
+      
+      const simpleUnsub = onSnapshot(simpleQuery, (snapshot) => {
+        const savedPostIds = snapshot.docs.map(doc => doc.data().postId);
+        setSavedPostsList(savedPostIds);
+        setUserProfile(prev => ({ ...prev, savedPosts: savedPostIds }));
+      });
+      
+      return simpleUnsub;
     });
     
     return unsubscribe;
@@ -787,6 +818,24 @@ export default function App() {
       // Aquí almacenaríamos los mensajes en el estado correspondiente
       // Por ahora solo para demostración
       console.log('Mensajes cargados:', messages);
+    }, (error) => {
+      console.error("Error cargando mensajes:", error);
+    });
+    
+    return unsubscribe;
+  };
+
+  // Cargar portadas de la comunidad
+  const loadCommunityCovers = () => {
+    const coversQuery = query(collection(db, 'bookCovers'));
+    
+    const unsubscribe = onSnapshot(coversQuery, (snapshot) => {
+      const coversMap = {};
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        coversMap[data.bookId] = data;
+      });
+      setCommunityCovers(coversMap);
     });
     
     return unsubscribe;
@@ -811,43 +860,50 @@ export default function App() {
     setDeferredPrompt(null);
   };
 
-  // Función para subir portada de libro
+  // Función para subir portada de libro a Firebase Storage
   const handleBookCoverUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !user || !bookForCoverUpload) return;
     
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const imageDataUrl = reader.result;
-        
-        // Subir la imagen a Firebase Storage o almacenar como base64
-        // Por ahora, actualizamos el libro localmente
-        const bookId = bookForCoverUpload.id || bookForCoverUpload.bookId;
-        
-        // Actualizar en la base de datos
-        await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), {
-          thumbnail: imageDataUrl,
+      // Subir a Firebase Storage
+      const bookId = bookForCoverUpload.id || bookForCoverUpload.bookId;
+      const fileName = `${bookId}_${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `bookCovers/${fileName}`);
+      
+      // Subir el archivo
+      await uploadBytes(storageRef, file);
+      
+      // Obtener URL de descarga
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      // Actualizar en la base de datos para compartir con toda la comunidad
+      await setDoc(doc(db, 'bookCovers', bookId), {
+        bookId,
+        title: bookForCoverUpload.volumeInfo?.title || bookForCoverUpload.title,
+        authors: bookForCoverUpload.volumeInfo?.authors || bookForCoverUpload.authors || ['Anónimo'],
+        thumbnail: downloadURL,
+        uploadedBy: user.uid,
+        uploadedByName: userProfile.name,
+        uploadedAt: serverTimestamp(),
+        upvotes: 1,
+        upvotedBy: [user.uid]
+      }, { merge: true });
+      
+      // También actualizar en el libro del usuario si lo tiene
+      const userBookRef = doc(db, 'users', user.uid, 'myBooks', bookId);
+      const userBookSnap = await getDoc(userBookRef);
+      if (userBookSnap.exists()) {
+        await updateDoc(userBookRef, {
+          thumbnail: downloadURL,
           coverUploadedBy: user.uid,
           coverUploadedAt: new Date().toISOString()
         });
-        
-        // También actualizar en globalLikes para compartir con otros usuarios
-        await setDoc(doc(db, 'bookCovers', bookId), {
-          bookId,
-          thumbnail: imageDataUrl,
-          uploadedBy: user.uid,
-          uploadedByName: userProfile.name,
-          uploadedAt: serverTimestamp(),
-          upvotes: 0,
-          upvotedBy: []
-        }, { merge: true });
-        
-        alert(lang === 'es' ? '¡Portada subida con éxito! Ayudas a la comunidad.' : 'Cover uploaded successfully! You help the community.');
-        setShowCoverUploadModal(false);
-        setBookForCoverUpload(null);
-      };
-      reader.readAsDataURL(file);
+      }
+      
+      alert(lang === 'es' ? '¡Portada subida con éxito! Ayudas a la comunidad.' : 'Cover uploaded successfully! You help the community.');
+      setShowCoverUploadModal(false);
+      setBookForCoverUpload(null);
     } catch (error) {
       console.error('Error subiendo portada:', error);
       alert(lang === 'es' ? 'Error subiendo portada' : 'Error uploading cover');
@@ -917,34 +973,61 @@ export default function App() {
         cancelButton.style.fontWeight = 'bold';
         cancelButton.style.cursor = 'pointer';
         
-        captureButton.onclick = () => {
+        captureButton.onclick = async () => {
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(video, 0, 0);
           
-          const imageDataUrl = canvas.toDataURL('image/jpeg');
-          
-          // Detener stream
-          stream.getTracks().forEach(track => track.stop());
-          
-          // Subir la foto
-          const bookId = bookForCoverUpload.id || bookForCoverUpload.bookId;
-          updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), {
-            thumbnail: imageDataUrl,
-            coverUploadedBy: user.uid,
-            coverUploadedAt: new Date().toISOString()
-          }).then(() => {
-            alert(lang === 'es' ? '¡Foto subida con éxito!' : 'Photo uploaded successfully!');
-          }).catch(error => {
-            console.error('Error subiendo foto:', error);
-            alert(lang === 'es' ? 'Error subiendo foto' : 'Error uploading photo');
-          });
-          
-          document.body.removeChild(modal);
-          setShowCoverUploadModal(false);
-          setBookForCoverUpload(null);
+          // Convertir a blob
+          canvas.toBlob(async (blob) => {
+            // Detener stream
+            stream.getTracks().forEach(track => track.stop());
+            
+            // Subir la foto a Firebase Storage
+            try {
+              const bookId = bookForCoverUpload.id || bookForCoverUpload.bookId;
+              const fileName = `${bookId}_${Date.now()}_photo.jpg`;
+              const storageRef = ref(storage, `bookCovers/${fileName}`);
+              
+              await uploadBytes(storageRef, blob);
+              const downloadURL = await getDownloadURL(storageRef);
+              
+              // Actualizar en la base de datos
+              await setDoc(doc(db, 'bookCovers', bookId), {
+                bookId,
+                title: bookForCoverUpload.volumeInfo?.title || bookForCoverUpload.title,
+                authors: bookForCoverUpload.volumeInfo?.authors || bookForCoverUpload.authors || ['Anónimo'],
+                thumbnail: downloadURL,
+                uploadedBy: user.uid,
+                uploadedByName: userProfile.name,
+                uploadedAt: serverTimestamp(),
+                upvotes: 1,
+                upvotedBy: [user.uid]
+              }, { merge: true });
+              
+              // Actualizar en el libro del usuario si lo tiene
+              const userBookRef = doc(db, 'users', user.uid, 'myBooks', bookId);
+              const userBookSnap = await getDoc(userBookRef);
+              if (userBookSnap.exists()) {
+                await updateDoc(userBookRef, {
+                  thumbnail: downloadURL,
+                  coverUploadedBy: user.uid,
+                  coverUploadedAt: new Date().toISOString()
+                });
+              }
+              
+              alert(lang === 'es' ? '¡Foto subida con éxito!' : 'Photo uploaded successfully!');
+            } catch (error) {
+              console.error('Error subiendo foto:', error);
+              alert(lang === 'es' ? 'Error subiendo foto' : 'Error uploading photo');
+            }
+            
+            document.body.removeChild(modal);
+            setShowCoverUploadModal(false);
+            setBookForCoverUpload(null);
+          }, 'image/jpeg', 0.9);
         };
         
         cancelButton.onclick = () => {
@@ -964,6 +1047,43 @@ export default function App() {
         console.error('Error accediendo a la cámara:', error);
         alert(lang === 'es' ? 'Error accediendo a la cámara' : 'Error accessing camera');
       });
+  };
+
+  // Obtener la mejor portada disponible para un libro
+  const getBestCoverForBook = (bookId) => {
+    // 1. Primero verificar si hay portada de la comunidad
+    const communityCover = communityCovers[bookId];
+    if (communityCover?.thumbnail) {
+      return {
+        url: communityCover.thumbnail,
+        source: 'community',
+        uploader: communityCover.uploadedByName
+      };
+    }
+    
+    // 2. Buscar en los libros del usuario actual
+    const userBook = myBooks.find(b => b.bookId === bookId);
+    if (userBook?.thumbnail && userBook.thumbnail.startsWith('https://')) {
+      return {
+        url: userBook.thumbnail,
+        source: 'user'
+      };
+    }
+    
+    // 3. Buscar en los resultados de búsqueda
+    const searchBook = searchResults.find(b => b.id === bookId);
+    if (searchBook?.volumeInfo?.imageLinks?.thumbnail) {
+      return {
+        url: searchBook.volumeInfo.imageLinks.thumbnail.replace('http:', 'https:'),
+        source: 'google'
+      };
+    }
+    
+    // 4. Portada por defecto
+    return {
+      url: 'https://via.placeholder.com/150x200?text=NO+COVER',
+      source: 'default'
+    };
   };
 
   useEffect(() => {
@@ -998,6 +1118,9 @@ export default function App() {
     script.src = "https://unpkg.com/html5-qrcode";
     script.async = true;
     document.body.appendChild(script);
+    
+    // Cargar portadas de la comunidad
+    loadCommunityCovers();
     
     return () => { 
       if (document.body.contains(script)) document.body.removeChild(script);
@@ -1109,8 +1232,8 @@ export default function App() {
     });
     
     return () => {
-      unsubRequests();
-      unsubSentRequests();
+      unsubRequests && unsubRequests();
+      unsubSentRequests && unsubSentRequests();
     };
   };
 
@@ -1128,19 +1251,26 @@ export default function App() {
     return unsubscribe;
   };
 
-  // Cargar posts del muro
+  // Cargar posts del muro - CORREGIDA SIN ÍNDICE
   const loadWallPosts = () => {
     if (!user) return;
     
+    // Query simplificada para evitar error de índice
     const postsQuery = query(
-      collection(db, 'wallPosts'),
-      orderBy('timestamp', 'desc'),
-      limit(50)
+      collection(db, 'wallPosts')
     );
     
     const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
       const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setWallPosts(posts);
+      // Ordenar localmente por timestamp descendente
+      posts.sort((a, b) => {
+        const timeA = a.timestamp?.seconds || 0;
+        const timeB = b.timestamp?.seconds || 0;
+        return timeB - timeA;
+      });
+      setWallPosts(posts.slice(0, 50)); // Limitar a 50 posts
+    }, (error) => {
+      console.error("Error cargando posts del muro:", error);
     });
     
     return unsubscribe;
@@ -1151,8 +1281,7 @@ export default function App() {
     if (!user) return;
     
     const commentsQuery = query(
-      collection(db, 'wallPostComments'),
-      orderBy('timestamp', 'asc')
+      collection(db, 'wallPostComments')
     );
     
     const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
@@ -1437,11 +1566,15 @@ export default function App() {
   const handleAddBook = async (book, status, isFav = false, addToLibrary = false) => {
     if (!user) return;
     const bookId = book.id || book.bookId;
+    
+    // Obtener la mejor portada disponible
+    const bestCover = getBestCoverForBook(bookId);
+    
     const info = {
       bookId,
       title: book.volumeInfo?.title || book.title,
       authors: book.volumeInfo?.authors || book.authors || ['Anónimo'],
-      thumbnail: (book.volumeInfo?.imageLinks?.thumbnail || book.thumbnail)?.replace('http:', 'https:') || 'https://via.placeholder.com/150',
+      thumbnail: bestCover.url,
       description: book.volumeInfo?.description || book.description || "",
       status, 
       isFavorite: isFav, 
@@ -1673,7 +1806,7 @@ export default function App() {
       bookId,
       title: viewingBook.volumeInfo?.title || viewingBook.title,
       authors: viewingBook.volumeInfo?.authors || viewingBook.authors || ['Anónimo'],
-      thumbnail: (viewingBook.volumeInfo?.imageLinks?.thumbnail || viewingBook.thumbnail)?.replace('http:', 'https:') || 'https://via.placeholder.com/150',
+      thumbnail: (viewingBook.volumeInfo?.imageLinks?.thumbnail || viewingBook.thumbnail)?.replace('http:','https:') || 'https://via.placeholder.com/150',
       status: 'library',
       recommendedBy: userProfile.name,
       senderId: user.uid,
@@ -2160,6 +2293,30 @@ export default function App() {
     setRequireGoogleLogin(false);
   };
 
+  // Votar por una portada de la comunidad
+  const voteForCover = async (bookId, userId) => {
+    if (!user) return;
+    
+    const cover = communityCovers[bookId];
+    if (!cover) return;
+    
+    const hasVoted = cover.upvotedBy?.includes(user.uid);
+    
+    if (hasVoted) {
+      // Quitar voto
+      await updateDoc(doc(db, 'bookCovers', bookId), {
+        upvotes: increment(-1),
+        upvotedBy: arrayRemove(user.uid)
+      });
+    } else {
+      // Agregar voto
+      await updateDoc(doc(db, 'bookCovers', bookId), {
+        upvotes: increment(1),
+        upvotedBy: arrayUnion(user.uid)
+      });
+    }
+  };
+
   const filteredMyBooks = myBooks.filter(b => {
     if (filterType === 'favorite') return b.isFavorite;
     if (filterType === 'read') return b.status === 'read';
@@ -2292,7 +2449,7 @@ export default function App() {
         <div className="fixed inset-0 z-[9998] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-gray-800 text-white rounded-3xl p-8 max-w-md w-full text-center space-y-6">
             <div className="flex justify-center">
-              <img src="/logo.png" className="w-24 h-24" alt="Sandbook" />
+              <img src="/logo.png" className="w-40 h-40 object-contain" alt="Sandbook" />
             </div>
             <h2 className="text-2xl font-bold">{t.welcome_video}</h2>
             <p className="text-gray-300">{t.require_google_login}</p>
@@ -2321,7 +2478,7 @@ export default function App() {
       {showInstallPrompt && (
         <div className="fixed bottom-24 left-4 right-4 z-[9997] bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" className="w-12 h-12" alt="Sandbook" />
+            <img src="/logo.png" className="w-16 h-16 object-contain" alt="Sandbook" />
             <div>
               <p className="font-bold">Instalar Sandbook</p>
               <p className="text-sm opacity-90">Para una mejor experiencia</p>
@@ -2370,7 +2527,7 @@ export default function App() {
                       <BookIcon size={48} className="text-gray-500" />
                     )}
                   </div>
-                  <ArrowRight size={24} className="text-gray-400" />
+                  <ChevronRight size={24} className="text-gray-400" />
                   <div className="w-32 h-48 bg-indigo-900/30 rounded-lg border-2 border-dashed border-indigo-500 flex items-center justify-center">
                     <Upload size={48} className="text-indigo-400" />
                   </div>
@@ -2536,7 +2693,7 @@ export default function App() {
       <header className={`sticky top-0 z-50 ${theme === 'dark' ? 'bg-gray-800/90' : theme === 'sunset' ? 'bg-orange-100/90' : 'bg-white/90'} backdrop-blur-md border-b ${themeClasses.border} px-6 py-4 flex items-center justify-between shadow-sm`}>
         <div className="flex items-center gap-2">
           <div className="p-2 rounded-xl">
-            <img src="/logo.png" className="w-8 h-8" alt="Sandbook" />
+            <img src="/logo.png" className="w-40 h-10 object-contain" alt="Sandbook" />
           </div>
         </div>
         
@@ -2662,7 +2819,10 @@ export default function App() {
         <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
           <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
             <div className={`relative h-48 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
-              <img src={viewingBook.volumeInfo?.imageLinks?.thumbnail?.replace('http:','https:') || viewingBook.thumbnail} className="absolute -bottom-12 left-8 w-28 h-40 object-cover rounded-2xl shadow-2xl border-4 border-white" />
+              <img 
+                src={getBestCoverForBook(viewingBook.id || viewingBook.bookId).url} 
+                className="absolute -bottom-12 left-8 w-28 h-40 object-contain rounded-2xl shadow-2xl border-4 border-white bg-white" 
+              />
               <button onClick={() => {setViewingBook(null); setShowRecommendList(false);}} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
               </button>
@@ -2789,8 +2949,36 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Botón para subir portada si no hay imagen */}
-              {!viewingBook.volumeInfo?.imageLinks?.thumbnail && (
+              {/* Información de portada de la comunidad */}
+              {communityCovers[viewingBook.id || viewingBook.bookId] && (
+                <div className="mb-4 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users size={12} className="text-indigo-500" />
+                    <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                      Portada subida por {communityCovers[viewingBook.id || viewingBook.bookId].uploadedByName}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => voteForCover(viewingBook.id || viewingBook.bookId, user?.uid)}
+                      className={`px-2 py-1 rounded text-xs flex items-center gap-1 ${
+                        communityCovers[viewingBook.id || viewingBook.bookId]?.upvotedBy?.includes(user?.uid)
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300'
+                      }`}
+                    >
+                      <ThumbsUp size={10} />
+                      {communityCovers[viewingBook.id || viewingBook.bookId]?.upvotes || 0}
+                    </button>
+                    <p className="text-[10px] text-indigo-500 dark:text-indigo-400">
+                      {new Date(communityCovers[viewingBook.id || viewingBook.bookId]?.uploadedAt?.seconds * 1000).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Botón para subir portada si no hay buena imagen */}
+              {getBestCoverForBook(viewingBook.id || viewingBook.bookId).source === 'default' && (
                 <div className="mb-6">
                   <button 
                     onClick={() => {
@@ -2908,7 +3096,7 @@ export default function App() {
                 
                 {selectedBookForPost && (
                   <div className={`flex items-center gap-3 p-3 rounded-2xl mb-3 ${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'}`}>
-                    <img src={selectedBookForPost.thumbnail || selectedBookForPost.volumeInfo?.imageLinks?.thumbnail} className="w-12 h-16 object-cover rounded-lg" />
+                    <img src={selectedBookForPost.thumbnail || selectedBookForPost.volumeInfo?.imageLinks?.thumbnail} className="w-12 h-16 object-contain rounded-lg bg-white" />
                     <div className="flex-1">
                       <p className="text-sm font-bold line-clamp-1">{selectedBookForPost.title || selectedBookForPost.volumeInfo?.title}</p>
                       <p className="text-xs text-slate-500">{selectedBookForPost.authors?.[0] || selectedBookForPost.volumeInfo?.authors?.[0]}</p>
@@ -2947,7 +3135,7 @@ export default function App() {
                           }}
                           className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl text-left"
                         >
-                          <img src={book.thumbnail || book.volumeInfo?.imageLinks?.thumbnail} className="w-10 h-14 object-cover rounded" />
+                          <img src={book.thumbnail || book.volumeInfo?.imageLinks?.thumbnail} className="w-10 h-14 object-contain rounded bg-white" />
                           <div className="flex-1">
                             <p className="text-xs font-bold line-clamp-1">{book.title || book.volumeInfo?.title}</p>
                             <p className="text-[10px] text-slate-500">{book.authors?.[0] || book.volumeInfo?.authors?.[0]}</p>
@@ -3299,7 +3487,7 @@ export default function App() {
                       <img 
                         src={book.thumbnail} 
                         onClick={() => setViewingBook(book)} 
-                        className="w-14 h-20 object-cover rounded-xl shadow-sm cursor-pointer" 
+                        className="w-14 h-20 object-contain rounded-xl shadow-sm cursor-pointer bg-white" 
                       />
                       <div className="flex-1 flex flex-col justify-center">
                         <h4 className="font-bold text-sm line-clamp-1">{book.title}</h4>
@@ -3588,7 +3776,7 @@ export default function App() {
                       {authorDetails.thumbnail ? (
                         <img 
                           src={authorDetails.thumbnail} 
-                          className="w-32 h-32 object-cover rounded-2xl shadow-lg" 
+                          className="w-32 h-32 object-contain rounded-2xl shadow-lg bg-white" 
                           alt={authorDetails.name}
                         />
                       ) : (
@@ -3726,7 +3914,7 @@ export default function App() {
                         >
                           <img 
                             src={book.volumeInfo?.imageLinks?.thumbnail?.replace('http:', 'https:') || 'https://via.placeholder.com/150'} 
-                            className="w-16 h-20 object-cover rounded-lg" 
+                            className="w-16 h-20 object-contain rounded-lg bg-white" 
                           />
                           <div className="flex-1">
                             <h4 className="font-bold text-sm line-clamp-2">{book.volumeInfo?.title}</h4>
@@ -3776,7 +3964,7 @@ export default function App() {
                       >
                         <div className="flex items-center gap-3">
                           {writer.thumbnail ? (
-                            <img src={writer.thumbnail} className="w-12 h-12 rounded-full object-cover" />
+                            <img src={writer.thumbnail} className="w-12 h-12 object-contain rounded-full bg-white" />
                           ) : (
                             <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-300 font-bold text-lg">
                               {writer.name.charAt(0)}
@@ -3942,7 +4130,7 @@ export default function App() {
                           <div className={`p-3 rounded-2xl mb-4 ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'}`}>
                             <div className="flex items-center gap-3">
                               {post.bookThumbnail && (
-                                <img src={post.bookThumbnail} className="w-12 h-16 object-cover rounded-lg" />
+                                <img src={post.bookThumbnail} className="w-12 h-16 object-contain rounded-lg bg-white" />
                               )}
                               <div>
                                 <p className="text-xs font-bold">{post.bookTitle}</p>
@@ -4005,7 +4193,7 @@ export default function App() {
               <h2 className="text-2xl font-black tracking-tight">{selectedUserProfile.name}</h2>
               <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase mb-2 tracking-[0.2em]">
                 {getLevelTitle(selectedUserProfile.readCount, lang)} 
-                <img src={getLevelSymbol(selectedUserProfile.readCount)} className="w-6 h-6 inline-block ml-2" alt="Nivel" />
+                <img src={getLevelSymbol(selectedUserProfile.readCount)} className="w-6 h-6 object-contain inline-block ml-2" alt="Nivel" />
               </p>
               
               {/* Botón para ver libros leídos */}
@@ -4098,7 +4286,7 @@ export default function App() {
                       <img 
                         src={book.thumbnail} 
                         onClick={() => setViewingBook(book)} 
-                        className="w-14 h-20 object-cover rounded-xl shadow-sm cursor-pointer" 
+                        className="w-14 h-20 object-contain rounded-xl shadow-sm cursor-pointer bg-white" 
                       />
                       <div className="flex-1 flex flex-col justify-center">
                         <h4 className="font-bold text-sm line-clamp-1">{book.title}</h4>
@@ -4168,7 +4356,7 @@ export default function App() {
                     <div>
                       <div className="flex items-center gap-1.5 mb-1">
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-60">{t.level}</p>
-                        <img src={getLevelSymbol(userProfile.readCount)} className="w-6 h-6" alt="Nivel" />
+                        <img src={getLevelSymbol(userProfile.readCount)} className="w-6 h-6 object-contain" alt="Nivel" />
                       </div>
                       <h2 className="text-2xl font-black uppercase tracking-tight">{getLevelTitle(userProfile.readCount, lang)}</h2>
                       <div className="flex items-center gap-4 mt-4">
@@ -4248,7 +4436,7 @@ export default function App() {
                           <img 
                             src={book.thumbnail} 
                             onClick={() => setViewingBook(book)} 
-                            className="w-16 h-24 object-cover rounded-2xl shadow-sm cursor-pointer active:scale-95 transition-all" 
+                            className="w-16 h-24 object-contain rounded-2xl shadow-sm cursor-pointer active:scale-95 transition-all bg-white" 
                           />
                           <div className="flex-1 flex flex-col justify-center">
                             <div className="flex justify-between items-start">
@@ -4491,19 +4679,20 @@ export default function App() {
                   {searchResults.map((book) => {
                     const alreadyHave = myBooks.find(b => b.bookId === book.id);
                     const readersCount = getReadersCount(book.id);
-                    const hasThumbnail = book.volumeInfo?.imageLinks?.thumbnail;
+                    const bestCover = getBestCoverForBook(book.id);
                     const bookLikes = globalLikes[book.id];
+                    const hasGoodCover = bestCover.source !== 'default';
                     
                     return (
                       <div key={book.id} className={`${themeClasses.card} p-5 rounded-[2.5rem] border ${themeClasses.border} shadow-sm animate-in zoom-in-95`}>
                         <div className="flex gap-5">
                           <div className="relative">
                             <img 
-                              src={hasThumbnail ? book.volumeInfo.imageLinks.thumbnail.replace('http:','https:') : 'https://via.placeholder.com/150x200?text=NO+IMAGE'} 
+                              src={bestCover.url} 
                               onClick={() => setViewingBook(book)} 
-                              className="w-24 h-36 object-cover rounded-2xl shadow-md cursor-pointer hover:scale-105 transition-all" 
+                              className="w-24 h-36 object-contain rounded-2xl shadow-md cursor-pointer hover:scale-105 transition-all bg-white" 
                             />
-                            {!hasThumbnail && (
+                            {!hasGoodCover && (
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <button 
                                   onClick={() => {
@@ -4515,6 +4704,11 @@ export default function App() {
                                   <Camera size={12} />
                                   {t.help_community}
                                 </button>
+                              </div>
+                            )}
+                            {bestCover.source === 'community' && (
+                              <div className="absolute -top-2 -right-2 bg-indigo-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                                👥
                               </div>
                             )}
                           </div>
@@ -4629,8 +4823,8 @@ export default function App() {
                                   <Star size={16}/>
                                 </button>
                                 
-                                {/* Botón para subir portada si no hay imagen */}
-                                {!hasThumbnail && (
+                                {/* Botón para subir portada si no hay buena imagen */}
+                                {!hasGoodCover && (
                                   <button 
                                     onClick={() => {
                                       setShowCoverUploadModal(true);
@@ -4793,7 +4987,7 @@ export default function App() {
                                       <img src={p.profilePic || 'https://via.placeholder.com/40'} className="w-12 h-12 rounded-full object-cover" />
                                       {p.isGoogleUser ? (
                                         <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full border border-slate-200">
-                                          <img src="https://www.google.com/favicon.ico" className="w-3 h-3" />
+                                          <img src="https://www.google.com/favicon.ico" className="w-3 h-3 object-contain" />
                                         </div>
                                       ) : (
                                         <div className="absolute -bottom-1 -right-1 bg-slate-600 text-white p-1 rounded-full text-[8px] font-bold">
@@ -4805,7 +4999,7 @@ export default function App() {
                                       <p className="text-sm font-bold">{p.name}</p>
                                       <p className="text-[10px] text-slate-500 dark:text-gray-400">
                                         {p.readCount || 0} {t.read.toLowerCase()} • {getLevelTitle(p.readCount, lang)}
-                                        <img src={getLevelSymbol(p.readCount)} className="w-3 h-3 inline-block ml-1" alt="Nivel" />
+                                        <img src={getLevelSymbol(p.readCount)} className="w-3 h-3 object-contain inline-block ml-1" alt="Nivel" />
                                       </p>
                                     </div>
                                   </div>
@@ -5020,7 +5214,7 @@ export default function App() {
                               >
                                 <div className="flex items-center gap-3">
                                   {post.bookThumbnail && (
-                                    <img src={post.bookThumbnail} className="w-12 h-16 object-cover rounded-lg" />
+                                    <img src={post.bookThumbnail} className="w-12 h-16 object-contain rounded-lg bg-white" />
                                   )}
                                   <div>
                                     <p className="text-xs font-bold">{post.bookTitle}</p>
@@ -5159,7 +5353,7 @@ export default function App() {
                   )}
                   <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase mb-2 tracking-[0.2em]">
                     {getLevelTitle(userProfile.readCount, lang)} 
-                    <img src={getLevelSymbol(userProfile.readCount)} className="w-6 h-6 inline-block ml-2" alt="Nivel" />
+                    <img src={getLevelSymbol(userProfile.readCount)} className="w-6 h-6 object-contain inline-block ml-2" alt="Nivel" />
                   </p>
                   
                   {/* Estadísticas mejoradas */}
@@ -5207,7 +5401,7 @@ export default function App() {
                           onClick={handleGoogleLogin} 
                           className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 py-3 rounded-2xl font-bold text-xs uppercase shadow-sm transition-colors"
                         >
-                          <img src="https://www.google.com/favicon.ico" className="w-4 h-4" />
+                          <img src="https://www.google.com/favicon.ico" className="w-4 h-4 object-contain" />
                           {t.google_login}
                         </button>
                       </>
@@ -5319,65 +5513,53 @@ export default function App() {
                               </div>
                             )}
                           </div>
-                          <span className={`text-[7px] font-black text-center uppercase leading-tight ${
-                            unlocked 
-                              ? 'text-indigo-600 dark:text-indigo-400' 
-                              : 'text-slate-300 dark:text-gray-600'
-                          }`}>
-                            {unlocked ? BADGE_DEFS[id].name : "???"}
+                          <span className={`text-[7px] font-bold text-center leading-tight ${unlocked ? 'text-slate-700 dark:text-gray-200' : 'text-slate-400 dark:text-gray-500'}`}>
+                            {BADGE_DEFS[id]?.name?.substring(0, 10) || `Badge ${id}`}
                           </span>
                         </div>
                       );
                     })}
                   </div>
-                  
-                  {/* Leyenda de progreso */}
-                  <div className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl border ${themeClasses.border}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-bold">{lang === 'es' ? 'Progreso total de insignias:' : 'Total badge progress:'}</p>
-                      <p className="text-xs font-black text-indigo-600 dark:text-indigo-400">
-                        {Math.round(Object.values(badgeProgress).reduce((a, b) => a + b, 0) / 20)}%
-                      </p>
-                    </div>
-                    <div className="h-2 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-1000"
-                        style={{ width: `${Object.values(badgeProgress).reduce((a, b) => a + b, 0) / 20}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-500 dark:text-gray-400 mt-2 text-center">
-                      {userProfile.badges?.length || 0} de 20 insignias desbloqueadas
-                    </p>
-                  </div>
                 </div>
+
+                {/* Botón para invitar amigos */}
+                <button onClick={inviteWhatsApp} className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
+                  <MessageCircle size={18}/> {t.invite}
+                </button>
               </div>
             )}
           </>
         )}
       </main>
 
-      {/* NAV BAR INFERIOR */}
-      <nav className={`fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t ${themeClasses.border} px-8 py-4 flex justify-between items-center z-40 shadow-2xl ${
-        theme === 'dark' 
-          ? 'bg-gray-800/95' 
-          : theme === 'sunset' 
-          ? 'bg-orange-50/95' 
-          : 'bg-white/95'
-      }`}>
-        {[{id:'library',icon:Layout,l:t.library},{id:'search',icon:Search,l:t.plan},{id:'social',icon:Globe,l:t.social},{id:'profile',icon:User,l:t.profile}].map(t_nav => (
-          <button 
-            key={t_nav.id} 
-            onClick={() => {setActiveTab(t_nav.id); setSelectedUserProfile(null); setShowWriters(false); setShowFriendsSection(false); setShowMessages(false);}} 
-            className={`flex flex-col items-center gap-1.5 transition-all ${
-              activeTab === t_nav.id 
-                ? 'text-indigo-600 dark:text-indigo-400 scale-110' 
-                : 'text-slate-400 dark:text-gray-500 opacity-60'
-            }`}
-          >
-            <t_nav.icon size={22} strokeWidth={activeTab === t_nav.id ? 2.5 : 2} />
-            <span className="text-[7px] font-black uppercase tracking-widest">{t_nav.l}</span>
-          </button>
-        ))}
+      {/* NAVEGACIÓN INFERIOR */}
+      <nav className={`fixed bottom-0 left-0 right-0 z-40 ${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-white'} border-t ${themeClasses.border} px-6 py-3`}>
+        <div className="flex justify-around items-center max-w-xl mx-auto">
+          {[
+            { id: 'library', icon: <Layout size={24} />, label: t.library },
+            { id: 'search', icon: <Search size={24} />, label: t.search },
+            { id: 'social', icon: <Globe size={24} />, label: t.social },
+            { id: 'profile', icon: <User size={24} />, label: t.profile }
+          ].map(tab => (
+            <button 
+              key={tab.id} 
+              onClick={() => { 
+                setActiveTab(tab.id); 
+                setSelectedUserProfile(null);
+                setShowWriters(false);
+                setShowFriendsSection(false);
+                setShowMessages(false);
+              }} 
+              className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all ${activeTab === tab.id 
+                ? `${theme === 'dark' ? 'bg-indigo-900 text-indigo-300' : theme === 'sunset' ? 'bg-orange-100 text-orange-600' : 'bg-indigo-50 text-indigo-600'} shadow-sm` 
+                : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
+              }`}
+            >
+              {tab.icon}
+              <span className="text-[10px] font-black uppercase">{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </nav>
     </div>
   );
