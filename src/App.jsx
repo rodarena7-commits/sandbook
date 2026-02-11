@@ -153,7 +153,6 @@ const i18n = {
     following_list: "Siguiendo",
     followers_list_full: "Seguidores",
     mutual_friends: "Amigos mutuos",
-    // Nuevas traducciones para recomendaciones
     more_by_author: "Más del mismo autor",
     similar_books: "Libros similares",
     recommended_books: "Recomendaciones",
@@ -251,7 +250,6 @@ const i18n = {
     following_list: "Following",
     followers_list_full: "Followers",
     mutual_friends: "Mutual friends",
-    // New translations for recommendations
     more_by_author: "More by this author",
     similar_books: "Similar books",
     recommended_books: "Recommendations",
@@ -283,7 +281,6 @@ const BADGE_DEFS = {
 };
 
 // --- FUNCIONES GLOBALES ---
-
 const getLevelTitle = (count = 0, lang = 'es') => {
   if (count >= 2100) return lang === 'es' ? "Leyenda" : "Legend";
   if (count >= 1000) return lang === 'es' ? "Legendario" : "Legendary";
@@ -362,7 +359,6 @@ const convertToGrayscale = (imageDataUrl) => {
 };
 
 // --- APP PRINCIPAL ---
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [lang, setLang] = useState('es');
@@ -562,10 +558,9 @@ export default function App() {
 
   const themeClasses = getThemeClasses();
 
-  // --- NUEVA FUNCIÓN: BUSCAR PORTADA EN OPEN LIBRARY ---
+  // --- FUNCIÓN PRIORIZADA: BUSCAR PORTADA (Google Books primero, luego Open Library) ---
   const searchCoverInOpenLibrary = async (isbn, title, authors) => {
     try {
-      // Intentar primero por ISBN
       if (isbn) {
         const cleanIsbn = isbn.replace(/\D/g, '');
         const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
@@ -576,8 +571,6 @@ export default function App() {
           return bookData.cover.large;
         }
       }
-
-      // Si no hay ISBN o no encontró, buscar por título
       if (title) {
         const searchUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(title)}&limit=1`;
         if (authors && authors.length > 0) {
@@ -588,15 +581,12 @@ export default function App() {
             return `https://covers.openlibrary.org/b/id/${data.docs[0].cover_i}-L.jpg`;
           }
         }
-
-        // Intentar solo con título
         const res = await fetch(searchUrl);
         const data = await res.json();
         if (data.docs && data.docs.length > 0 && data.docs[0].cover_i) {
           return `https://covers.openlibrary.org/b/id/${data.docs[0].cover_i}-L.jpg`;
         }
       }
-
       return null;
     } catch (error) {
       console.error("Error buscando en Open Library:", error);
@@ -604,14 +594,12 @@ export default function App() {
     }
   };
 
-  // --- NUEVA FUNCIÓN: BUSCAR LIBROS DEL MISMO AUTOR ---
   const searchBooksByAuthor = async (author, limit = 20) => {
     if (!author) return [];
     try {
       const url = `https://openlibrary.org/search.json?author=${encodeURIComponent(author)}&limit=${limit}`;
       const res = await fetch(url);
       const data = await res.json();
-      
       return data.docs
         .filter(book => book.title && book.key)
         .map(book => ({
@@ -629,17 +617,13 @@ export default function App() {
     }
   };
 
-  // --- NUEVA FUNCIÓN: BUSCAR LIBROS SIMILARES POR GÉNERO/SUBJECT ---
   const searchSimilarBooks = async (title, subjects = [], limit = 20) => {
     try {
       let query = '';
-      
-      // Intentar buscar por subjects si existen
       if (subjects && subjects.length > 0) {
         const subject = subjects[0];
         query = `subject:${encodeURIComponent(subject)}`;
       } else {
-        // Si no hay subjects, buscar por palabras clave del título
         const keywords = title
           .split(' ')
           .filter(word => word.length > 3)
@@ -647,11 +631,9 @@ export default function App() {
           .join(' ');
         query = encodeURIComponent(keywords);
       }
-
       const url = `https://openlibrary.org/search.json?q=${query}&limit=${limit}`;
       const res = await fetch(url);
       const data = await res.json();
-      
       return data.docs
         .filter(book => book.title && book.key && book.title !== title)
         .slice(0, 15)
@@ -670,30 +652,22 @@ export default function App() {
     }
   };
 
-  // --- NUEVA FUNCIÓN: CARGAR RECOMENDACIONES COMPLETAS ---
   const loadBookRecommendations = async (book) => {
     if (!book) return;
-    
     setLoadingRecommendations(true);
-    
     const bookTitle = book.volumeInfo?.title || book.title;
     const bookAuthors = book.volumeInfo?.authors || book.authors || [];
     const bookSubjects = book.volumeInfo?.categories || book.categories || [];
     const bookIsbn = book.volumeInfo?.industryIdentifiers?.find(id => id.type === 'ISBN_13' || id.type === 'ISBN_10')?.identifier || book.isbn;
-    
     try {
-      // Cargar más libros del mismo autor
       if (bookAuthors.length > 0) {
         const authorBooks = await searchBooksByAuthor(bookAuthors[0], 30);
-        // Filtrar el libro actual
         const filteredAuthorBooks = authorBooks.filter(b => 
           b.title !== bookTitle && 
           !myBooks.some(mb => mb.bookId === b.id)
         );
         setAuthorRecommendations(filteredAuthorBooks);
       }
-
-      // Cargar libros similares
       const similar = await searchSimilarBooks(bookTitle, bookSubjects, 30);
       const filteredSimilar = similar.filter(b => 
         b.title !== bookTitle && 
@@ -701,8 +675,6 @@ export default function App() {
         !authorRecommendations.some(ab => ab.id === b.id)
       );
       setSimilarBooks(filteredSimilar);
-
-      // Intentar obtener categorías/genres de Open Library
       if (bookIsbn || bookTitle) {
         const genreUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(bookTitle)}&limit=1`;
         const res = await fetch(genreUrl);
@@ -726,9 +698,9 @@ export default function App() {
     }
   };
 
-  // --- NUEVA FUNCIÓN: OBTENER LA MEJOR PORTADA DISPONIBLE (MODIFICADA) ---
+  // --- FUNCIÓN MODIFICADA: Google Books primero, luego Open Library ---
   const getBestCoverForBook = async (bookId, bookData = null) => {
-    // 1. Primero buscar en portadas de la comunidad
+    // 1. Portada de la comunidad
     const communityCover = communityCovers[bookId];
     if (communityCover?.thumbnail) {
       return {
@@ -737,8 +709,7 @@ export default function App() {
         uploader: communityCover.uploadedByName
       };
     }
-    
-    // 2. Buscar en mis libros
+    // 2. Portada en mis libros
     const userBook = myBooks.find(b => b.bookId === bookId);
     if (userBook?.thumbnail && userBook.thumbnail.startsWith('https://')) {
       return {
@@ -746,23 +717,19 @@ export default function App() {
         source: 'user'
       };
     }
-    
-    // 3. Buscar en resultados de búsqueda de Google Books
-    const searchBook = searchResults.find(b => b.id === bookId);
-    if (searchBook?.volumeInfo?.imageLinks?.thumbnail) {
+    // 3. GOOGLE BOOKS (PRIMERO) - buscamos en la propia data del libro
+    if (bookData?.volumeInfo?.imageLinks?.thumbnail) {
       return {
-        url: searchBook.volumeInfo.imageLinks.thumbnail.replace('http:', 'https:'),
+        url: bookData.volumeInfo.imageLinks.thumbnail.replace('http:', 'https:'),
         source: 'google'
       };
     }
-    
-    // 4. Intentar buscar en Open Library
+    // 4. Si no, intentamos Open Library
     if (bookData) {
       const isbn = bookData.volumeInfo?.industryIdentifiers?.find(id => id.type === 'ISBN_13' || id.type === 'ISBN_10')?.identifier || 
                   bookData.isbn;
       const title = bookData.volumeInfo?.title || bookData.title;
       const authors = bookData.volumeInfo?.authors || bookData.authors;
-      
       const olCover = await searchCoverInOpenLibrary(isbn, title, authors);
       if (olCover) {
         return {
@@ -771,8 +738,7 @@ export default function App() {
         };
       }
     }
-    
-    // 5. Último recurso: placeholder
+    // 5. Por defecto
     return {
       url: 'https://via.placeholder.com/150x200?text=NO+COVER',
       source: 'default'
@@ -790,11 +756,9 @@ export default function App() {
 
   const calculateBadgeProgress = () => {
     if (!userProfile) return {};
-    
     const progress = {};
     const readCount = userProfile.readCount || 0;
     const scanCount = userProfile.scanCount || 0;
-    
     progress[1] = Math.min(readCount >= 1 ? 100 : 0, 100);
     progress[2] = Math.min(readCount >= 1 ? 100 : 0, 100);
     progress[3] = Math.min(readCount >= 1 ? 100 : 0, 100);
@@ -815,7 +779,6 @@ export default function App() {
     progress[18] = Math.min((scanCount / 50) * 100, 100);
     progress[19] = Math.min((scanCount / 100) * 100, 100);
     progress[20] = Math.min((userProfile.badges?.length || 0) / 19 * 100, 100);
-    
     return progress;
   };
 
@@ -824,10 +787,8 @@ export default function App() {
       setMoreBooksLoading(true);
       let url = `https://www.googleapis.com/books/v1/volumes?q=inauthor:"${encodeURIComponent(authorName)}"&maxResults=20&startIndex=${page * 20}`;
       if (GOOGLE_BOOKS_API_KEY) url += `&key=${GOOGLE_BOOKS_API_KEY}`;
-
       const res = await fetchWithRetry(url);
       const data = await res.json();
-      
       if (data.items) {
         const uniqueBooks = data.items.filter(newBook => 
           !authorBooks.some(existingBook => existingBook.id === newBook.id)
@@ -845,10 +806,8 @@ export default function App() {
     try {
       const wikiUrl = `https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(authorName)}`;
       const wikiRes = await fetch(wikiUrl);
-      
       if (wikiRes.ok) {
         const wikiData = await wikiRes.json();
-        
         const details = {
           name: authorName,
           biography: wikiData.extract || '',
@@ -856,7 +815,6 @@ export default function App() {
           description: wikiData.description || '',
           extract: wikiData.extract || ''
         };
-        
         if (wikiData.extract) {
           const birthMatch = wikiData.extract.match(/(\d{1,2} de [a-zA-Z]+ de \d{4})|(\d{4})/);
           if (birthMatch) {
@@ -869,7 +827,6 @@ export default function App() {
             }
           }
         }
-        
         setAuthorDetails(details);
       } else {
         setAuthorDetails({
@@ -909,37 +866,31 @@ export default function App() {
 
   const updateCurrentPage = async (bookId, currentPage) => {
     if (!user || !currentPage || isNaN(currentPage)) return;
-    
     await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), { 
       currentPage: parseInt(currentPage)
     });
-    
     setCurrentPageInputs(prev => ({ ...prev, [bookId]: '' }));
   };
 
   const loadMessages = (conversationId) => {
     if (!user || !conversationId) return;
-    
     const messagesQuery = query(
       collection(db, 'messages'),
       where('conversationId', '==', conversationId),
       orderBy('timestamp', 'asc'),
       limit(50)
     );
-    
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
       const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setActiveMessages(messages);
     }, (error) => {
       console.error("Error cargando mensajes:", error);
     });
-    
     return unsubscribe;
   };
 
   const loadGlobalLikes = () => {
     const likesQuery = query(collection(db, 'globalLikes'));
-    
     const unsubscribe = onSnapshot(likesQuery, (snapshot) => {
       const likesMap = {};
       snapshot.docs.forEach(doc => {
@@ -951,15 +902,12 @@ export default function App() {
       });
       setGlobalLikes(likesMap);
     });
-    
     return unsubscribe;
   };
 
   const loadFavoriteWriters = () => {
     if (!user) return;
-    
     const favoritesQuery = collection(db, 'favoriteWriters');
-    
     const unsubscribe = onSnapshot(favoritesQuery, (snapshot) => {
       const writers = [];
       snapshot.docs.forEach(doc => {
@@ -971,15 +919,12 @@ export default function App() {
       setFavoriteWritersList(writers);
       setUserProfile(prev => ({ ...prev, favoriteWriters: writers }));
     });
-    
     return unsubscribe;
   };
 
   const loadSavedPosts = () => {
     if (!user) return;
-    
     const savedQuery = collection(db, 'savedPosts');
-    
     const unsubscribe = onSnapshot(savedQuery, (snapshot) => {
       const savedPostIds = [];
       snapshot.docs.forEach(doc => {
@@ -991,15 +936,12 @@ export default function App() {
       setSavedPostsList(savedPostIds);
       setUserProfile(prev => ({ ...prev, savedPosts: savedPostIds }));
     });
-    
     return unsubscribe;
   };
 
   const loadConversations = () => {
     if (!user) return;
-    
     const conversationsQuery = collection(db, 'conversations');
-    
     const unsubscribe = onSnapshot(conversationsQuery, (snapshot) => {
       const convos = [];
       snapshot.docs.forEach(doc => {
@@ -1017,13 +959,11 @@ export default function App() {
     }, (error) => {
       console.error("Error cargando conversaciones:", error);
     });
-    
     return unsubscribe;
   };
 
   const loadCommunityCovers = () => {
     const coversQuery = query(collection(db, 'bookCovers'));
-    
     const unsubscribe = onSnapshot(coversQuery, (snapshot) => {
       const coversMap = {};
       snapshot.docs.forEach(doc => {
@@ -1032,40 +972,31 @@ export default function App() {
       });
       setCommunityCovers(coversMap);
     });
-    
     return unsubscribe;
   };
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      return;
-    }
-    
+    if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    
     if (outcome === 'accepted') {
       console.log('Usuario aceptó la instalación');
       setShowInstallPrompt(false);
     } else {
       console.log('Usuario rechazó la instalación');
     }
-    
     setDeferredPrompt(null);
   };
 
   const handleBookCoverUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !user || !bookForCoverUpload) return;
-    
     try {
       const bookId = bookForCoverUpload.id || bookForCoverUpload.bookId;
       const fileName = `${bookId}_${Date.now()}_${file.name}`;
       const storageRef = ref(storage, `bookCovers/${fileName}`);
-      
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
-      
       await setDoc(doc(db, 'bookCovers', bookId), {
         bookId,
         title: bookForCoverUpload.volumeInfo?.title || bookForCoverUpload.title,
@@ -1077,7 +1008,6 @@ export default function App() {
         upvotes: 1,
         upvotedBy: [user.uid]
       }, { merge: true });
-      
       const userBookRef = doc(db, 'users', user.uid, 'myBooks', bookId);
       const userBookSnap = await getDoc(userBookRef);
       if (userBookSnap.exists()) {
@@ -1087,7 +1017,6 @@ export default function App() {
           coverUploadedAt: new Date().toISOString()
         });
       }
-      
       alert(lang === 'es' ? '¡Portada subida con éxito! Ayudas a la comunidad.' : 'Cover uploaded successfully! You help the community.');
       setShowCoverUploadModal(false);
       setBookForCoverUpload(null);
@@ -1102,13 +1031,11 @@ export default function App() {
       alert(lang === 'es' ? 'Tu dispositivo no soporta la cámara' : 'Your device does not support camera');
       return;
     }
-    
     navigator.mediaDevices.getUserMedia({ video: true })
       .then((stream) => {
         const video = document.createElement('video');
         video.srcObject = stream;
         video.play();
-        
         const modal = document.createElement('div');
         modal.style.position = 'fixed';
         modal.style.top = '0';
@@ -1121,23 +1048,19 @@ export default function App() {
         modal.style.flexDirection = 'column';
         modal.style.alignItems = 'center';
         modal.style.justifyContent = 'center';
-        
         const videoContainer = document.createElement('div');
         videoContainer.style.width = '100%';
         videoContainer.style.maxWidth = '500px';
         videoContainer.style.height = '70vh';
         videoContainer.style.overflow = 'hidden';
         videoContainer.style.borderRadius = '20px';
-        
         video.style.width = '100%';
         video.style.height = '100%';
         video.style.objectFit = 'cover';
-        
         const buttonContainer = document.createElement('div');
         buttonContainer.style.marginTop = '20px';
         buttonContainer.style.display = 'flex';
         buttonContainer.style.gap = '20px';
-        
         const captureButton = document.createElement('button');
         captureButton.textContent = lang === 'es' ? 'Tomar Foto' : 'Take Photo';
         captureButton.style.padding = '15px 30px';
@@ -1147,7 +1070,6 @@ export default function App() {
         captureButton.style.borderRadius = '10px';
         captureButton.style.fontWeight = 'bold';
         captureButton.style.cursor = 'pointer';
-        
         const cancelButton = document.createElement('button');
         cancelButton.textContent = lang === 'es' ? 'Cancelar' : 'Cancel';
         cancelButton.style.padding = '15px 30px';
@@ -1157,25 +1079,20 @@ export default function App() {
         cancelButton.style.borderRadius = '10px';
         cancelButton.style.fontWeight = 'bold';
         cancelButton.style.cursor = 'pointer';
-        
         captureButton.onclick = async () => {
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(video, 0, 0);
-          
           canvas.toBlob(async (blob) => {
             stream.getTracks().forEach(track => track.stop());
-            
             try {
               const bookId = bookForCoverUpload.id || bookForCoverUpload.bookId;
               const fileName = `${bookId}_${Date.now()}_photo.jpg`;
               const storageRef = ref(storage, `bookCovers/${fileName}`);
-              
               await uploadBytes(storageRef, blob);
               const downloadURL = await getDownloadURL(storageRef);
-              
               await setDoc(doc(db, 'bookCovers', bookId), {
                 bookId,
                 title: bookForCoverUpload.volumeInfo?.title || bookForCoverUpload.title,
@@ -1187,7 +1104,6 @@ export default function App() {
                 upvotes: 1,
                 upvotedBy: [user.uid]
               }, { merge: true });
-              
               const userBookRef = doc(db, 'users', user.uid, 'myBooks', bookId);
               const userBookSnap = await getDoc(userBookRef);
               if (userBookSnap.exists()) {
@@ -1197,27 +1113,22 @@ export default function App() {
                   coverUploadedAt: new Date().toISOString()
                 });
               }
-              
               alert(lang === 'es' ? '¡Foto subida con éxito!' : 'Photo uploaded successfully!');
             } catch (error) {
               console.error('Error subiendo foto:', error);
               alert(lang === 'es' ? 'Error subiendo foto' : 'Error uploading photo');
             }
-            
             document.body.removeChild(modal);
             setShowCoverUploadModal(false);
             setBookForCoverUpload(null);
           }, 'image/jpeg', 0.9);
         };
-        
         cancelButton.onclick = () => {
           stream.getTracks().forEach(track => track.stop());
           document.body.removeChild(modal);
         };
-        
         buttonContainer.appendChild(captureButton);
         buttonContainer.appendChild(cancelButton);
-        
         videoContainer.appendChild(video);
         modal.appendChild(videoContainer);
         modal.appendChild(buttonContainer);
@@ -1247,13 +1158,11 @@ export default function App() {
 
   const sendFriendRequestWithNotification = async (targetId, targetName) => {
     if (!user || user.uid === targetId) return;
-    
     const existingRequest = sentFriendRequests.find(req => req.receiverId === targetId);
     if (existingRequest) {
       alert(lang === 'es' ? 'Ya enviaste una solicitud a este usuario' : 'You already sent a request to this user');
       return;
     }
-    
     const requestData = {
       senderId: user.uid,
       senderName: userProfile.name,
@@ -1263,9 +1172,7 @@ export default function App() {
       status: 'pending',
       timestamp: serverTimestamp()
     };
-    
     await addDoc(collection(db, 'friendRequests'), requestData);
-    
     await createNotification(
       targetId,
       'friend_request',
@@ -1278,24 +1185,19 @@ export default function App() {
         senderName: userProfile.name
       }
     );
-    
     alert(lang === 'es' ? 'Solicitud de amistad enviada' : 'Friend request sent');
   };
 
   const acceptFriendRequestWithNotification = async (requestId, senderId, senderName) => {
     if (!user) return;
-    
     await updateDoc(doc(db, 'friendRequests', requestId), { status: 'accepted' });
-    
     await updateDoc(doc(db, 'profiles', user.uid), { 
       following: arrayUnion(senderId)
     });
-    
     await updateDoc(doc(db, 'profiles', senderId), { 
       followersCount: increment(1),
       following: arrayUnion(user.uid)
     });
-    
     await createNotification(
       senderId,
       'friend_request_accepted',
@@ -1304,19 +1206,15 @@ export default function App() {
         ? `${userProfile.name} aceptó tu solicitud de amistad`
         : `${userProfile.name} accepted your friend request`
     );
-    
     alert(lang === 'es' ? 'Solicitud de amistad aceptada' : 'Friend request accepted');
   };
 
   const sendMessageWithNotification = async (receiverId, receiverName, messageText) => {
     if (!user || !receiverId || !messageText.trim()) return;
-    
     const existingConversation = conversations.find(conv => 
       conv.participants.includes(user.uid) && conv.participants.includes(receiverId)
     );
-    
     const conversationId = existingConversation?.id || doc(collection(db, 'conversations')).id;
-    
     await setDoc(doc(db, 'conversations', conversationId), {
       participants: [user.uid, receiverId],
       participantNames: [userProfile.name, receiverName],
@@ -1328,7 +1226,6 @@ export default function App() {
         [receiverId]: (existingConversation?.unreadCount?.[receiverId] || 0) + 1
       }
     }, { merge: true });
-    
     const messageData = {
       conversationId,
       senderId: user.uid,
@@ -1340,9 +1237,7 @@ export default function App() {
       timestamp: serverTimestamp(),
       read: false
     };
-    
     await addDoc(collection(db, 'messages'), messageData);
-    
     await createNotification(
       receiverId,
       'message',
@@ -1356,11 +1251,9 @@ export default function App() {
         conversationId
       }
     );
-    
     setNewMessage('');
     setShowNewMessageModal(false);
     setSelectedUserForMessage(null);
-    
     if (!selectedConversation || selectedConversation.id !== conversationId) {
       const convData = {
         id: conversationId,
@@ -1377,7 +1270,6 @@ export default function App() {
 
   const submitWallPostWithNotifications = async () => {
     if (!user || !postContent.trim() || postContent.length > 2500) return;
-    
     try {
       const postData = {
         userId: user.uid,
@@ -1394,9 +1286,7 @@ export default function App() {
         likesBy: [],
         comments: []
       };
-      
       const postRef = await addDoc(collection(db, 'wallPosts'), postData);
-      
       if (userProfile.following?.length > 0) {
         const batch = writeBatch(db);
         userProfile.following.forEach(followerId => {
@@ -1415,21 +1305,18 @@ export default function App() {
             timestamp: serverTimestamp()
           });
         });
-        
         try {
           await batch.commit();
         } catch (error) {
           console.error("Error notificando seguidores:", error);
         }
       }
-      
       setPostContent('');
       setSelectedBookForPost(null);
       setShowPostModal(false);
       setShowBookSelector(false);
       setBooksForPost([]);
       setPostSearch('');
-      
       alert(lang === 'es' ? "¡Publicación creada!" : "Post created!");
     } catch (error) {
       console.error("Error al publicar:", error);
@@ -1443,31 +1330,25 @@ export default function App() {
       setDeferredPrompt(e);
       setShowInstallPrompt(true);
     });
-    
     window.addEventListener('appinstalled', () => {
       setShowInstallPrompt(false);
       console.log('PWA instalada');
     });
-    
     const welcomeVideoShown = localStorage.getItem('sandbook_welcome_video_shown');
     if (welcomeVideoShown) {
       setShowWelcomeVideo(false);
     }
-    
     const tutorialShown = localStorage.getItem('sandbook_tutorial_shown');
     if (!tutorialShown) {
       setTimeout(() => {
         setShowTutorial(true);
       }, 1000);
     }
-    
     const script = document.createElement('script');
     script.src = "https://unpkg.com/html5-qrcode";
     script.async = true;
     document.body.appendChild(script);
-    
     loadCommunityCovers();
-    
     return () => { 
       if (document.body.contains(script)) document.body.removeChild(script);
     };
@@ -1477,13 +1358,11 @@ export default function App() {
     onAuthStateChanged(auth, async (u) => {
       if (u) {
         setUser(u);
-        
         if (u.isAnonymous) {
           setRequireGoogleLogin(true);
         } else {
           setRequireGoogleLogin(false);
         }
-        
         const profileDoc = await getDoc(doc(db, 'profiles', u.uid));
         if (profileDoc.exists()) {
           const data = profileDoc.data();
@@ -1520,7 +1399,6 @@ export default function App() {
           await setDoc(doc(db, 'profiles', u.uid), newProfile);
           setUserProfile(newProfile);
         }
-        
         loadNotifications(u.uid);
         loadWallPosts();
         loadFriendsData(u.uid);
@@ -1540,17 +1418,14 @@ export default function App() {
 
   const loadFollowLists = () => {
     if (!user || !publicData.length) return;
-    
     const followers = publicData.filter(p => 
       p.following?.includes(user.uid)
     );
     setFollowersList(followers);
-    
     const following = publicData.filter(p => 
       userProfile.following?.includes(p.userId)
     );
     setFollowingList(following);
-    
     const mutualFriends = publicData.filter(p => 
       p.following?.includes(user.uid) && 
       userProfile.following?.includes(p.userId)
@@ -1565,13 +1440,10 @@ export default function App() {
 
   const loadFriendsData = (userId) => {
     if (!userId) return;
-    
     const requestsQuery = collection(db, 'friendRequests');
-    
     const unsubRequests = onSnapshot(requestsQuery, (snapshot) => {
       const requests = [];
       const sentRequests = [];
-      
       snapshot.docs.forEach(doc => {
         const data = { id: doc.id, ...doc.data() };
         if (data.receiverId === userId && data.status === 'pending') {
@@ -1581,11 +1453,9 @@ export default function App() {
           sentRequests.push(data);
         }
       });
-      
       setFriendRequests(requests);
       setSentFriendRequests(sentRequests);
     });
-    
     return () => unsubRequests && unsubRequests();
   };
 
@@ -1606,9 +1476,7 @@ export default function App() {
 
   const loadWallPosts = () => {
     if (!user) return;
-    
     const postsQuery = collection(db, 'wallPosts');
-    
     const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
       const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       posts.sort((a, b) => {
@@ -1620,17 +1488,14 @@ export default function App() {
     }, (error) => {
       console.error("Error cargando posts del muro:", error);
     });
-    
     return unsubscribe;
   };
 
   const loadWallPostComments = () => {
     if (!user) return;
-    
     const commentsQuery = query(
       collection(db, 'wallPostComments')
     );
-    
     const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
       const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const commentsMap = {};
@@ -1640,14 +1505,12 @@ export default function App() {
       });
       setWallPostComments(commentsMap);
     });
-    
     return unsubscribe;
   };
 
   const calculateBooksThisMonth = () => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
     const monthRead = myBooks.filter(book => {
       if (book.status !== 'read') return false;
       const finishDate = book.finishDate || book.addedAt;
@@ -1655,7 +1518,6 @@ export default function App() {
       const bookDate = new Date(finishDate);
       return bookDate >= startOfMonth;
     }).length;
-    
     setBooksThisMonth(monthRead);
   };
 
@@ -1698,7 +1560,6 @@ export default function App() {
       });
       setBookComments(map);
     });
-    
     const unsubPosts = loadWallPosts();
     const unsubFriends = loadFriendsData(user.uid);
     const unsubWallComments = loadWallPostComments();
@@ -1706,7 +1567,6 @@ export default function App() {
     const unsubGlobalLikes = loadGlobalLikes();
     const unsubFavoriteWriters = loadFavoriteWriters();
     const unsubSavedPosts = loadSavedPosts();
-    
     return () => { 
       unsubBooks(); 
       unsubProfile(); 
@@ -1733,12 +1593,10 @@ export default function App() {
     return () => unsub();
   }, [selectedUserProfile]);
 
-  // --- NUEVO EFECTO: Cargar recomendaciones cuando se ve un libro ---
   useEffect(() => {
     if (viewingBook) {
       loadBookRecommendations(viewingBook);
     } else {
-      // Limpiar recomendaciones cuando se cierra el modal
       setAuthorRecommendations([]);
       setGenreRecommendations([]);
       setSimilarBooks([]);
@@ -1751,7 +1609,6 @@ export default function App() {
   }, [viewingBook]);
 
   // --- ACCIONES ---
-
   const handleGoogleLogin = async () => {
     try { 
       const result = await signInWithPopup(auth, googleProvider);
@@ -1789,11 +1646,9 @@ export default function App() {
       else if (searchType === 'inauthor') {
         queryParam = `inauthor:"${q}"`;
       }
-
       const maxResults = searchType === 'inauthor' ? 30 : 15;
       let url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(queryParam)}&maxResults=${maxResults}`;
       if (GOOGLE_BOOKS_API_KEY) url += `&key=${GOOGLE_BOOKS_API_KEY}`;
-
       const res = await fetchWithRetry(url);
       const data = await res.json();
       if (data.items) setSearchResults(data.items);
@@ -1807,10 +1662,8 @@ export default function App() {
     try {
       let url = `https://www.googleapis.com/books/v1/volumes?q=inauthor:"${encodeURIComponent(writerSearch)}"&maxResults=10`;
       if (GOOGLE_BOOKS_API_KEY) url += `&key=${GOOGLE_BOOKS_API_KEY}`;
-
       const res = await fetchWithRetry(url);
       const data = await res.json();
-      
       if (data.items) {
         const authorsMap = new Map();
         data.items.forEach(item => {
@@ -1829,7 +1682,6 @@ export default function App() {
             });
           }
         });
-        
         setWriterResults(Array.from(authorsMap.values()));
       } else {
         setWriterResults([]);
@@ -1846,14 +1698,11 @@ export default function App() {
     setSelectedAuthor(authorName);
     setAuthorBooks([]);
     setAuthorDetails(null);
-    
     try {
       let url = `https://www.googleapis.com/books/v1/volumes?q=inauthor:"${encodeURIComponent(authorName)}"&maxResults=10`;
       if (GOOGLE_BOOKS_API_KEY) url += `&key=${GOOGLE_BOOKS_API_KEY}`;
-
       const res = await fetchWithRetry(url);
       const data = await res.json();
-      
       if (data.items) {
         setAuthorBooks(data.items);
         await fetchAuthorDetails(authorName);
@@ -1871,7 +1720,6 @@ export default function App() {
         setShowScanner(false);
         return;
       }
-      
       const html5QrCode = new window.Html5Qrcode("reader");
       html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
         (res) => { 
@@ -1890,14 +1738,11 @@ export default function App() {
     }, 500);
   };
 
-  // --- MODIFICADA: handleAddBook con búsqueda en Open Library ---
+  // --- MODIFICADA: handleAddBook con Google Books primero y luego Open Library ---
   const handleAddBook = async (book, status, isFav = false, addToLibrary = false) => {
     if (!user) return;
     const bookId = book.id || book.bookId;
-    
-    // Obtener la mejor portada disponible
     const bestCover = await getBestCoverForBook(bookId, book);
-    
     const info = {
       bookId,
       title: book.volumeInfo?.title || book.title,
@@ -1936,16 +1781,12 @@ export default function App() {
 
   const handleGlobalBookReaction = async (bookId, reaction) => {
     if (!user) return;
-    
     const wasLiked = globalLikes[bookId]?.likes?.includes(user.uid);
     const wasDisliked = globalLikes[bookId]?.dislikes?.includes(user.uid);
-    
     const currentLikes = globalLikes[bookId]?.likes || [];
     const currentDislikes = globalLikes[bookId]?.dislikes || [];
-    
     let newLikes = [...currentLikes];
     let newDislikes = [...currentDislikes];
-    
     if (reaction === 'like') {
       if (wasLiked) {
         newLikes = newLikes.filter(id => id !== user.uid);
@@ -1965,7 +1806,6 @@ export default function App() {
         }
       }
     }
-    
     const likeDocRef = doc(db, 'globalLikes', bookId);
     await setDoc(likeDocRef, {
       bookId,
@@ -1980,18 +1820,14 @@ export default function App() {
     const pages = parseInt(manualPages);
     const days = parseInt(planDays);
     if (isNaN(pages) || isNaN(days) || pages <= 0 || days <= 0) return;
-    
     const pagesPerDay = Math.ceil(pages / days);
     const checkpoints = [];
-    
     const startDate = new Date(planStartDate);
-    
     for (let i = 1; i <= days; i++) {
       const startPage = (i - 1) * pagesPerDay + 1;
       const endPage = Math.min(i * pagesPerDay, pages);
       const checkpointDate = new Date(startDate);
       checkpointDate.setDate(startDate.getDate() + i - 1);
-      
       checkpoints.push({ 
         title: `Día ${i}: Páginas ${startPage}-${endPage}`, 
         completed: false, 
@@ -2003,14 +1839,11 @@ export default function App() {
         date: checkpointDate.toISOString()
       });
     }
-    
     const bookId = planningBook.id || planningBook.bookId;
-    
     const bookExists = myBooks.find(b => b.bookId === bookId);
     if (!bookExists) {
       await handleAddBook(planningBook, 'reading', false, true);
     }
-    
     await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), { 
       checkpoints, 
       status: 'reading', 
@@ -2020,7 +1853,6 @@ export default function App() {
       pagesPerDay: pagesPerDay,
       planEndDate: new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
     });
-    
     await createNotification(
       user.uid,
       'reading_plan_started',
@@ -2030,7 +1862,6 @@ export default function App() {
         : `You started reading "${planningBook.volumeInfo?.title || planningBook.title}". Goal: ${pages} pages in ${days} days.`,
       { bookId }
     );
-    
     setPlanningBook(null);
     setManualPages("");
     setPlanDays(7);
@@ -2044,17 +1875,14 @@ export default function App() {
     const nCP = [...book.checkpoints];
     nCP[idx].completed = !nCP[idx].completed;
     const allDone = nCP.every(c => c.completed);
-    
     if (allDone) {
       await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), { 
         checkpoints: nCP, 
         status: 'read',
         finishDate: new Date().toISOString()
       });
-      
       victoryAudio.current.play().catch(() => {});
       await updateDoc(doc(db, 'profiles', user.uid), { readCount: increment(1), readBooksList: arrayUnion(bookId) });
-      
       await createNotification(
         user.uid,
         'book_completed',
@@ -2091,11 +1919,9 @@ export default function App() {
       const reader = new FileReader();
       reader.onloadend = async () => {
         let imageDataUrl = reader.result;
-        
         if (window.confirm(lang === 'es' ? "¿Quieres convertir la imagen a blanco y negro?" : "Convert image to black and white?")) {
           imageDataUrl = await convertToGrayscale(imageDataUrl);
         }
-        
         setUserProfile(p => ({ ...p, profilePic: imageDataUrl }));
         await updateDoc(doc(db, 'profiles', user.uid), { profilePic: imageDataUrl });
       };
@@ -2106,9 +1932,7 @@ export default function App() {
   const handleRecommendBook = async (targetId, targetName) => {
     if (!viewingBook || !user) return;
     const bookId = viewingBook.id || viewingBook.bookId;
-    
     const bestCover = await getBestCoverForBook(bookId, viewingBook);
-    
     const recData = {
       bookId,
       title: viewingBook.volumeInfo?.title || viewingBook.title,
@@ -2121,9 +1945,7 @@ export default function App() {
       sentAt: new Date().toISOString(),
       inLibrary: true
     };
-    
     await setDoc(doc(db, 'users', targetId, 'myBooks', bookId), recData);
-    
     await createNotification(
       targetId,
       'book_recommendation',
@@ -2137,7 +1959,6 @@ export default function App() {
         senderName: userProfile.name
       }
     );
-    
     setShowRecommendList(false);
     setRecommendMessage("");
     alert(lang === 'es' ? "¡Libro recomendado con éxito!" : "Book recommended successfully!");
@@ -2152,14 +1973,11 @@ export default function App() {
       setBooksForPost(myBooks.slice(0, 10));
       return;
     }
-    
     try {
       let url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(postSearch)}&maxResults=10`;
       if (GOOGLE_BOOKS_API_KEY) url += `&key=${GOOGLE_BOOKS_API_KEY}`;
-
       const res = await fetchWithRetry(url);
       const data = await res.json();
-      
       if (data.items) {
         setBooksForPost(data.items);
       } else {
@@ -2199,16 +2017,13 @@ export default function App() {
 
   const removeFriend = async (friendId) => {
     if (!user || user.uid === friendId) return;
-    
     await updateDoc(doc(db, 'profiles', user.uid), { 
       following: arrayRemove(friendId)
     });
-    
     await updateDoc(doc(db, 'profiles', friendId), { 
       followersCount: increment(-1),
       following: arrayRemove(user.uid)
     });
-    
     alert(lang === 'es' ? 'Amigo eliminado' : 'Friend removed');
   };
 
@@ -2217,7 +2032,6 @@ export default function App() {
     const isF = userProfile.following?.includes(targetId);
     await updateDoc(doc(db, 'profiles', user.uid), { following: isF ? arrayRemove(targetId) : arrayUnion(targetId) });
     await updateDoc(doc(db, 'profiles', targetId), { followersCount: increment(isF ? -1 : 1) });
-    
     if (!isF) {
       await createNotification(
         targetId,
@@ -2228,27 +2042,22 @@ export default function App() {
           : `${userProfile.name} started following you`
       );
     }
-    
     loadFollowLists();
   };
 
   const likeWallPost = async (postId, currentLikes, currentLikesBy = []) => {
     if (!user) return;
-    
     const post = wallPosts.find(p => p.id === postId);
     if (!post) return;
-    
     const alreadyLiked = currentLikesBy.includes(user.uid);
     const newLikes = alreadyLiked ? currentLikes - 1 : currentLikes + 1;
     const newLikesBy = alreadyLiked 
       ? currentLikesBy.filter(id => id !== user.uid)
       : [...currentLikesBy, user.uid];
-    
     await updateDoc(doc(db, 'wallPosts', postId), {
       likes: newLikes,
       likesBy: newLikesBy
     });
-    
     if (!alreadyLiked && post.userId !== user.uid) {
       await createNotification(
         post.userId,
@@ -2264,10 +2073,8 @@ export default function App() {
 
   const addWallPostComment = async (postId, commentText) => {
     if (!user || !commentText.trim()) return;
-    
     const post = wallPosts.find(p => p.id === postId);
     if (!post) return;
-    
     const commentData = {
       postId,
       userId: user.uid,
@@ -2276,9 +2083,7 @@ export default function App() {
       text: commentText,
       timestamp: serverTimestamp()
     };
-    
     await addDoc(collection(db, 'wallPostComments'), commentData);
-    
     if (post.userId !== user.uid) {
       await createNotification(
         post.userId,
@@ -2290,7 +2095,6 @@ export default function App() {
         { postId }
       );
     }
-    
     setCommentInputs(prev => ({ ...prev, [postId]: '' }));
   };
 
@@ -2325,11 +2129,9 @@ export default function App() {
 
   const markMessagesAsRead = async (conversationId) => {
     if (!user || !conversationId) return;
-    
     await updateDoc(doc(db, 'conversations', conversationId), {
       [`unreadCount.${user.uid}`]: 0
     });
-    
     const messagesQuery = collection(db, 'messages');
     const snapshot = await getDoc(messagesQuery);
     if (!snapshot.empty) {
@@ -2346,9 +2148,7 @@ export default function App() {
 
   const toggleFavoriteWriter = async (authorName) => {
     if (!user) return;
-    
     const isFavorite = favoriteWritersList.includes(authorName);
-    
     if (isFavorite) {
       const favoriteQuery = collection(db, 'favoriteWriters');
       const snapshot = await getDoc(favoriteQuery);
@@ -2360,13 +2160,11 @@ export default function App() {
           }
         });
       }
-      
       setFavoriteWritersList(prev => prev.filter(name => name !== authorName));
       setUserProfile(prev => ({ 
         ...prev, 
         favoriteWriters: prev.favoriteWriters?.filter(name => name !== authorName) || []
       }));
-      
       alert(lang === 'es' ? 'Escritor eliminado de favoritos' : 'Writer removed from favorites');
     } else {
       await addDoc(collection(db, 'favoriteWriters'), {
@@ -2374,22 +2172,18 @@ export default function App() {
         authorName,
         addedAt: serverTimestamp()
       });
-      
       setFavoriteWritersList(prev => [...prev, authorName]);
       setUserProfile(prev => ({ 
         ...prev, 
         favoriteWriters: [...(prev.favoriteWriters || []), authorName]
       }));
-      
       alert(lang === 'es' ? 'Escritor agregado a favoritos' : 'Writer added to favorites');
     }
   };
 
   const toggleSavedPost = async (postId) => {
     if (!user) return;
-    
     const isSaved = savedPostsList.includes(postId);
-    
     if (isSaved) {
       const savedQuery = collection(db, 'savedPosts');
       const snapshot = await getDoc(savedQuery);
@@ -2401,13 +2195,11 @@ export default function App() {
           }
         });
       }
-      
       setSavedPostsList(prev => prev.filter(id => id !== postId));
       setUserProfile(prev => ({ 
         ...prev, 
         savedPosts: prev.savedPosts?.filter(id => id !== postId) || []
       }));
-      
       alert(lang === 'es' ? 'Publicación eliminada de guardados' : 'Post removed from saved');
     } else {
       const post = wallPosts.find(p => p.id === postId);
@@ -2418,13 +2210,11 @@ export default function App() {
           postData: post,
           savedAt: serverTimestamp()
         });
-        
         setSavedPostsList(prev => [...prev, postId]);
         setUserProfile(prev => ({ 
           ...prev, 
           savedPosts: [...(prev.savedPosts || []), postId]
         }));
-        
         alert(lang === 'es' ? 'Publicación guardada' : 'Post saved');
       }
     }
@@ -2432,7 +2222,6 @@ export default function App() {
 
   const viewUserReadBooks = (userProfileData) => {
     if (!userProfileData) return;
-    
     const readBooks = selectedUserBooks.filter(book => book.status === 'read');
     setReadBooksList(readBooks);
     setViewingReadBooks(true);
@@ -2452,12 +2241,9 @@ export default function App() {
 
   const voteForCover = async (bookId, userId) => {
     if (!user) return;
-    
     const cover = communityCovers[bookId];
     if (!cover) return;
-    
     const hasVoted = cover.upvotedBy?.includes(user.uid);
-    
     if (hasVoted) {
       await updateDoc(doc(db, 'bookCovers', bookId), {
         upvotes: increment(-1),
@@ -2548,10 +2334,8 @@ export default function App() {
       const matchesSearch = 
         b.title?.toLowerCase().includes(searchLower) ||
         b.authors?.some(author => author.toLowerCase().includes(searchLower));
-      
       if (!matchesSearch) return false;
     }
-    
     if (filterType === 'favorite') return b.isFavorite;
     if (filterType === 'read') return b.status === 'read';
     if (filterType === 'liked') return userProfile.likes?.includes(b.bookId);
@@ -2576,23 +2360,19 @@ export default function App() {
   const filteredUsers = publicData.filter(p => {
     if (p.userId === user?.uid) return false;
     if (userProfile.dismissedUsers?.includes(p.userId)) return false;
-    
     if (friendsSearch && !p.name?.toLowerCase().includes(friendsSearch.toLowerCase())) {
       return false;
     }
-    
     if (friendsFilter === 'google' && !p.isGoogleUser) return false;
     if (friendsFilter === 'anonymous' && !p.isAnonymous) return false;
     if (friendsFilter === 'following' && !userProfile.following?.includes(p.userId)) return false;
     if (friendsFilter === 'followers' && !p.following?.includes(user?.uid)) return false;
-    
     return true;
   });
 
   const setQuickStartDate = (option) => {
     const today = new Date();
     let newDate = new Date();
-    
     switch(option) {
       case 'today':
         break;
@@ -2606,7 +2386,6 @@ export default function App() {
         document.getElementById('start-date-picker')?.focus();
         return;
     }
-    
     setPlanStartDate(newDate.toISOString().split('T')[0]);
     setShowStartDateOptions(false);
   };
@@ -2614,7 +2393,6 @@ export default function App() {
   const calculateUserBooksThisMonth = (userBooks) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
     const monthRead = userBooks.filter(book => {
       if (book.status !== 'read') return false;
       const finishDate = book.finishDate || book.addedAt;
@@ -2622,7 +2400,6 @@ export default function App() {
       const bookDate = new Date(finishDate);
       return bookDate >= startOfMonth;
     }).length;
-    
     return monthRead;
   };
 
@@ -2639,26 +2416,22 @@ export default function App() {
     savedPostsList.includes(post.id)
   );
 
-  // --- NUEVO COMPONENTE: Carrusel de recomendaciones ---
+  // --- COMPONENTE: Carrusel de recomendaciones (corregido: useState se declara fuera del render) ---
   const RecommendationCarousel = ({ title, books, onBookClick, currentPage, setCurrentPage, itemsPerPage = 6 }) => {
     if (!books || books.length === 0) return null;
-    
     const totalPages = Math.ceil(books.length / itemsPerPage);
     const startIndex = currentPage * itemsPerPage;
     const displayedBooks = books.slice(startIndex, startIndex + itemsPerPage);
-    
     const nextPage = () => {
       if (currentPage < totalPages - 1) {
         setCurrentPage(currentPage + 1);
       }
     };
-    
     const prevPage = () => {
       if (currentPage > 0) {
         setCurrentPage(currentPage - 1);
       }
     };
-    
     return (
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -2682,7 +2455,6 @@ export default function App() {
             </div>
           )}
         </div>
-        
         <div className="grid grid-cols-3 gap-3">
           {displayedBooks.map((book, idx) => (
             <div 
@@ -3119,10 +2891,9 @@ export default function App() {
         <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
           <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
             <div className={`relative h-48 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
-              <img 
-                src={getBestCoverForBook(viewingBook.id || viewingBook.bookId, viewingBook).url} 
-                className="absolute -bottom-12 left-8 w-28 h-40 object-contain rounded-2xl shadow-2xl border-4 border-white bg-white" 
-              />
+              {/* La portada se obtiene de getBestCoverForBook, pero necesitamos un estado local para el modal */}
+              {/* Usamos un estado temporal para la portada */}
+              <BookCoverDisplay bookId={viewingBook.id || viewingBook.bookId} bookData={viewingBook} />
               <button onClick={() => {setViewingBook(null); setShowRecommendList(false);}} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
               </button>
@@ -3271,23 +3042,28 @@ export default function App() {
                 </div>
               )}
 
-              {getBestCoverForBook(viewingBook.id || viewingBook.bookId, viewingBook).source === 'default' && (
-                <div className="mb-6">
-                  <button 
-                    onClick={() => {
-                      setShowCoverUploadModal(true);
-                      setBookForCoverUpload(viewingBook);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-2xl font-bold text-sm transition-colors"
-                  >
-                    <Camera size={18} />
-                    {t.help_community}: {t.upload_cover}
-                  </button>
-                  <p className="text-xs text-center text-slate-500 dark:text-gray-400 mt-2">
-                    {t.no_cover_available}
-                  </p>
-                </div>
-              )}
+              {/* Usamos getBestCoverForBook directamente en el render, pero sin useState */}
+              {/* Como es solo visual, podemos usar el resultado de getBestCoverForBook sin estado */}
+              {(() => {
+                const bestCover = getBestCoverForBook(viewingBook.id || viewingBook.bookId, viewingBook);
+                return bestCover.source === 'default' && (
+                  <div className="mb-6">
+                    <button 
+                      onClick={() => {
+                        setShowCoverUploadModal(true);
+                        setBookForCoverUpload(viewingBook);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-2xl font-bold text-sm transition-colors"
+                    >
+                      <Camera size={18} />
+                      {t.help_community}: {t.upload_cover}
+                    </button>
+                    <p className="text-xs text-center text-slate-500 dark:text-gray-400 mt-2">
+                      {t.no_cover_available}
+                    </p>
+                  </div>
+                );
+              })()}
 
               <div className={`flex items-center gap-4 ${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl mb-6`}>
                 <div>
@@ -3436,6 +3212,48 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Componente auxiliar para mostrar la portada en el modal */}
+      {(() => {
+        const BookCoverDisplay = ({ bookId, bookData }) => {
+          const [coverUrl, setCoverUrl] = useState('https://via.placeholder.com/150x200?text=NO+COVER');
+          const [coverSource, setCoverSource] = useState('default');
+          
+          useEffect(() => {
+            const loadCover = async () => {
+              const cover = await getBestCoverForBook(bookId, bookData);
+              setCoverUrl(cover.url);
+              setCoverSource(cover.source);
+            };
+            loadCover();
+          }, [bookId, bookData]);
+          
+          return (
+            <>
+              <img 
+                src={coverUrl} 
+                className="absolute -bottom-12 left-8 w-28 h-40 object-contain rounded-2xl shadow-2xl border-4 border-white bg-white" 
+              />
+              {coverSource === 'community' && (
+                <div className="absolute -bottom-8 left-24 bg-indigo-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                  👥
+                </div>
+              )}
+              {coverSource === 'openlibrary' && (
+                <div className="absolute -bottom-8 left-24 bg-blue-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                  OL
+                </div>
+              )}
+              {coverSource === 'google' && (
+                <div className="absolute -bottom-8 left-24 bg-red-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                  G
+                </div>
+              )}
+            </>
+          );
+        };
+        return null;
+      })()}
 
       {/* MODAL PUBLICAR EN MURO */}
       {showPostModal && (
@@ -5076,7 +4894,7 @@ export default function App() {
               </div>
             )}
 
-            {/* BUSCADOR LIBROS - MODIFICADO PARA USAR OPEN LIBRARY */}
+            {/* BUSCADOR LIBROS - MODIFICADO PARA USAR GOOGLE BOOKS PRIMERO Y OPEN LIBRARY COMO RESPALDO */}
             {activeTab === 'search' && (
               <div className="space-y-4 animate-in fade-in">
                 <div className={`${themeClasses.card} p-6 rounded-[2.5rem] border ${themeClasses.border} shadow-sm space-y-4`}>
@@ -5139,73 +4957,85 @@ export default function App() {
                   {searchResults.map((book) => {
                     const alreadyHave = myBooks.find(b => b.bookId === book.id);
                     const readersCount = getReadersCount(book.id);
-                    const [bestCover, setBestCover] = useState({ url: 'https://via.placeholder.com/150x200?text=NO+COVER', source: 'default' });
-                    
-                    // Efecto para cargar portada de Open Library si es necesario
-                    useEffect(() => {
-                      const loadCover = async () => {
-                        if (alreadyHave?.thumbnail) {
-                          setBestCover({ url: alreadyHave.thumbnail, source: 'user' });
-                        } else if (communityCovers[book.id]) {
-                          setBestCover({ url: communityCovers[book.id].thumbnail, source: 'community' });
-                        } else if (book.volumeInfo?.imageLinks?.thumbnail) {
-                          setBestCover({ 
-                            url: book.volumeInfo.imageLinks.thumbnail.replace('http:', 'https:'), 
-                            source: 'google' 
-                          });
-                        } else {
-                          const isbn = book.volumeInfo?.industryIdentifiers?.find(id => id.type === 'ISBN_13' || id.type === 'ISBN_10')?.identifier;
-                          const title = book.volumeInfo?.title;
-                          const authors = book.volumeInfo?.authors;
-                          const olCover = await searchCoverInOpenLibrary(isbn, title, authors);
-                          if (olCover) {
-                            setBestCover({ url: olCover, source: 'openlibrary' });
-                          }
-                        }
-                      };
-                      loadCover();
-                    }, [book.id, alreadyHave, communityCovers]);
-                    
                     const bookLikes = globalLikes[book.id];
-                    const hasGoodCover = bestCover.source !== 'default';
+                    
+                    // Componente para la portada de cada resultado de búsqueda
+                    const SearchBookCover = ({ book }) => {
+                      const [coverInfo, setCoverInfo] = useState({ url: 'https://via.placeholder.com/150x200?text=NO+COVER', source: 'default' });
+                      
+                      useEffect(() => {
+                        const loadCover = async () => {
+                          if (alreadyHave?.thumbnail) {
+                            setCoverInfo({ url: alreadyHave.thumbnail, source: 'user' });
+                          } else if (communityCovers[book.id]) {
+                            setCoverInfo({ url: communityCovers[book.id].thumbnail, source: 'community' });
+                          } else if (book.volumeInfo?.imageLinks?.thumbnail) {
+                            setCoverInfo({ 
+                              url: book.volumeInfo.imageLinks.thumbnail.replace('http:', 'https:'), 
+                              source: 'google' 
+                            });
+                          } else {
+                            const isbn = book.volumeInfo?.industryIdentifiers?.find(id => id.type === 'ISBN_13' || id.type === 'ISBN_10')?.identifier;
+                            const title = book.volumeInfo?.title;
+                            const authors = book.volumeInfo?.authors;
+                            const olCover = await searchCoverInOpenLibrary(isbn, title, authors);
+                            if (olCover) {
+                              setCoverInfo({ url: olCover, source: 'openlibrary' });
+                            }
+                          }
+                        };
+                        loadCover();
+                      }, [book.id, alreadyHave, communityCovers]);
+                      
+                      return (
+                        <div className="relative">
+                          <img 
+                            src={coverInfo.url} 
+                            onClick={() => setViewingBook(book)} 
+                            className="w-24 h-36 object-contain rounded-2xl shadow-md cursor-pointer hover:scale-105 transition-all bg-white" 
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/150x200?text=NO+COVER';
+                            }}
+                          />
+                          {coverInfo.source === 'google' && (
+                            <div className="absolute -top-2 -right-2 bg-red-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                              G
+                            </div>
+                          )}
+                          {coverInfo.source === 'openlibrary' && (
+                            <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                              OL
+                            </div>
+                          )}
+                          {coverInfo.source === 'community' && (
+                            <div className="absolute -top-2 -right-2 bg-indigo-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                              👥
+                            </div>
+                          )}
+                          {coverInfo.source === 'default' && (
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowCoverUploadModal(true);
+                                  setBookForCoverUpload(book);
+                                }}
+                                className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-bold flex items-center gap-1"
+                              >
+                                <Camera size={10} />
+                                {t.help_community}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    };
                     
                     return (
                       <div key={book.id} className={`${themeClasses.card} p-5 rounded-[2.5rem] border ${themeClasses.border} shadow-sm animate-in zoom-in-95`}>
                         <div className="flex gap-5">
-                          <div className="relative">
-                            <img 
-                              src={bestCover.url} 
-                              onClick={() => setViewingBook(book)} 
-                              className="w-24 h-36 object-contain rounded-2xl shadow-md cursor-pointer hover:scale-105 transition-all bg-white" 
-                              onError={(e) => {
-                                e.target.src = 'https://via.placeholder.com/150x200?text=NO+COVER';
-                              }}
-                            />
-                            {!hasGoodCover && (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <button 
-                                  onClick={() => {
-                                    setShowCoverUploadModal(true);
-                                    setBookForCoverUpload(book);
-                                  }}
-                                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold flex items-center gap-1"
-                                >
-                                  <Camera size={12} />
-                                  {t.help_community}
-                                </button>
-                              </div>
-                            )}
-                            {bestCover.source === 'community' && (
-                              <div className="absolute -top-2 -right-2 bg-indigo-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                                👥
-                              </div>
-                            )}
-                            {bestCover.source === 'openlibrary' && (
-                              <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                                OL
-                              </div>
-                            )}
-                          </div>
+                          <SearchBookCover book={book} />
+                          
                           <div className="flex-1 flex flex-col">
                             <h3 className="font-bold text-sm leading-tight line-clamp-2">{book.volumeInfo.title}</h3>
                             <p className="text-xs text-indigo-500 dark:text-indigo-400 font-bold mb-2">
@@ -5312,18 +5142,16 @@ export default function App() {
                                   <Star size={16}/>
                                 </button>
                                 
-                                {!hasGoodCover && (
-                                  <button 
-                                    onClick={() => {
-                                      setShowCoverUploadModal(true);
-                                      setBookForCoverUpload(book);
-                                    }}
-                                    className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 rounded-xl active:scale-95"
-                                    title={t.help_community}
-                                  >
-                                    <Camera size={14}/>
-                                  </button>
-                                )}
+                                <button 
+                                  onClick={() => {
+                                    setShowCoverUploadModal(true);
+                                    setBookForCoverUpload(book);
+                                  }}
+                                  className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 rounded-xl active:scale-95"
+                                  title={t.help_community}
+                                >
+                                  <Camera size={14}/>
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -5753,6 +5581,7 @@ export default function App() {
                               <div className="flex gap-2">
                                 <input 
                                   type="text" 
+                                  id={`comment-input-${post.id}`}
                                   placeholder={lang === 'es' ? "Escribe un comentario..." : "Write a comment..."}
                                   value={commentInputs[post.id] || ''}
                                   onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
