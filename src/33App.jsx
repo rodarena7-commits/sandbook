@@ -5020,4 +5020,1283 @@ export default function App() {
 
               {!selectedAuthor && writerResults.length > 0 && (
                 <div className="space-y-4">
-                  <h3 className
+                                    <h3 className="text-lg font-black mb-4">{t.search_results}</h3>
+                  {writerResults.map((writer, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => viewAuthorDetails(writer.name)}
+                      className={`w-full flex items-center gap-4 p-4 rounded-2xl border ${themeClasses.border} text-left hover:border-indigo-300 dark:hover:border-indigo-500 transition-all mb-3`}
+                    >
+                      {writer.thumbnail ? (
+                        <img src={writer.thumbnail} className="w-16 h-16 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-300">
+                          {writer.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="font-bold text-lg">{writer.name}</h4>
+                        <p className="text-sm text-slate-500 dark:text-gray-400">
+                          {writer.booksCount} {lang === 'es' ? 'libros en Google Books' : 'books in Google Books'}
+                        </p>
+                      </div>
+                      <ChevronRight size={20} className="text-slate-400" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!selectedAuthor && writerResults.length === 0 && writerSearch && !authorSearchLoading && (
+                <div className="text-center py-12">
+                  <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>
+                    {lang === 'es' ? 'No se encontraron escritores' : 'No writers found'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VISTA ESCRITORES FAVORITOS */}
+      {showFavoriteWriters && (
+        <div className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-md overflow-y-auto animate-in fade-in">
+          <div className="min-h-screen bg-white dark:bg-gray-900">
+            <div className={`sticky top-0 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} z-10 border-b ${themeClasses.border} px-6 py-4 flex items-center justify-between`}>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setShowFavoriteWriters(false)} 
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div>
+                  <h1 className="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-tighter">{t.favorite_writers}</h1>
+                  <p className="text-xs text-slate-500 dark:text-gray-400">{t.writers_section}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="max-w-4xl mx-auto p-4">
+              <div className="relative mb-6">
+                <input 
+                  type="text" 
+                  placeholder={lang === 'es' ? "Buscar escritor favorito..." : "Search favorite writer..."}
+                  value={writerSearch}
+                  onChange={(e) => setWriterSearch(e.target.value)}
+                  className={`w-full pl-12 pr-4 py-4 rounded-2xl outline-none font-medium text-sm border ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-gray-100' 
+                      : 'bg-white border-slate-200 text-slate-900'
+                  }`}
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+              </div>
+
+              {filteredFavoriteWriters.length === 0 ? (
+                <div className="text-center py-12">
+                  <Star className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>
+                    {lang === 'es' ? 'No tienes escritores favoritos' : 'No favorite writers yet'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredFavoriteWriters.map((writer, idx) => (
+                    <div key={idx} className={`flex items-center gap-4 p-4 rounded-2xl border ${themeClasses.border}`}>
+                      {writer.thumbnail ? (
+                        <img src={writer.thumbnail} className="w-16 h-16 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-300">
+                          {writer.authorName.charAt(0)}
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="font-bold text-lg">{writer.authorName}</h4>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">
+                          {new Date(writer.addedAt?.seconds * 1000).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => {
+                            setShowFavoriteWriters(false);
+                            setShowWriters(true);
+                            viewAuthorDetails(writer.authorName);
+                          }}
+                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold"
+                        >
+                          {t.view}
+                        </button>
+                        <button 
+                          onClick={() => toggleFavoriteWriter(writer.authorName)}
+                          className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-xl"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VISTA FRASES GUARDADAS */}
+      {showSavedPosts && (
+        <div className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-md overflow-y-auto animate-in fade-in">
+          <div className="min-h-screen bg-white dark:bg-gray-900">
+            <div className={`sticky top-0 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} z-10 border-b ${themeClasses.border} px-6 py-4 flex items-center justify-between`}>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setShowSavedPosts(false)} 
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div>
+                  <h1 className="text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-tighter">{t.saved_posts}</h1>
+                  <p className="text-xs text-slate-500 dark:text-gray-400">{t.saved_section}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="max-w-4xl mx-auto p-4">
+              {filteredSavedPosts.length === 0 ? (
+                <div className="text-center py-12">
+                  <Bookmark className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>
+                    {lang === 'es' ? 'No tienes frases guardadas' : 'No saved quotes yet'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {filteredSavedPosts.map(post => (
+                    <div key={post.id} className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6 rounded-3xl border ${themeClasses.border} space-y-4`}>
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={post.userPic || 'https://via.placeholder.com/40'} 
+                          className="w-10 h-10 rounded-full object-cover cursor-pointer"
+                          onClick={() => {
+                            const userData = publicData.find(p => p.userId === post.userId);
+                            if (userData) handleViewUserProfile(userData);
+                          }}
+                        />
+                        <div>
+                          <p 
+                            className="font-bold text-sm cursor-pointer hover:text-indigo-600"
+                            onClick={() => {
+                              const userData = publicData.find(p => p.userId === post.userId);
+                              if (userData) handleViewUserProfile(userData);
+                            }}
+                          >
+                            {post.userName}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {post.timestamp?.seconds ? new Date(post.timestamp.seconds * 1000).toLocaleDateString() : ''}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {post.bookTitle && (
+                        <div className={`flex items-center gap-3 p-3 rounded-2xl ${theme === 'dark' ? 'bg-gray-700' : 'bg-slate-50'}`}>
+                          <img 
+                            src={post.bookThumbnail || 'https://via.placeholder.com/150'} 
+                            className="w-10 h-14 object-contain rounded-lg bg-white cursor-pointer"
+                            onClick={() => {
+                              setShowSavedPosts(false);
+                              setTimeout(() => {
+                                handleViewBookDetails({
+                                  id: post.bookId,
+                                  title: post.bookTitle,
+                                  authors: post.bookAuthors,
+                                  thumbnail: post.bookThumbnail
+                                });
+                              }, 100);
+                            }}
+                          />
+                          <div>
+                            <p 
+                              className="text-sm font-bold cursor-pointer hover:text-indigo-600"
+                              onClick={() => {
+                                setShowSavedPosts(false);
+                                setTimeout(() => {
+                                  handleViewBookDetails({
+                                    id: post.bookId,
+                                    title: post.bookTitle,
+                                    authors: post.bookAuthors,
+                                    thumbnail: post.bookThumbnail
+                                  });
+                                }, 100);
+                              }}
+                            >
+                              {post.bookTitle}
+                            </p>
+                            <p className="text-xs text-slate-500">{post.bookAuthors?.[0]}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {post.imageUrl && (
+                        <img 
+                          src={post.imageUrl} 
+                          className="w-full h-48 object-cover rounded-2xl cursor-pointer"
+                          onClick={() => handleZoomImage(post.imageUrl, post.bookTitle || 'Publicación')}
+                        />
+                      )}
+                      
+                      <p className="text-sm text-slate-700 dark:text-gray-300 italic leading-relaxed">
+                        "{post.content}"
+                      </p>
+                      
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center gap-4">
+                          <button 
+                            onClick={() => likeWallPost(post.id, post.likes || 0, post.likesBy || [])}
+                            className={`flex items-center gap-1 text-xs ${post.likesBy?.includes(user?.uid) ? 'text-green-600' : 'text-slate-500'}`}
+                          >
+                            <ThumbsUp size={14} /> {post.likes || 0}
+                          </button>
+                          <button 
+                            onClick={() => dislikeWallPost(post.id, post.dislikes || 0, post.dislikesBy || [])}
+                            className={`flex items-center gap-1 text-xs ${post.dislikesBy?.includes(user?.uid) ? 'text-red-600' : 'text-slate-500'}`}
+                          >
+                            <ThumbsDown size={14} /> {post.dislikes || 0}
+                          </button>
+                        </div>
+                        
+                        <button 
+                          onClick={() => toggleSavedPost(post.id)}
+                          className="p-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-300 rounded-full"
+                          title={t.remove_saved_post}
+                        >
+                          <Bookmark size={14} className="fill-yellow-400" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MURO SOCIAL */}
+      {activeTab === 'social' && (
+        <main className="max-w-2xl mx-auto p-6 pb-24">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-tighter">{t.wall}</h2>
+            <button 
+              onClick={() => {
+                setPostContent('');
+                setSelectedBookForPost(null);
+                setPostImage(null);
+                setPostImageFile(null);
+                setShowBookSelector(false);
+                setBooksForPost([]);
+                setPostSearch('');
+                setShowPostModal(true);
+              }}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full font-bold text-sm shadow-md transition-all active:scale-95"
+            >
+              <PenLine size={18} />
+              {t.post_quote}
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            {wallPosts.length === 0 ? (
+              <div className={`${themeClasses.card} p-12 text-center rounded-[3rem] border ${themeClasses.border}`}>
+                <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : 'text-slate-200'} mb-4`} size={48} />
+                <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>
+                  {t.no_posts}
+                </p>
+              </div>
+            ) : (
+              wallPosts.map(post => (
+                <div key={post.id} className={`${themeClasses.card} p-6 rounded-[2.5rem] border ${themeClasses.border} space-y-4 relative`}>
+                  {/* Opciones de publicación (solo para el autor) */}
+                  {post.userId === user?.uid && (
+                    <div className="absolute top-6 right-6">
+                      <button 
+                        onClick={() => setShowPostOptions(showPostOptions === post.id ? null : post.id)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                      >
+                        <Settings size={18} />
+                      </button>
+                      
+                      {showPostOptions === post.id && (
+                        <div className={`absolute right-0 mt-2 w-48 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl border ${themeClasses.border} z-10`}>
+                          <div className="p-2 space-y-1">
+                            <button 
+                              onClick={() => {
+                                setEditingPost(post);
+                                setPostContent(post.content);
+                                setPostImage(post.imageUrl || null);
+                                setPostImageFile(null);
+                                setShowEditPostModal(true);
+                                setShowPostOptions(null);
+                              }}
+                              className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
+                            >
+                              <Edit size={14} /> {t.edit}
+                            </button>
+                            <button 
+                              onClick={() => togglePostPrivacy(post.id, post.isPublic)}
+                              className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
+                            >
+                              {post.isPublic ? <EyeOff size={14} /> : <Eye size={14} />}
+                              {post.isPublic ? t.make_private : t.make_public}
+                            </button>
+                            <button 
+                              onClick={() => {
+                                if (window.confirm(lang === 'es' ? '¿Eliminar esta publicación?' : 'Delete this post?')) {
+                                  deletePost(post.id);
+                                  setShowPostOptions(null);
+                                }
+                              }}
+                              className="w-full text-left px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 text-sm flex items-center gap-2"
+                            >
+                              <Trash size={14} /> {t.delete}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Cabecera del post */}
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={post.userPic || 'https://via.placeholder.com/40'} 
+                      className="w-12 h-12 rounded-full object-cover cursor-pointer border-2 border-indigo-200 dark:border-indigo-800"
+                      onClick={() => {
+                        const userData = publicData.find(p => p.userId === post.userId);
+                        if (userData) handleViewUserProfile(userData);
+                      }}
+                    />
+                    <div>
+                      <p 
+                        className="font-bold text-base cursor-pointer hover:text-indigo-600 transition-colors"
+                        onClick={() => {
+                          const userData = publicData.find(p => p.userId === post.userId);
+                          if (userData) handleViewUserProfile(userData);
+                        }}
+                      >
+                        {post.userName}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span>{post.timestamp?.seconds ? new Date(post.timestamp.seconds * 1000).toLocaleDateString() : ''}</span>
+                        {!post.isPublic && post.userId === user?.uid && (
+                          <span className="flex items-center gap-1 text-amber-600">
+                            <Lock size={12} /> {t.private}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Libro asociado */}
+                  {post.bookTitle && (
+                    <div className={`flex items-center gap-3 p-3 rounded-2xl ${theme === 'dark' ? 'bg-gray-700' : 'bg-slate-50'} cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-500 border border-transparent transition-all`}
+                         onClick={() => handleViewBookDetails({
+                           id: post.bookId,
+                           title: post.bookTitle,
+                           authors: post.bookAuthors,
+                           thumbnail: post.bookThumbnail
+                         })}
+                    >
+                      <img 
+                        src={post.bookThumbnail || 'https://via.placeholder.com/150'} 
+                        className="w-12 h-16 object-contain rounded-xl bg-white"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-bold line-clamp-1 hover:text-indigo-600">{post.bookTitle}</p>
+                        <p className="text-xs text-slate-500">{post.bookAuthors?.[0]}</p>
+                      </div>
+                      <ChevronRight size={18} className="text-slate-400" />
+                    </div>
+                  )}
+
+                  {/* Imagen del post */}
+                  {post.imageUrl && (
+                    <img 
+                      src={post.imageUrl} 
+                      className="w-full h-64 object-cover rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => handleZoomImage(post.imageUrl, post.bookTitle || 'Publicación')}
+                    />
+                  )}
+
+                  {/* Contenido del post */}
+                  <p className="text-sm text-slate-700 dark:text-gray-300 italic leading-relaxed whitespace-pre-wrap">
+                    "{post.content}"
+                  </p>
+
+                  {/* Estadísticas de likes/dislikes */}
+                  <div className="flex items-center gap-4 pt-2">
+                    <button 
+                      onClick={() => likeWallPost(post.id, post.likes || 0, post.likesBy || [])}
+                      className={`flex items-center gap-2 text-xs font-bold transition-all ${
+                        post.likesBy?.includes(user?.uid) 
+                          ? 'text-green-600' 
+                          : 'text-slate-500 hover:text-green-600'
+                      }`}
+                    >
+                      <ThumbsUp size={16} /> {post.likes || 0}
+                    </button>
+                    <button 
+                      onClick={() => dislikeWallPost(post.id, post.dislikes || 0, post.dislikesBy || [])}
+                      className={`flex items-center gap-2 text-xs font-bold transition-all ${
+                        post.dislikesBy?.includes(user?.uid) 
+                          ? 'text-red-600' 
+                          : 'text-slate-500 hover:text-red-600'
+                      }`}
+                    >
+                      <ThumbsDown size={16} /> {post.dislikes || 0}
+                    </button>
+                    <button 
+                      onClick={() => toggleSavedPost(post.id)}
+                      className={`flex items-center gap-2 text-xs font-bold transition-all ${
+                        savedPostsList.includes(post.id)
+                          ? 'text-yellow-600'
+                          : 'text-slate-500 hover:text-yellow-600'
+                      }`}
+                    >
+                      <Bookmark size={16} className={savedPostsList.includes(post.id) ? 'fill-yellow-400' : ''} /> {t.saved}
+                    </button>
+                  </div>
+
+                  {/* Ver quién dio like/dislike */}
+                  {(post.likes > 0 || post.dislikes > 0) && (
+                    <div className="flex items-center gap-4 pt-2 text-[10px] text-slate-400">
+                      {post.likes > 0 && (
+                        <button 
+                          onClick={() => viewPostLikes(post, 'likes')}
+                          className="hover:text-indigo-600 transition-colors"
+                        >
+                          {post.likes} {post.likes === 1 ? (lang === 'es' ? 'persona le gusta' : 'person likes') : (lang === 'es' ? 'personas les gusta' : 'people like')}
+                        </button>
+                      )}
+                      {post.dislikes > 0 && (
+                        <button 
+                          onClick={() => viewPostLikes(post, 'dislikes')}
+                          className="hover:text-red-600 transition-colors"
+                        >
+                          {post.dislikes} {post.dislikes === 1 ? (lang === 'es' ? 'persona no le gusta' : 'person dislikes') : (lang === 'es' ? 'personas no les gusta' : 'people dislike')}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Comentarios */}
+                  <div className="pt-4 border-t border-slate-200 dark:border-gray-700">
+                    <p className="text-xs font-bold mb-3">{t.reviews} ({wallPostComments[post.id]?.length || 0})</p>
+                    
+                    <div className="space-y-3 max-h-60 overflow-y-auto mb-4">
+                      {wallPostComments[post.id]?.map(comment => (
+                        <div key={comment.id} className="flex gap-2">
+                          <img 
+                            src={comment.userPic || 'https://via.placeholder.com/30'} 
+                            className="w-6 h-6 rounded-full object-cover cursor-pointer flex-shrink-0"
+                            onClick={() => {
+                              const userData = publicData.find(p => p.userId === comment.userId);
+                              if (userData) handleViewUserProfile(userData);
+                            }}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p 
+                                className="text-xs font-bold cursor-pointer hover:text-indigo-600"
+                                onClick={() => {
+                                  const userData = publicData.find(p => p.userId === comment.userId);
+                                  if (userData) handleViewUserProfile(userData);
+                                }}
+                              >
+                                {comment.userName}
+                              </p>
+                              <span className="text-[8px] text-slate-400">
+                                {comment.timestamp?.seconds ? new Date(comment.timestamp.seconds * 1000).toLocaleDateString() : ''}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-600 dark:text-gray-300">{comment.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Input de comentario */}
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={commentInputs[post.id] || ''}
+                        onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                        placeholder={lang === 'es' ? "Escribe un comentario..." : "Write a comment..."}
+                        className={`flex-1 px-4 py-2 rounded-xl text-xs outline-none ${
+                          theme === 'dark' 
+                            ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                            : 'bg-white text-slate-900 border-slate-200'
+                        } border`}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && commentInputs[post.id]?.trim()) {
+                            addWallPostComment(post.id, commentInputs[post.id]);
+                          }
+                        }}
+                      />
+                      <button 
+                        onClick={() => {
+                          if (commentInputs[post.id]?.trim()) {
+                            addWallPostComment(post.id, commentInputs[post.id]);
+                          }
+                        }}
+                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold"
+                      >
+                        <Send size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </main>
+      )}
+
+      {/* VISTA PRINCIPAL - BIBLIOTECA */}
+      {activeTab === 'library' && (
+        <main className="max-w-6xl mx-auto p-6 pb-24">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-tighter">{t.library}</h2>
+            <div className="flex gap-2">
+              <button onClick={() => setFilterType('all')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${filterType === 'all' ? 'bg-indigo-600 text-white' : theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.all}</button>
+              <button onClick={() => setFilterType('read')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${filterType === 'read' ? 'bg-green-600 text-white' : theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.read}</button>
+              <button onClick={() => setFilterType('favorite')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${filterType === 'favorite' ? 'bg-yellow-600 text-white' : theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.favorites}</button>
+              <button onClick={() => setFilterType('in_plan')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${filterType === 'in_plan' ? 'bg-blue-600 text-white' : theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.in_plan}</button>
+              <button onClick={() => setFilterType('in_library')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${filterType === 'in_library' ? 'bg-purple-600 text-white' : theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.in_library}</button>
+            </div>
+          </div>
+
+          {/* Barra de búsqueda en biblioteca */}
+          <div className="relative mb-8">
+            <input 
+              type="text" 
+              placeholder={t.search_in_my_books}
+              value={librarySearch}
+              onChange={(e) => setLibrarySearch(e.target.value)}
+              className={`w-full pl-12 pr-4 py-4 rounded-2xl outline-none font-medium text-sm border ${
+                theme === 'dark' 
+                  ? 'bg-gray-800 border-gray-700 text-gray-100' 
+                  : 'bg-white border-slate-200 text-slate-900'
+              }`}
+            />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          </div>
+
+          {filteredMyBooks.length === 0 ? (
+            <div className={`${themeClasses.card} p-12 text-center rounded-[3rem] border ${themeClasses.border}`}>
+              <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : 'text-slate-200'} mb-4`} size={48} />
+              <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>
+                {lang === 'es' ? 'Tu biblioteca está vacía' : 'Your library is empty'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredMyBooks.map(book => (
+                <div key={book.bookId} className={`${themeClasses.card} p-6 rounded-[2.5rem] border ${themeClasses.border} space-y-4 relative`}>
+                  <button 
+                    onClick={() => setBookToDelete(book.bookId)}
+                    className="absolute top-4 right-4 p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-full hover:bg-red-200 dark:hover:bg-red-800 transition-colors z-10"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+
+                  <div className="flex gap-4">
+                    <img 
+                      src={book.thumbnail} 
+                      onClick={() => handleViewBookDetails(book)} 
+                      className="w-20 h-28 object-contain rounded-2xl shadow-md cursor-pointer bg-white hover:scale-105 transition-transform" 
+                    />
+                    <div className="flex-1">
+                      <h3 
+                        className="font-bold text-lg line-clamp-2 cursor-pointer hover:text-indigo-600 transition-colors"
+                        onClick={() => handleViewBookDetails(book)}
+                      >
+                        {book.title}
+                      </h3>
+                      <p className="text-xs text-indigo-600 font-bold mt-1 line-clamp-1">
+                        {book.authors?.[0]}
+                      </p>
+                      
+                      <div className="flex items-center gap-2 mt-2">
+                        <StarRating rating={book.rating || 0} interactive={false} size={14} />
+                      </div>
+                      
+                      {book.status === 'reading' && (
+                        <div className="mt-3">
+                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-[10px] font-bold rounded-full">
+                            {t.currently_reading}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {book.status === 'reading' && book.checkpoints && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold">{t.reading_progress}</span>
+                        <span className="text-xs font-bold text-indigo-600">
+                          {book.checkpoints.filter(c => c.completed).length}/{book.checkpoints.length}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-slate-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-indigo-500 transition-all duration-700" 
+                          style={{ width: `${(book.checkpoints.filter(c => c.completed).length / book.checkpoints.length) * 100}%` }} 
+                        />
+                      </div>
+                      
+                      <button
+                        onClick={() => setExpandedBooks(prev => {
+                          const newSet = new Set(prev);
+                          if (newSet.has(book.bookId)) {
+                            newSet.delete(book.bookId);
+                          } else {
+                            newSet.add(book.bookId);
+                          }
+                          return newSet;
+                        })}
+                        className="w-full mt-3 flex items-center justify-center gap-1 text-xs text-slate-500"
+                      >
+                        {expandedBooks.has(book.bookId) ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        {expandedBooks.has(book.bookId) ? (lang === 'es' ? 'Ocultar días' : 'Hide days') : (lang === 'es' ? 'Ver días' : 'View days')}
+                      </button>
+                      
+                      {expandedBooks.has(book.bookId) && (
+                        <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
+                          {book.checkpoints.map((cp, idx) => (
+                            <div key={idx} className={`flex items-center gap-2 p-2 rounded-xl ${theme === 'dark' ? 'bg-gray-700' : 'bg-slate-50'}`}>
+                              <button 
+                                onClick={() => toggleCheckpoint(book.bookId, idx)}
+                                className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
+                                  cp.completed 
+                                    ? 'bg-green-500 text-white' 
+                                    : 'border-2 border-slate-300 dark:border-gray-500'
+                                }`}
+                              >
+                                {cp.completed && <CheckCircle size={12} />}
+                              </button>
+                              <div className="flex-1">
+                                <p className={`text-xs font-bold ${cp.completed ? 'line-through text-slate-400' : ''}`}>
+                                  {cp.title}
+                                </p>
+                                {cp.note && (
+                                  <p className="text-[10px] text-slate-500">{cp.note}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {book.planType === 'relax' && book.relaxCurrentDay && (
+                    <div className="mt-4 p-3 rounded-xl bg-purple-50 dark:bg-purple-900/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-purple-600 dark:text-purple-300">{t.relax_mode}</span>
+                        <span className="text-xs font-bold text-purple-600">
+                          {t.current_day}: {book.relaxCurrentDay}/{book.relaxTotalDays}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-purple-200 dark:bg-purple-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-purple-500 transition-all duration-700" 
+                          style={{ width: `${(book.relaxCurrentDay / book.relaxTotalDays) * 100}%` }} 
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-2">
+                    <button 
+                      onClick={() => toggleLibraryStatus(book.bookId)}
+                      className={`flex items-center gap-1 text-xs font-bold ${
+                        book.inLibrary ? 'text-green-600' : 'text-slate-400'
+                      }`}
+                    >
+                      <Library size={14} />
+                      {book.inLibrary ? t.in_your_library : t.add_to_library}
+                    </button>
+                    
+                    {book.status !== 'reading' && (
+                      <button 
+                        onClick={() => {
+                          setPlanningBook(book);
+                          setManualPages(book.totalPages?.toString() || '');
+                        }}
+                        className="flex items-center gap-1 text-xs font-bold text-indigo-600"
+                      >
+                        <Calendar size={14} />
+                        {t.reading_plan}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      )}
+
+      {/* VISTA DE BÚSQUEDA */}
+      {activeTab === 'search' && (
+        <main className="max-w-4xl mx-auto p-6 pb-24">
+          <div className={`${themeClasses.card} p-8 rounded-[3rem] border ${themeClasses.border} mb-8`}>
+            <div className="flex gap-2 mb-4">
+              <button onClick={() => setSearchType('all')} className={`px-4 py-2 rounded-full text-xs font-bold ${searchType === 'all' ? 'bg-indigo-600 text-white' : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.global_f}</button>
+              <button onClick={() => setSearchType('intitle')} className={`px-4 py-2 rounded-full text-xs font-bold ${searchType === 'intitle' ? 'bg-indigo-600 text-white' : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.title_f}</button>
+              <button onClick={() => setSearchType('inauthor')} className={`px-4 py-2 rounded-full text-xs font-bold ${searchType === 'inauthor' ? 'bg-indigo-600 text-white' : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.author_f}</button>
+              <button onClick={() => setSearchType('isbn')} className={`px-4 py-2 rounded-full text-xs font-bold ${searchType === 'isbn' ? 'bg-indigo-600 text-white' : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.isbn_f}</button>
+            </div>
+
+            <div className="relative">
+              <input 
+                type="text" 
+                placeholder={t.search_p}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && performSearch()}
+                className={`w-full pl-12 pr-24 py-4 rounded-2xl outline-none font-medium text-sm border ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100' 
+                    : 'bg-white border-slate-200 text-slate-900'
+                }`}
+              />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                <button onClick={startScanner} className={`p-2 ${theme === 'dark' ? 'bg-gray-600 hover:bg-gray-500' : 'bg-slate-100 hover:bg-slate-200'} rounded-xl transition-colors`}>
+                  <Camera size={18} />
+                </button>
+                <button onClick={() => performSearch()} disabled={isSearching} className={`px-4 py-2 ${theme === 'dark' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white rounded-xl text-sm font-bold disabled:opacity-50 flex items-center gap-2`}>
+                  {isSearching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                  {t.search}
+                </button>
+              </div>
+            </div>
+
+            {searchError && (
+              <p className="mt-4 text-red-500 text-xs font-bold text-center">{searchError}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {searchResults.map((book, idx) => {
+              const alreadyHave = myBooks.find(b => b.bookId === book.id);
+              
+              return (
+                <div key={idx} className={`${themeClasses.card} p-6 rounded-[2.5rem] border ${themeClasses.border} flex gap-4`}>
+                  <SearchBookCover 
+                    book={book}
+                    alreadyHave={alreadyHave}
+                    t={t}
+                    lang={lang}
+                    onViewDetails={handleViewBookDetails}
+                  />
+                  
+                  <div className="flex-1">
+                    <h3 
+                      className="font-bold text-base line-clamp-2 cursor-pointer hover:text-indigo-600 transition-colors"
+                      onClick={() => handleViewBookDetails(book)}
+                    >
+                      {book.volumeInfo?.title}
+                    </h3>
+                    <p className="text-xs text-indigo-600 mt-1 line-clamp-1">
+                      {book.volumeInfo?.authors?.join(', ')}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      {book.volumeInfo?.publishedDate?.substring(0, 4) || 'Año desconocido'}
+                    </p>
+                    
+                    <div className="flex gap-2 mt-3">
+                      {alreadyHave ? (
+                        <>
+                          <button 
+                            onClick={() => {
+                              if (alreadyHave.status !== 'reading') {
+                                setPlanningBook(book);
+                                setManualPages(book.volumeInfo?.pageCount?.toString() || '');
+                              }
+                            }}
+                            className={`flex-1 text-xs font-bold py-2 rounded-xl ${
+                              alreadyHave.status === 'reading'
+                                ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300'
+                                : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300'
+                            }`}
+                          >
+                            {alreadyHave.status === 'reading' ? t.currently_reading : t.reading_plan}
+                          </button>
+                          
+                          <button 
+                            onClick={() => toggleLibraryStatus(book.id)}
+                            className={`p-2 rounded-xl ${
+                              alreadyHave.inLibrary 
+                                ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300' 
+                                : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300'
+                            }`}
+                          >
+                            <Library size={14} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => handleAddBook(book, 'library', false, true)}
+                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold transition-colors"
+                          >
+                            {t.add_to_library}
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setPlanningBook(book);
+                              setManualPages(book.volumeInfo?.pageCount?.toString() || '');
+                            }}
+                            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-xl text-xs font-bold transition-colors"
+                          >
+                            {t.reading_plan}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </main>
+      )}
+
+      {/* VISTA DE PERFIL */}
+      {activeTab === 'profile' && (
+        <main className="max-w-4xl mx-auto p-6 pb-24">
+          {selectedUserProfile ? (
+            // Perfil de otro usuario
+            <div className="space-y-6">
+              <div className={`${themeClasses.card} p-8 rounded-[3rem] border ${themeClasses.border}`}>
+                <div className="flex items-start gap-6">
+                  <img 
+                    src={selectedUserProfile.profilePic || 'https://via.placeholder.com/100'} 
+                    className="w-24 h-24 rounded-full object-cover border-4 border-indigo-200 dark:border-indigo-800 cursor-pointer"
+                    onClick={() => {
+                      if (selectedUserProfile.profilePic) {
+                        handleZoomImage(selectedUserProfile.profilePic, selectedUserProfile.name);
+                      }
+                    }}
+                  />
+                  
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="text-2xl font-black">{selectedUserProfile.name}</h2>
+                        <p className="text-sm text-indigo-600 font-bold mt-1">
+                          {getLevelTitle(selectedUserProfile.readCount, lang)}
+                          <img src={getLevelSymbol(selectedUserProfile.readCount)} className="w-4 h-4 object-contain inline-block ml-1" alt="Nivel" />
+                        </p>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        {user && user.uid !== selectedUserProfile.userId && (
+                          <>
+                            <button 
+                              onClick={() => {
+                                setSelectedUserForMessage(selectedUserProfile);
+                                setShowNewMessageModal(true);
+                              }}
+                              className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+                              title={t.send_message}
+                            >
+                              <MessageSquare size={18} />
+                            </button>
+                            
+                            <button 
+                              onClick={() => toggleFollow(selectedUserProfile.userId)}
+                              className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-1 ${
+                                userProfile.following?.includes(selectedUserProfile.userId)
+                                  ? 'bg-green-600 text-white'
+                                  : 'bg-indigo-600 text-white'
+                              }`}
+                            >
+                              <UserPlus size={14} />
+                              {userProfile.following?.includes(selectedUserProfile.userId) ? t.following : t.add_friend}
+                            </button>
+                            
+                            {userProfile.following?.includes(selectedUserProfile.userId) && (
+                              <button 
+                                onClick={() => {
+                                  if (window.confirm(lang === 'es' ? '¿Eliminar amigo?' : 'Remove friend?')) {
+                                    removeFriend(selectedUserProfile.userId);
+                                  }
+                                }}
+                                className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-full"
+                                title={t.remove_friend}
+                              >
+                                <UserMinus size={18} />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4 mt-6">
+                      <div className="text-center">
+                        <p className="text-2xl font-black">{selectedUserProfile.followersCount || 0}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">{t.followers}</p>
+                      </div>
+                      <div className="text-center cursor-pointer" onClick={() => setViewingReadBooks(true)}>
+                        <p className="text-2xl font-black">{selectedUserProfile.readCount || 0}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">{t.read}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-black">{mutualFriendsList.filter(f => f.userId === selectedUserProfile.userId).length}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">{t.mutual_friends}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-4 mt-6">
+                      <button 
+                        onClick={() => viewUserReadBooks(selectedUserProfile)}
+                        className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2"
+                      >
+                        <BookOpen size={14} />
+                        {t.view_read_books}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Libros del usuario */}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-black">{t.user_books} {selectedUserProfile.name}</h3>
+                <div className="flex gap-2">
+                  <button onClick={() => setSelectedUserFilter('all')} className={`px-3 py-1 rounded-full text-[10px] font-bold ${selectedUserFilter === 'all' ? 'bg-indigo-600 text-white' : theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.all}</button>
+                  <button onClick={() => setSelectedUserFilter('read')} className={`px-3 py-1 rounded-full text-[10px] font-bold ${selectedUserFilter === 'read' ? 'bg-green-600 text-white' : theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.read}</button>
+                  <button onClick={() => setSelectedUserFilter('in_plan')} className={`px-3 py-1 rounded-full text-[10px] font-bold ${selectedUserFilter === 'in_plan' ? 'bg-blue-600 text-white' : theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>{t.in_plan}</button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredExternalBooks.map((book, idx) => (
+                  <div key={idx} className={`${themeClasses.card} p-4 rounded-[2rem] border ${themeClasses.border} flex gap-3`}>
+                    <img 
+                      src={book.thumbnail} 
+                      onClick={() => handleViewBookDetails(book)} 
+                      className="w-16 h-20 object-contain rounded-xl bg-white cursor-pointer hover:scale-105 transition-transform" 
+                    />
+                    <div className="flex-1">
+                      <h4 
+                        className="font-bold text-sm line-clamp-2 cursor-pointer hover:text-indigo-600"
+                        onClick={() => handleViewBookDetails(book)}
+                      >
+                        {book.title}
+                      </h4>
+                      <p className="text-[10px] text-indigo-600 mt-1 line-clamp-1">{book.authors?.[0]}</p>
+                      
+                      {book.status === 'reading' && book.checkpoints && (
+                        <UserReadingProgress book={book} theme={theme} t={t} />
+                      )}
+                      
+                      {book.status === 'reading' && book.planType === 'relax' && (
+                        <div className="mt-2 p-2 rounded-xl bg-purple-50 dark:bg-purple-900/30">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[8px] font-bold text-purple-600">{t.relax_mode}</span>
+                            <span className="text-[8px] font-bold">{t.current_day}: {book.relaxCurrentDay}/{book.relaxTotalDays}</span>
+                          </div>
+                          <div className="h-1 bg-purple-200 dark:bg-purple-800 rounded-full mt-1 overflow-hidden">
+                            <div className="h-full bg-purple-500" style={{ width: `${(book.relaxCurrentDay / book.relaxTotalDays) * 100}%` }} />
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-2">
+                          <StarRating rating={book.rating || 0} interactive={false} size={12} />
+                        </div>
+                        
+                        {user && user.uid !== selectedUserProfile.userId && (
+                          <button 
+                            onClick={() => {
+                              setBookToBorrow(book);
+                              setShowBorrowModal(true);
+                            }}
+                            className="p-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full text-[8px] font-bold"
+                            title={t.borrow_book}
+                          >
+                            <Handshake size={12} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            // Perfil propio
+            <div className="space-y-6">
+              <div className={`${themeClasses.card} p-8 rounded-[3rem] border ${themeClasses.border}`}>
+                <div className="flex items-start gap-6">
+                  <div className="relative">
+                    <img 
+                      src={userProfile.profilePic || 'https://via.placeholder.com/100'} 
+                      className="w-24 h-24 rounded-full object-cover border-4 border-indigo-200 dark:border-indigo-800 cursor-pointer"
+                      onClick={() => {
+                        if (userProfile.profilePic) {
+                          handleZoomImage(userProfile.profilePic, userProfile.name);
+                        }
+                      }}
+                    />
+                    <label className="absolute -bottom-2 -right-2 p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full cursor-pointer shadow-lg">
+                      <Camera size={14} />
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    </label>
+                  </div>
+                  
+                  <div className="flex-1">
+                    {isEditingProfile ? (
+                      <div className="space-y-3">
+                        <input 
+                          type="text" 
+                          value={userProfile.name}
+                          onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
+                          className={`w-full px-4 py-2 rounded-xl text-sm outline-none ${
+                            theme === 'dark' 
+                              ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                              : 'bg-white text-slate-900 border-slate-200'
+                          } border`}
+                          placeholder={lang === 'es' ? 'Tu nombre' : 'Your name'}
+                        />
+                        <input 
+                          type="email" 
+                          value={userProfile.email || ''}
+                          onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
+                          className={`w-full px-4 py-2 rounded-xl text-sm outline-none ${
+                            theme === 'dark' 
+                              ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                              : 'bg-white text-slate-900 border-slate-200'
+                          } border`}
+                          placeholder={lang === 'es' ? 'Email' : 'Email'}
+                        />
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={async () => {
+                              await updateDoc(doc(db, 'profiles', user.uid), {
+                                name: userProfile.name,
+                                email: userProfile.email
+                              });
+                              setIsEditingProfile(false);
+                            }}
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl text-xs font-bold"
+                          >
+                            {t.save}
+                          </button>
+                          <button 
+                            onClick={() => setIsEditingProfile(false)}
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl text-xs font-bold"
+                          >
+                            {t.cancel}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h2 className="text-2xl font-black">{userProfile.name}</h2>
+                            <p className="text-sm text-indigo-600 font-bold mt-1">
+                              {getLevelTitle(userProfile.readCount, lang)}
+                              <img src={getLevelSymbol(userProfile.readCount)} className="w-4 h-4 object-contain inline-block ml-1" alt="Nivel" />
+                            </p>
+                            {userProfile.email && (
+                              <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{userProfile.email}</p>
+                            )}
+                          </div>
+                          <button 
+                            onClick={() => setIsEditingProfile(true)}
+                            className="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 rounded-full"
+                          >
+                            <Edit size={16} />
+                          </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-4 mt-6">
+                          <button 
+                            onClick={() => setShowFollowersModal(true)}
+                            className="text-center hover:bg-slate-50 dark:hover:bg-gray-700 p-2 rounded-2xl transition-colors"
+                          >
+                            <p className="text-2xl font-black">{userProfile.followersCount || 0}</p>
+                            <p className="text-xs text-slate-500 dark:text-gray-400">{t.followers}</p>
+                          </button>
+                          
+                          <button 
+                            onClick={() => setShowFollowingModal(true)}
+                            className="text-center hover:bg-slate-50 dark:hover:bg-gray-700 p-2 rounded-2xl transition-colors"
+                          >
+                            <p className="text-2xl font-black">{userProfile.following?.length || 0}</p>
+                            <p className="text-xs text-slate-500 dark:text-gray-400">{t.following}</p>
+                          </button>
+                          
+                          <button 
+                            onClick={() => setShowMutualFriendsModal(true)}
+                            className="text-center hover:bg-slate-50 dark:hover:bg-gray-700 p-2 rounded-2xl transition-colors"
+                          >
+                            <p className="text-2xl font-black">{mutualFriendsList.length}</p>
+                            <p className="text-xs text-slate-500 dark:text-gray-400">{t.mutual_friends}</p>
+                          </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-4 mt-4">
+                          <div className="text-center">
+                            <p className="text-lg font-black">{currentlyReadingCount}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-gray-400">{t.currently_reading}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-lg font-black">{booksThisMonth}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-gray-400">{t.books_this_month}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-lg font-black">{userProfile.scanCount || 0}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-gray-400">{lang === 'es' ? 'Escaneados' : 'Scanned'}</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Sección de insignias */}
+              <div className={`${themeClasses.card} p-8 rounded-[3rem] border ${themeClasses.border}`}>
+                <h3 className="text-xl font-black mb-6 flex items-center gap-2">
+                  <Award className="text-yellow-500" size={24} />
+                  {t.badges_title}
+                </h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {Object.entries(BADGE_DEFS).map(([id, badge]) => {
+                    const progress = badgeProgress[id] || 0;
+                    const earned = userProfile.badges?.includes(parseInt(id));
+                    
+                    return (
+                      <div key={id} className={`p-4 rounded-2xl border ${earned ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30' : themeClasses.border} text-center`}>
+                        <div className="relative">
+                          <Trophy size={32} className={`mx-auto mb-2 ${earned ? 'text-yellow-500' : 'text-slate-300 dark:text-gray-600'}`} />
+                          {!earned && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Lock size={16} className="text-slate-400" />
+                            </div>
+                          )}
+                        </div>
+                        <p className={`text-xs font-bold ${earned ? 'text-yellow-700 dark:text-yellow-300' : 'text-slate-400 dark:text-gray-500'}`}>
+                          {badge.name}
+                        </p>
+                        <p className="text-[8px] text-slate-500 dark:text-gray-400 mt-1">{badge.desc}</p>
+                        
+                        {!earned && progress > 0 && (
+                          <div className="mt-2">
+                            <div className="h-1 bg-slate-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                              <div className="h-full bg-yellow-400" style={{ width: `${progress}%` }} />
+                            </div>
+                            <p className="text-[8px] text-yellow-600 mt-1">{Math.round(progress)}%</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => {
+                    setShowWriters(true);
+                    setShowFavoriteWriters(false);
+                  }}
+                  className={`${themeClasses.card} p-6 rounded-[2rem] border ${themeClasses.border} text-center hover:border-indigo-300 transition-all`}
+                >
+                  <Star size={24} className="mx-auto mb-2 text-yellow-500" />
+                  <p className="text-sm font-bold">{t.favorite_writers}</p>
+                  <p className="text-xs text-slate-500">{favoriteWritersList.length} {lang === 'es' ? 'guardados' : 'saved'}</p>
+                </button>
+                
+                <button 
+                  onClick={() => setShowSavedPosts(true)}
+                  className={`${themeClasses.card} p-6 rounded-[2rem] border ${themeClasses.border} text-center hover:border-purple-300 transition-all`}
+                >
+                  <Bookmark size={24} className="mx-auto mb-2 text-purple-500" />
+                  <p className="text-sm font-bold">{t.saved_posts}</p>
+                  <p className="text-xs text-slate-500">{savedPostsList.length} {lang === 'es' ? 'guardadas' : 'saved'}</p>
+                </button>
+                
+                <button 
+                  onClick={() => setShowFriendsSection(true)}
+                  className={`${themeClasses.card} p-6 rounded-[2rem] border ${themeClasses.border} text-center hover:border-green-300 transition-all`}
+                >
+                  <Users size={24} className="mx-auto mb-2 text-green-500" />
+                  <p className="text-sm font-bold">{t.friends}</p>
+                  <p className="text-xs text-slate-500">{mutualFriendsList.length} {lang === 'es' ? 'conectados' : 'connected'}</p>
+                </button>
+                
+                <button 
+                  onClick={handleLogout}
+                  className={`${themeClasses.card} p-6 rounded-[2rem] border ${themeClasses.border} text-center hover:border-red-300 transition-all`}
+                >
+                  <LogOut size={24} className="mx-auto mb-2 text-red-500" />
+                  <p className="text-sm font-bold">{t.logout}</p>
+                </button>
+              </div>
+              
+              {/* Invitación WhatsApp */}
+              <button 
+                onClick={inviteWhatsApp}
+                className="w-full py-6 bg-green-600 hover:bg-green-700 text-white rounded-[2rem] font-black text-sm uppercase flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"
+              >
+                <Share2 size={18} />
+                {t.invite}
+              </button>
+            </div>
+          )}
+        </main>
+      )}
+
+      {/* BARRA DE NAVEGACIÓN INFERIOR */}
+      <nav className={`fixed bottom-0 left-0 right-0 ${theme === 'dark' ? 'bg-gray-800/90' : theme === 'sunset' ? 'bg-orange-100/90' : 'bg-white/90'} backdrop-blur-md border-t ${themeClasses.border} px-6 py-2 flex justify-around items-center`}>
+        <button onClick={() => { setActiveTab('library'); setSelectedUserProfile(null); setShowWriters(false); setShowFriendsSection(false); setShowMessages(false); }} className={`flex flex-col items-center p-2 rounded-2xl transition-colors ${activeTab === 'library' ? 'text-indigo-600' : 'text-slate-400'}`}>
+          <BookOpen size={22} />
+          <span className="text-[8px] font-bold mt-1 uppercase">{t.library}</span>
+        </button>
+        
+        <button onClick={() => { setActiveTab('search'); setSelectedUserProfile(null); setShowWriters(false); setShowFriendsSection(false); setShowMessages(false); }} className={`flex flex-col items-center p-2 rounded-2xl transition-colors ${activeTab === 'search' ? 'text-indigo-600' : 'text-slate-400'}`}>
+          <Search size={22} />
+          <span className="text-[8px] font-bold mt-1 uppercase">{t.search}</span>
+        </button>
+        
+        <button onClick={() => { setActiveTab('social'); setSelectedUserProfile(null); setShowWriters(false); setShowFriendsSection(false); setShowMessages(false); }} className={`flex flex-col items-center p-2 rounded-2xl transition-colors ${activeTab === 'social' ? 'text-indigo-600' : 'text-slate-400'}`}>
+          <Globe size={22} />
+          <span className="text-[8px] font-bold mt-1 uppercase">{t.social}</span>
+        </button>
+        
+        <button onClick={() => { setActiveTab('profile'); setSelectedUserProfile(null); setShowWriters(false); setShowFriendsSection(false); setShowMessages(false); }} className={`flex flex-col items-center p-2 rounded-2xl transition-colors ${activeTab === 'profile' ? 'text-indigo-600' : 'text-slate-400'}`}>
+          <User size={22} />
+          <span className="text-[8px] font-bold mt-1 uppercase">{t.profile}</span>
+        </button>
+      </nav>
+    </div>
+  );
+}
