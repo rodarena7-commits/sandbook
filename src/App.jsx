@@ -1373,7 +1373,23 @@ export default function App() {
   const videoRef = useRef(null);
   const notificationsModalRef = useRef(null);
 
-  const getThemeClasses = () => {
+  
+  // --- NUEVOS ESTADOS PARA LIKERS/DISLIKERS DE PUBLICACIONES ---
+  const [showPostLikersModal, setShowPostLikersModal] = useState(false);
+  const [postLikersData, setPostLikersData] = useState([]);
+  const [showPostDislikersModal, setShowPostDislikersModal] = useState(false);
+  const [postDislikersData, setPostDislikersData] = useState([]);
+
+  // --- NUEVOS ESTADOS PARA TIPOS DE PLANES DE LECTURA ---
+  const [planType, setPlanType] = useState('structured'); // 'relaxed' o 'structured'
+  const [relaxedPlanBooks, setRelaxedPlanBooks] = useState({}); // { bookId: { currentPage, totalPages, notes } }
+
+  // --- NUEVOS ESTADOS PARA IMÁGENES EN PUBLICACIONES ---
+  const [postImageFile, setPostImageFile] = useState(null);
+  const [postImagePreview, setPostImagePreview] = useState(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+const getThemeClasses = () => {
     switch(theme) {
       case 'dark':
         return {
@@ -1991,7 +2007,203 @@ export default function App() {
     return unsubscribe;
   };
 
-  const loadBorrowRequests = () => {
+  
+  // --- NUEVAS FUNCIONES PARA MOSTRAR LIKERS/DISLIKERS DE PUBLICACIONES ---
+  const showPostLikers = async (postId) => {
+    const post = wallPosts.find(p => p.id === postId);
+    if (!post || !post.likesBy || post.likesBy.length === 0) {
+      setPostLikersData([]);
+      setShowPostLikersModal(true);
+      return;
+    }
+
+    // Get user data for each liker
+    const likersData = [];
+    for (const userId of post.likesBy) {
+      const userData = publicData.find(p => p.userId === userId);
+      if (userData) {
+        likersData.push(userData);
+      }
+    }
+    setPostLikersData(likersData);
+    setShowPostLikersModal(true);
+  };
+
+  const showPostDislikers = async (postId) => {
+    const post = wallPosts.find(p => p.id === postId);
+    if (!post || !post.dislikesBy || post.dislikesBy.length === 0) {
+      setPostDislikersData([]);
+      setShowPostDislikersModal(true);
+      return;
+    }
+
+    // Get user data for each disliker
+    const dislikersData = [];
+    for (const userId of post.dislikesBy) {
+      const userData = publicData.find(p => p.userId === userId);
+      if (userData) {
+        dislikersData.push(userData);
+      }
+    }
+    setPostDislikersData(dislikersData);
+    setShowPostDislikersModal(true);
+  };
+
+  // --- NUEVAS FUNCIONES PARA PLANES DE LECTURA ---
+  // Plan Relajado: Solo páginas, sin metas diarias
+  const saveRelaxedPlan = async () => {
+    if (!user || !planningBook) return;
+    const pages = parseInt(manualPages);
+    if (isNaN(pages) || pages <= 0) return;
+
+    const bookId = planningBook.id || planningBook.bookId;
+    const bookExists = myBooks.find(b => b.bookId === bookId);
+
+    if (!bookExists) {
+      await handleAddBook(planningBook, 'reading', false, true);
+    }
+
+    // Guardar plan relajado
+    await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), { 
+      status: 'reading',
+      totalPages: pages,
+      currentPage: 0,
+      planType: 'relaxed',
+      planStartDate: new Date().toISOString(),
+      relaxedNotes: '',
+      checkpoints: null // No checkpoints for relaxed plan
+    });
+
+    await createNotification(
+      user.uid,
+      'reading_plan_started',
+      lang === 'es' ? '¡Plan de lectura relajado iniciado!' : 'Relaxed reading plan started!',
+      lang === 'es' 
+        ? `Comenzaste a leer "${planningBook.volumeInfo?.title || planningBook.title}". Total: ${pages} páginas.`
+        : `You started reading "${planningBook.volumeInfo?.title || planningBook.title}". Total: ${pages} pages.`,
+      { bookId }
+    );
+
+    setPlanningBook(null);
+    setManualPages("");
+    setActiveTab('library');
+  };
+
+  // Plan Estructurado: Páginas + días con checkpoints
+  const saveStructuredPlan = async () => {
+    if (!user || !planningBook) return;
+    const pages = parseInt(manualPages);
+    const days = parseInt(planDays);
+    if (isNaN(pages) || isNaN(days) || pages <= 0 || days <= 0) return;
+
+    const pagesPerDay = Math.ceil(pages / days);
+    const checkpoints = [];
+    const startDate = new Date(planStartDate);
+
+    for (let i = 1; i <= days; i++) {
+      const startPage = (i - 1) * pagesPerDay + 1;
+      const endPage = Math.min(i * pagesPerDay, pages);
+      const checkpointDate = new Date(startDate);
+      checkpointDate.setDate(startDate.getDate() + i - 1);
+
+      checkpoints.push({ 
+        title: `Día ${i}: Páginas ${startPage}-${endPage}`, 
+        completed: false, 
+        note: "",
+        dayNumber: i,
+        pages: `${startPage}-${endPage}`,
+        startPage,
+        endPage,
+        date: checkpointDate.toISOString()
+      });
+    }
+
+    const bookId = planningBook.id || planningBook.bookId;
+    const bookExists = myBooks.find(b => b.bookId === bookId);
+
+    if (!bookExists) {
+      await handleAddBook(planningBook, 'reading', false, true);
+    }
+
+    await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), { 
+      checkpoints, 
+      status: 'reading', 
+      totalPages: pages,
+      planStartDate: startDate.toISOString(),
+      planDays: days,
+      pagesPerDay: pagesPerDay,
+      planEndDate: new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString(),
+      planType: 'structured'
+    });
+
+    await createNotification(
+      user.uid,
+      'reading_plan_started',
+      lang === 'es' ? '¡Plan de lectura iniciado!' : 'Reading plan started!',
+      lang === 'es' 
+        ? `Comenzaste a leer "${planningBook.volumeInfo?.title || planningBook.title}". Meta: ${pages} páginas en ${days} días.`
+        : `You started reading "${planningBook.volumeInfo?.title || planningBook.title}". Goal: ${pages} pages in ${days} days.`,
+      { bookId }
+    );
+
+    setPlanningBook(null);
+    setManualPages("");
+    setPlanDays(7);
+    setPlanStartDate(new Date().toISOString().split('T')[0]);
+    setShowStartDateOptions(false);
+    setActiveTab('library');
+  };
+
+  // --- NUEVAS FUNCIONES PARA IMÁGENES EN PUBLICACIONES ---
+  const handlePostImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      alert(lang === 'es' ? 'Por favor selecciona una imagen' : 'Please select an image');
+      return;
+    }
+
+    // Validar tamaño (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert(lang === 'es' ? 'La imagen debe ser menor a 5MB' : 'Image must be less than 5MB');
+      return;
+    }
+
+    setPostImageFile(file);
+
+    // Crear preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPostImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadPostImage = async () => {
+    if (!postImageFile || !user) return null;
+
+    setIsUploadingImage(true);
+    try {
+      const storageRef = ref(storage, `postImages/${user.uid}/${Date.now()}_${postImageFile.name}`);
+      await uploadBytes(storageRef, postImageFile);
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      return null;
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const removePostImage = () => {
+    setPostImageFile(null);
+    setPostImagePreview(null);
+  };
+
+const loadBorrowRequests = () => {
     if (!user) return;
     const borrowQuery = query(collection(db, 'borrowRequests'));
     const unsubscribe = onSnapshot(borrowQuery, (snapshot) => {
@@ -2272,6 +2484,12 @@ export default function App() {
   const submitWallPostWithNotifications = async () => {
     if (!user || !postContent.trim() || postContent.length > 2500) return;
     try {
+      // Upload image if selected
+      let imageUrl = null;
+      if (postImageFile) {
+        imageUrl = await uploadPostImage();
+      }
+
       const postData = {
         userId: user.uid,
         userName: userProfile.name,
@@ -2285,8 +2503,11 @@ export default function App() {
         timestamp: serverTimestamp(),
         likes: 0,
         likesBy: [],
+        dislikes: 0,
+        dislikesBy: [],
         comments: [],
-        isPublic: true
+        isPublic: true,
+        imageUrl: imageUrl // Add image URL to post
       };
       const postRef = await addDoc(collection(db, 'wallPosts'), postData);
       if (userProfile.following?.length > 0) {
@@ -2319,6 +2540,8 @@ export default function App() {
       setShowBookSelector(false);
       setBooksForPost([]);
       setPostSearch('');
+      setPostImageFile(null); // Clear image
+      setPostImagePreview(null); // Clear preview
       alert(lang === 'es' ? "¡Publicación creada!" : "Post created!");
     } catch (error) {
       console.error("Error al publicar:", error);
@@ -2817,30 +3040,89 @@ export default function App() {
     loadFollowLists();
   };
 
-  const likeWallPost = async (postId, currentLikes, currentLikesBy = []) => {
+  const likeWallPost = async (postId, currentLikes, currentLikesBy = [], currentDislikes = 0, currentDislikesBy = []) => {
     if (!user) return;
     const post = wallPosts.find(p => p.id === postId);
     if (!post) return;
     const alreadyLiked = currentLikesBy.includes(user.uid);
-    const newLikes = alreadyLiked ? currentLikes - 1 : currentLikes + 1;
-    const newLikesBy = alreadyLiked 
-      ? currentLikesBy.filter(id => id !== user.uid)
-      : [...currentLikesBy, user.uid];
+    const alreadyDisliked = currentDislikesBy.includes(user.uid);
+
+    let newLikes = currentLikes;
+    let newLikesBy = [...currentLikesBy];
+    let newDislikes = currentDislikes;
+    let newDislikesBy = [...currentDislikesBy];
+
+    if (alreadyLiked) {
+      // Remove like
+      newLikes = currentLikes - 1;
+      newLikesBy = currentLikesBy.filter(id => id !== user.uid);
+    } else {
+      // Add like
+      newLikes = currentLikes + 1;
+      newLikesBy = [...currentLikesBy, user.uid];
+
+      // Remove dislike if exists
+      if (alreadyDisliked) {
+        newDislikes = currentDislikes - 1;
+        newDislikesBy = currentDislikesBy.filter(id => id !== user.uid);
+      }
+
+      // Send notification
+      if (post.userId !== user.uid) {
+        await createNotification(
+          post.userId,
+          'post_liked',
+          lang === 'es' ? 'A alguien le gustó tu publicación' : 'Someone liked your post',
+          lang === 'es' 
+            ? `${userProfile.name} le dio like a tu publicación`
+            : `${userProfile.name} liked your post`,
+          { postId }
+        );
+      }
+    }
+
     await updateDoc(doc(db, 'wallPosts', postId), {
       likes: newLikes,
-      likesBy: newLikesBy
+      likesBy: newLikesBy,
+      dislikes: newDislikes,
+      dislikesBy: newDislikesBy
     });
-    if (!alreadyLiked && post.userId !== user.uid) {
-      await createNotification(
-        post.userId,
-        'post_liked',
-        lang === 'es' ? 'A alguien le gustó tu publicación' : 'Someone liked your post',
-        lang === 'es' 
-          ? `${userProfile.name} le dio like a tu publicación`
-          : `${userProfile.name} liked your post`,
-        { postId }
-      );
+  };
+
+  const dislikeWallPost = async (postId, currentLikes, currentLikesBy = [], currentDislikes = 0, currentDislikesBy = []) => {
+    if (!user) return;
+    const post = wallPosts.find(p => p.id === postId);
+    if (!post) return;
+    const alreadyLiked = currentLikesBy.includes(user.uid);
+    const alreadyDisliked = currentDislikesBy.includes(user.uid);
+
+    let newLikes = currentLikes;
+    let newLikesBy = [...currentLikesBy];
+    let newDislikes = currentDislikes;
+    let newDislikesBy = [...currentDislikesBy];
+
+    if (alreadyDisliked) {
+      // Remove dislike
+      newDislikes = currentDislikes - 1;
+      newDislikesBy = currentDislikesBy.filter(id => id !== user.uid);
+    } else {
+      // Add dislike
+      newDislikes = currentDislikes + 1;
+      newDislikesBy = [...currentDislikesBy, user.uid];
+
+      // Remove like if exists
+      if (alreadyLiked) {
+        newLikes = currentLikes - 1;
+        newLikesBy = currentLikesBy.filter(id => id !== user.uid);
+      }
     }
+
+    await updateDoc(doc(db, 'wallPosts', postId), {
+      likes: newLikes,
+      likesBy: newLikesBy,
+      dislikes: newDislikes,
+      dislikesBy: newDislikesBy
+    });
   };
 
   const addWallPostComment = async (postId, commentText) => {
@@ -3987,6 +4269,113 @@ export default function App() {
         </div>
       )}
 
+      {/* MODAL: USUARIOS QUE DIERON LIKE */}
+      {showPostLikersModal && (
+        <div className="fixed inset-0 z-[1001] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[2.5rem] p-6 shadow-2xl border ${themeClasses.border} max-h-[80vh] overflow-hidden flex flex-col`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-black text-lg uppercase flex items-center gap-2">
+                <Heart size={20} className="text-red-500 fill-red-500" />
+                {lang === 'es' ? 'Me gusta' : 'Likes'}
+                <span className="text-slate-400">({postLikersData.length})</span>
+              </h3>
+              <button 
+                onClick={() => setShowPostLikersModal(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3">
+              {postLikersData.length === 0 ? (
+                <p className="text-center text-slate-400 py-8">
+                  {lang === 'es' ? 'Nadie ha dado like aún' : 'No likes yet'}
+                </p>
+              ) : (
+                postLikersData.map(liker => (
+                  <div 
+                    key={liker.userId} 
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-gray-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => {
+                      setShowPostLikersModal(false);
+                      handleViewUserProfile(liker);
+                    }}
+                  >
+                    <img 
+                      src={liker.profilePic || 'https://via.placeholder.com/40'} 
+                      alt={liker.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <p className="font-bold text-sm">{liker.name}</p>
+                      <p className="text-xs text-slate-400">
+                        {liker.readCount || 0} {t.read.toLowerCase()}
+                      </p>
+                    </div>
+                    <ChevronRight size={16} className="text-slate-300" />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: USUARIOS QUE DIERON DISLIKE */}
+      {showPostDislikersModal && (
+        <div className="fixed inset-0 z-[1001] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[2.5rem] p-6 shadow-2xl border ${themeClasses.border} max-h-[80vh] overflow-hidden flex flex-col`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-black text-lg uppercase flex items-center gap-2">
+                <ThumbsDown size={20} className="text-blue-500 fill-blue-500" />
+                {lang === 'es' ? 'No me gusta' : 'Dislikes'}
+                <span className="text-slate-400">({postDislikersData.length})</span>
+              </h3>
+              <button 
+                onClick={() => setShowPostDislikersModal(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3">
+              {postDislikersData.length === 0 ? (
+                <p className="text-center text-slate-400 py-8">
+                  {lang === 'es' ? 'Nadie ha dado dislike aún' : 'No dislikes yet'}
+                </p>
+              ) : (
+                postDislikersData.map(disliker => (
+                  <div 
+                    key={disliker.userId} 
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-gray-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => {
+                      setShowPostDislikersModal(false);
+                      handleViewUserProfile(disliker);
+                    }}
+                  >
+                    <img 
+                      src={disliker.profilePic || 'https://via.placeholder.com/40'} 
+                      alt={disliker.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <p className="font-bold text-sm">{disliker.name}</p>
+                      <p className="text-xs text-slate-400">
+                        {disliker.readCount || 0} {t.read.toLowerCase()}
+                      </p>
+                    </div>
+                    <ChevronRight size={16} className="text-slate-300" />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+
       
       {/* MODAL PERFIL DE USUARIO (MEJORADO PARA MOSTRAR TODOS SUS LIBROS) */}
       {showUserProfileModal && userProfileModalData && (
@@ -4614,6 +5003,48 @@ export default function App() {
                 </div>
               </div>
               <div className="space-y-4">
+                {/* Plan Type Selector */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">
+                    {lang === 'es' ? 'Tipo de plan' : 'Plan type'}
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setPlanType('relaxed')}
+                      className={`flex-1 py-3 px-4 rounded-2xl text-sm font-bold transition-all ${
+                        planType === 'relaxed'
+                          ? 'bg-indigo-600 text-white'
+                          : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <BookOpen size={18} />
+                        {lang === 'es' ? 'Relajado' : 'Relaxed'}
+                      </div>
+                      <span className="text-[10px] font-normal opacity-80 block mt-1">
+                        {lang === 'es' ? 'Solo páginas, sin metas diarias' : 'Pages only, no daily goals'}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setPlanType('structured')}
+                      className={`flex-1 py-3 px-4 rounded-2xl text-sm font-bold transition-all ${
+                        planType === 'structured'
+                          ? 'bg-indigo-600 text-white'
+                          : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <Calendar size={18} />
+                        {lang === 'es' ? 'Estructurado' : 'Structured'}
+                      </div>
+                      <span className="text-[10px] font-normal opacity-80 block mt-1">
+                        {lang === 'es' ? 'Páginas + días con metas' : 'Pages + days with goals'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.manual_p}</label>
                   <input 
@@ -4624,6 +5055,8 @@ export default function App() {
                     placeholder="Ej: 300"
                   />
                 </div>
+                {planType === 'structured' && (
+                <>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.days}</label>
                   <input 
@@ -4665,6 +5098,10 @@ export default function App() {
                     </div>
                   )}
                 </div>
+                </>
+              )}
+                  )}
+                </div>
                 {manualPages && planDays && (
                   <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-indigo-900/30' : theme === 'sunset' ? 'bg-orange-100' : 'bg-indigo-50'}`}>
                     <p className="text-xs text-center">
@@ -4674,15 +5111,16 @@ export default function App() {
                 )}
               </div>
               <button 
-                onClick={saveReadingPlan}
-                disabled={!manualPages || !planDays}
+                onClick={planType === 'relaxed' ? saveRelaxedPlan : saveReadingPlan}
+                disabled={!manualPages || (planType === 'structured' && !planDays)}
                 className={`w-full mt-6 py-4 rounded-2xl font-black text-sm uppercase shadow-md flex items-center justify-center gap-2 transition-all ${
-                  !manualPages || !planDays
+                  !manualPages || (planType === 'structured' && !planDays)
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                 }`}
               >
-                <Calendar size={18}/> {t.start}
+                {planType === 'relaxed' ? <BookOpen size={18}/> : <Calendar size={18}/>} 
+                {planType === 'relaxed' ? (lang === 'es' ? 'Comenzar lectura' : 'Start reading') : t.start}
               </button>
             </div>
           </div>
@@ -5376,6 +5814,47 @@ export default function App() {
                 placeholder={t.write_quote}
                 maxLength={2500}
               />
+
+              {/* Image Upload Section */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold">{lang === 'es' ? 'Imagen (opcional)' : 'Image (optional)'}</p>
+                  {!postImagePreview && (
+                    <label className="cursor-pointer px-3 py-1.5 bg-indigo-100 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-200 transition-colors">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handlePostImageUpload}
+                        className="hidden"
+                      />
+                      <Camera size={14} className="inline mr-1" />
+                      {lang === 'es' ? 'Subir foto' : 'Upload photo'}
+                    </label>
+                  )}
+                </div>
+
+                {postImagePreview && (
+                  <div className="relative">
+                    <img 
+                      src={postImagePreview} 
+                      alt="Preview" 
+                      className="w-full h-48 object-cover rounded-2xl"
+                    />
+                    <button
+                      onClick={removePostImage}
+                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                    {isUploadingImage && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl">
+                        <Loader2 className="animate-spin text-white" size={32} />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-between mt-2 mb-4">
                 <p className="text-xs text-slate-400">{t.max_characters}</p>
                 <p className={`text-xs font-bold ${postContent.length >= 2500 ? 'text-red-500' : 'text-slate-400'}`}>
@@ -6496,6 +6975,7 @@ export default function App() {
                 {wallPosts.map((post) => {
                   const isOwnPost = post.userId === user?.uid;
                   const isLiked = (post.likesBy || []).includes(user?.uid);
+                  const isDisliked = (post.dislikesBy || []).includes(user?.uid);
                   const isSaved = savedPostsList.includes(post.id);
                   const postComments = wallPostComments[post.id] || [];
                   return (
@@ -6591,15 +7071,60 @@ export default function App() {
                         </div>
                       )}
                       <p className="text-sm text-slate-600 dark:text-gray-300 mb-4 whitespace-pre-wrap">{post.content}</p>
+
+                      {/* Post Image */}
+                      {post.imageUrl && (
+                        <div className="mb-4">
+                          <img 
+                            src={post.imageUrl} 
+                            alt="Post image" 
+                            className="w-full max-h-80 object-cover rounded-2xl cursor-pointer hover:opacity-95 transition-opacity"
+                            onClick={() => window.open(post.imageUrl, '_blank')}
+                          />
+                        </div>
+                      )}
                       <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-gray-700">
                         <div className="flex gap-4">
+                          {/* Like Button */}
                           <button 
-                            onClick={() => likeWallPost(post.id, post.likes || 0, post.likesBy || [])}
+                            onClick={() => likeWallPost(post.id, post.likes || 0, post.likesBy || [], post.dislikes || 0, post.dislikesBy || [])}
                             className={`flex items-center gap-1 text-xs transition-all ${isLiked ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}
+                            title={lang === 'es' ? 'Me gusta' : 'Like'}
                           >
                             <Heart size={16} className={isLiked ? 'fill-red-500' : ''} />
                             {post.likes || 0}
                           </button>
+
+                          {/* View Likes Button */}
+                          {(post.likesBy?.length > 0) && (
+                            <button 
+                              onClick={() => showPostLikers(post.id)}
+                              className="text-[10px] text-slate-400 hover:text-indigo-500 underline"
+                            >
+                              {lang === 'es' ? 'Ver' : 'View'}
+                            </button>
+                          )}
+
+                          {/* Dislike Button */}
+                          <button 
+                            onClick={() => dislikeWallPost(post.id, post.likes || 0, post.likesBy || [], post.dislikes || 0, post.dislikesBy || [])}
+                            className={`flex items-center gap-1 text-xs transition-all ${isDisliked ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'}`}
+                            title={lang === 'es' ? 'No me gusta' : 'Dislike'}
+                          >
+                            <ThumbsDown size={16} className={isDisliked ? 'fill-blue-500' : ''} />
+                            {post.dislikes || 0}
+                          </button>
+
+                          {/* View Dislikes Button */}
+                          {(post.dislikesBy?.length > 0) && (
+                            <button 
+                              onClick={() => showPostDislikers(post.id)}
+                              className="text-[10px] text-slate-400 hover:text-indigo-500 underline"
+                            >
+                              {lang === 'es' ? 'Ver' : 'View'}
+                            </button>
+                          )}
+
                           <button 
                             onClick={() => {
                               const input = document.getElementById(`comment-input-${post.id}`);
