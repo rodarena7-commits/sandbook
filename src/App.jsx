@@ -2040,7 +2040,7 @@ export default function App() {
     setActiveTab('library');
   };
 
-  // --- MODIFICADA: saveReadingPlan (mantener la original) ---
+  // --- MODIFICADA: saveReadingPlan (única declaración) ---
   const saveReadingPlan = async () => {
     if (!user || !planningBook) return;
     const pages = parseInt(manualPages);
@@ -2637,60 +2637,6 @@ export default function App() {
         inLibrary: !book.inLibrary 
       });
     }
-  };
-
-  const saveReadingPlan = async () => {
-    if (!user || !planningBook) return;
-    const pages = parseInt(manualPages);
-    const days = parseInt(planDays);
-    if (isNaN(pages) || isNaN(days) || pages <= 0 || days <= 0) return;
-    const pagesPerDay = Math.ceil(pages / days);
-    const checkpoints = [];
-    const startDate = new Date(planStartDate);
-    for (let i = 1; i <= days; i++) {
-      const startPage = (i - 1) * pagesPerDay + 1;
-      const endPage = Math.min(i * pagesPerDay, pages);
-      const checkpointDate = new Date(startDate);
-      checkpointDate.setDate(startDate.getDate() + i - 1);
-      checkpoints.push({ 
-        title: `Día ${i}: Páginas ${startPage}-${endPage}`, 
-        completed: false, 
-        note: "",
-        dayNumber: i,
-        pages: `${startPage}-${endPage}`,
-        startPage,
-        endPage,
-        date: checkpointDate.toISOString()
-      });
-    }
-    const bookId = planningBook.id || planningBook.bookId;
-    const bookExists = myBooks.find(b => b.bookId === bookId);
-    if (!bookExists) {
-      await handleAddBook(planningBook, 'reading', false, true);
-    }
-    await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), { 
-      checkpoints, 
-      status: 'reading', 
-      totalPages: pages,
-      planStartDate: startDate.toISOString(),
-      planDays: days,
-      pagesPerDay: pagesPerDay,
-      planEndDate: new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
-    });
-    await createNotification(
-      user.uid,
-      'reading_plan_started',
-      lang === 'es' ? '¡Plan de lectura iniciado!' : 'Reading plan started!',
-      lang === 'es' 
-        ? `Comenzaste a leer "${planningBook.volumeInfo?.title || planningBook.title}". Meta: ${pages} páginas en ${days} días.`
-        : `You started reading "${planningBook.volumeInfo?.title || planningBook.title}". Goal: ${pages} pages in ${days} days.`,
-      { bookId }
-    );
-    setPlanningBook(null);
-    setManualPages("");
-    setPlanDays(7);
-    setPlanStartDate(new Date().toISOString().split('T')[0]);
-    setActiveTab('library');
   };
 
   const toggleCheckpoint = async (bookId, idx) => {
@@ -6937,7 +6883,7 @@ export default function App() {
                         <button onClick={() => changeTheme('sunset')} className={`p-1.5 rounded-full ${theme === 'sunset' ? 'bg-white shadow' : 'opacity-50'}`}>
                           <Sunset size={16} className="text-orange-500" />
                         </button>
-                        <button onClick={() -> changeTheme('dark')} className={`p-1.5 rounded-full ${theme === 'dark' ? 'bg-gray-800 shadow' : 'opacity-50'}`}>
+                        <button onClick={() => changeTheme('dark')} className={`p-1.5 rounded-full ${theme === 'dark' ? 'bg-gray-800 shadow' : 'opacity-50'}`}>
                           <Moon size={16} className="text-blue-400" />
                         </button>
                       </div>
@@ -6993,7 +6939,7 @@ export default function App() {
           50% { transform: translateX(100%); }
           100% { transform: translateX(100%); }
         }
-        .animate-\[loading_1\.5s_ease-in-out_infinite\] {
+        .animate-\\[loading_1\\.5s_ease-in-out_infinite\\] {
           animation: loading 1.5s ease-in-out infinite;
         }
       `}</style>
