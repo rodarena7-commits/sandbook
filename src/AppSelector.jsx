@@ -1,6 +1,6 @@
 // AppSelector.jsx - Versión 0 (Selector)
 import React, { useState, useEffect } from 'react';
-import AppV4 from './v.4.App';
+import AppV4 from './v4.App';
 import AppV2 from './App';
 
 // Configuración de Firebase (compartida entre versiones)
