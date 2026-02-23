@@ -1,18 +1,14 @@
-// AppSelector.jsx - Versión 0 (Selector)
-import React, { useState, useEffect } from 'react';
-import AppV4 from './v4.App';
-import AppV2 from './App';
+// src/AppSelector.jsx
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { X, Sparkles, Languages } from 'lucide-react';
 
-// Configuración de Firebase (compartida entre versiones)
-const firebaseConfig = {
-  apiKey: "AIzaSyDM9GK7_gnd0GaVbxwK9xnwl0qk75MnFXw",
-  authDomain: "playmobil-2d74d.firebaseapp.com",
-  projectId: "playmobil-2d74d",
-  storageBucket: "playmobil-2d74d.firebasestorage.app",
-  messagingSenderId: "85202851148",
-  appId: "1:85202851148:web:bf8eba63238c06c7b4ebe9",
-  measurementId: "G-MX2B76PCD6"
-};
+// Importar las versiones con los nombres CORREGIDOS
+import AppV4 from './versions/version4';  // Sin extensión, Vite la encuentra automáticamente
+import AppV2 from './versions/version2';
+
+// O si prefieres lazy loading:
+// const AppV4 = lazy(() => import('./versions/version4'));
+// const AppV2 = lazy(() => import('./versions/version2'));
 
 // Traducciones para el selector
 const selectorI18n = {
@@ -54,7 +50,6 @@ const VersionSelector = ({ currentVersion, onVersionChange, onClose, lang }) => 
 
   const handleFeedbackSubmit = () => {
     if (feedback.trim()) {
-      // Aquí podrías guardar el feedback en Firebase
       console.log('Feedback enviado:', { version: currentVersion, feedback });
       setFeedbackSent(true);
       setTimeout(() => setFeedbackSent(false), 3000);
@@ -152,31 +147,27 @@ const VersionSelector = ({ currentVersion, onVersionChange, onClose, lang }) => 
   );
 };
 
-// Componente principal que alterna entre versiones
+// Componente principal
 export default function AppSelector() {
   const [lang, setLang] = useState('es');
   const [version, setVersion] = useState(() => {
-    // Intentar cargar la versión preferida de localStorage
     const saved = localStorage.getItem('sandbook_preferred_version');
-    return saved || 'v4'; // Por defecto v4
+    return saved || 'v4';
   });
   const [showSelector, setShowSelector] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   
   const t = selectorI18n[lang];
 
-  // Función para cambiar de versión
   const handleVersionChange = (newVersion) => {
     setVersion(newVersion);
     setShowSelector(false);
     
-    // Guardar en localStorage si se seleccionó "recordar"
     const remember = localStorage.getItem('sandbook_preferred_version') !== null;
     if (remember) {
       localStorage.setItem('sandbook_preferred_version', newVersion);
     }
     
-    // Recargar la aplicación para asegurar una inicialización limpia
     window.location.reload();
   };
 
@@ -184,7 +175,6 @@ export default function AppSelector() {
     setIsInitialized(true);
   }, []);
 
-  // Renderizar la versión seleccionada
   const renderCurrentVersion = () => {
     if (!isInitialized) {
       return (
@@ -203,10 +193,8 @@ export default function AppSelector() {
 
   return (
     <>
-      {/* Renderizar la versión actual */}
       {renderCurrentVersion()}
       
-      {/* Botón flotante para abrir el selector */}
       <button
         onClick={() => setShowSelector(!showSelector)}
         className="fixed bottom-6 right-6 z-[9999] w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform border-2 border-white/30"
@@ -214,16 +202,13 @@ export default function AppSelector() {
         <Sparkles size={24} />
       </button>
       
-      {/* Selector de versiones */}
       {showSelector && (
         <>
-          {/* Overlay */}
           <div 
             className="fixed inset-0 bg-black/50 z-[9999]"
             onClick={() => setShowSelector(false)}
           />
           
-          {/* Selector flotante */}
           <VersionSelector
             currentVersion={version}
             onVersionChange={handleVersionChange}
@@ -233,7 +218,6 @@ export default function AppSelector() {
         </>
       )}
       
-      {/* Botón de idioma para el selector */}
       <button
         onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
         className="fixed bottom-6 left-6 z-[9999] w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
