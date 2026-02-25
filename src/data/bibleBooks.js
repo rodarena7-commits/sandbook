@@ -268,6 +268,3 @@ export const bibleBooks = [
 // Aquí va TODO el JSON que te di
 ];
 
-    )}
-  </div>
-)}
