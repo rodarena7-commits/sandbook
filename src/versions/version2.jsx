@@ -466,8 +466,8 @@ const getBestCoverForBook = async (bookId, bookData = null, lang = 'es') => {
   // 1. Portada de la comunidad (mantenemos por si hay, pero ya no la sugeriremos)
   if (window.communityCovers && window.communityCovers[bookId]?.thumbnail) {
     return {
-      url: window.communityCovers[bookId].thumbnail,
-      source: 'community',
+      url: getPlaceholder(150, 200, 'NO COVER'),
+      source: 'default',
       uploader: window.communityCovers[bookId].uploadedByName
     };
   }
