@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 
 // --- IMPORTAR DATOS DE LA BIBLIA ---
-import { bibleBooks } from './data/bibleBooks';
+import { bibleBooks } from '../data/bibleBooks';
 
 // --- CONFIGURACIÓN DE FIREBASE ---
 const firebaseConfig = {
