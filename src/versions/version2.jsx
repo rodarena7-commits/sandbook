@@ -2244,27 +2244,27 @@ export default function App() {
   };
 
   const performSearch = async (forcedQ = null) => {
-    const q = (forcedQ || searchQuery).trim();
+    const q = (forcedQ || searchQuery).trim().toLowerCase();
     if (!q) return;
     setIsSearching(true);
     setSearchError(null);
     
     // Verificar si está buscando "Biblia"
-    if (q.toLowerCase().includes('biblia')) {
-      setSearchResults([{
-        id: 'bible-special',
-        specialBible: true,
-        volumeInfo: {
-          title: t.bible,
-          authors: ['Dios'],
-          description: t.bible_description,
-          publishedDate: 'Siglo I',
-          pageCount: 1189
-        }
-      }]);
-      setIsSearching(false);
-      return;
-    }
+    if (q.includes('biblia')) {
+    setSearchResults([{
+      id: 'bible-special',
+      specialBible: true,
+      volumeInfo: {
+        title: t.bible,
+        authors: ['Dios'],
+        description: t.bible_description,
+        publishedDate: 'Siglo I',
+        pageCount: 1189
+      }
+    }]);
+    setIsSearching(false);
+    return;
+  }
     
     try {
       let queryParam = q;
@@ -2280,7 +2280,8 @@ export default function App() {
       const data = await res.json();
       if (data.items) setSearchResults(data.items);
       else setSearchError(lang === 'es' ? "Sin resultados" : "No results");
-    } catch (err) { setSearchError("API Error"); } finally { setIsSearching(false); }
+    } catch (err) { setSearchError("Error en la búsqueda");
+    setIsSearching(false);}
   };
 
   const searchAuthors = async () => {
