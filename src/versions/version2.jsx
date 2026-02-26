@@ -36,7 +36,7 @@ import {
   getDownloadURL
 } from 'firebase/storage';
 import { 
-  BookOpen, Search, Trophy, Plus, CheckCircle, Layout, User, Award, Loader2, PenTool, Globe, Camera, MessageSquare, Send, X, ChevronDown, ChevronUp, ChevronRight, Settings, Edit3, ListChecks, Lock, Flag, Sparkles, Star, Upload, Book as BookIcon, AlertCircle, Calendar, FileText, Info, Maximize2, Minimize2, UserPlus, UserCheck, Users, Trash2, Facebook, Languages, Share2, UserX, MessageCircle, StickyNote, Barcode, Library, Heart, ArrowLeft, Moon, Sun, Sunset, LogIn, LogOut, MessageSquarePlus, Eye, EyeOff, Bell, ThumbsUp, ThumbsDown, Bookmark, Quote, PenLine, TrendingUp, Clock, Flame, Target, Hash, Mic, Filter, MapPin, UserMinus, Shield, Mail, Phone, Home, HelpCircle, Download, ChevronLeft, ZoomIn, ZoomOut, Handshake, Image as ImageIcon, Edit, Trash, Lock as LockIcon, Unlock
+  BookOpen, Search, Trophy, Plus, CheckCircle, Layout, User, Award, Loader2, PenTool, Globe, Camera, MessageSquare, Send, X, ChevronDown, ChevronUp, ChevronRight, Settings, Edit3, ListChecks, Lock, Flag, Sparkles, Star, Upload, Book as BookIcon, AlertCircle, Calendar, FileText, Info, Maximize2, Minimize2, UserPlus, UserCheck, Users, Trash2, Facebook, Languages, Share2, UserX, MessageCircle, StickyNote, Barcode, Library, Heart, ArrowLeft, Moon, Sun, Sunset, LogIn, LogOut, MessageSquarePlus, Eye, EyeOff, Bell, ThumbsUp, ThumbsDown, Bookmark, Quote, PenLine, TrendingUp, Clock, Flame, Target, Hash, Mic, Filter, MapPin, UserMinus, Shield, Mail, Phone, Home, HelpCircle, Download, ChevronLeft, ZoomIn, ZoomOut, Handshake, Image as ImageIcon, Edit, Trash, Lock as LockIcon, Unlock, Menu
 } from 'lucide-react';
 
 // --- IMPORTAR DATOS DE LA BIBLIA ---
@@ -204,7 +204,13 @@ const i18n = {
     unread_chapter: "Marcar como no leído",
     current_chapter: "Capítulo actual",
     chapters: "Capítulos",
-    start_bible_plan: "Comenzar plan de la Biblia"
+    start_bible_plan: "Comenzar plan de la Biblia",
+    search_book: "Buscar libro...",
+    books_in_plan: "Libros en plan",
+    liked_books: "Libros que me gustan",
+    read_books: "Libros leídos",
+    language: "Idioma",
+    change_language: "Cambiar idioma"
   },
   en: {
     library: "Library", plan: "Plan", social: "Social", profile: "Me",
@@ -346,7 +352,13 @@ const i18n = {
     unread_chapter: "Mark as unread",
     current_chapter: "Current chapter",
     chapters: "Chapters",
-    start_bible_plan: "Start Bible plan"
+    start_bible_plan: "Start Bible plan",
+    search_book: "Search book...",
+    books_in_plan: "Books in plan",
+    liked_books: "Liked books",
+    read_books: "Read books",
+    language: "Language",
+    change_language: "Change language"
   }
 };
 
@@ -861,25 +873,31 @@ const BibleReadingPlan = ({ book, onClose, t, theme, user, onUpdate }) => {
   const [chapters, setChapters] = useState([]);
   const [currentChapter, setCurrentChapter] = useState(book.currentChapter || 1);
   const [readChapters, setReadChapters] = useState(book.readChapters || []);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('all'); // 'all', 'plan', 'liked', 'read'
   
   useEffect(() => {
-    // Cargar los capítulos de la Biblia
+    // Cargar los capítulos de la Biblia con estructura de libros
     const allChapters = [];
-    bibleBooks.forEach(bibleBook => {
-      bibleBook.chapters.forEach((chapterCount, index) => {
+    bibleBooks.forEach((bibleBook, bookIndex) => {
+      for (let chapterNum = 1; chapterNum <= bibleBook.chapters.length; chapterNum++) {
         allChapters.push({
           bookName: bibleBook.name,
-          bookIndex: index + 1,
-          chapterNumber: chapterCount,
-          totalChapters: chapterCount
+          bookIndex: bookIndex,
+          chapterNumber: chapterNum,
+          totalChaptersInBook: bibleBook.chapters.length,
+          globalChapterIndex: allChapters.length + 1 // Índice global para mantener referencia
         });
-      });
+      }
     });
     setChapters(allChapters);
     
     // Cargar capítulos leídos del libro
     if (book.readChapters) {
       setReadChapters(book.readChapters);
+    }
+    if (book.currentChapter) {
+      setCurrentChapter(book.currentChapter);
     }
   }, [book]);
   
@@ -921,6 +939,30 @@ const BibleReadingPlan = ({ book, onClose, t, theme, user, onUpdate }) => {
   const progress = chapters.length > 0 
     ? Math.round((readChapters.length / chapters.length) * 100) 
     : 0;
+  
+  // Filtrar capítulos según búsqueda y modo de vista
+  const filteredChapters = chapters.filter((chap, idx) => {
+    const chapterNumber = idx + 1;
+    
+    // Filtro de búsqueda
+    if (searchQuery && !chap.bookName.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !chap.bookName.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    
+    // Filtro por modo de vista
+    if (viewMode === 'plan' && !(chapterNumber >= currentChapter && !readChapters.includes(chapterNumber))) {
+      return false;
+    }
+    if (viewMode === 'liked' && !globalLikes[book.bookId]?.likes?.includes(user?.uid)) {
+      return false;
+    }
+    if (viewMode === 'read' && !readChapters.includes(chapterNumber)) {
+      return false;
+    }
+    
+    return true;
+  });
   
   return (
     <div className={`fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in`}>
@@ -967,18 +1009,80 @@ const BibleReadingPlan = ({ book, onClose, t, theme, user, onUpdate }) => {
               } border`}
             />
           </div>
+
+          {/* Filtros de vista */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+            <button
+              onClick={() => setViewMode('all')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${
+                viewMode === 'all' 
+                  ? 'bg-indigo-600 text-white' 
+                  : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {t.all}
+            </button>
+            <button
+              onClick={() => setViewMode('plan')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${
+                viewMode === 'plan' 
+                  ? 'bg-blue-600 text-white' 
+                  : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {t.books_in_plan}
+            </button>
+            <button
+              onClick={() => setViewMode('liked')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${
+                viewMode === 'liked' 
+                  ? 'bg-green-600 text-white' 
+                  : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {t.liked_books}
+            </button>
+            <button
+              onClick={() => setViewMode('read')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${
+                viewMode === 'read' 
+                  ? 'bg-purple-600 text-white' 
+                  : theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {t.read_books}
+            </button>
+          </div>
+
+          {/* Barra de búsqueda */}
+          <div className="relative mb-4">
+            <input 
+              type="text" 
+              placeholder={t.search_book}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`w-full pl-10 pr-4 py-2 rounded-xl text-sm outline-none ${
+                theme === 'dark' 
+                  ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                  : 'bg-white text-slate-900 border-slate-200'
+              } border`}
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          </div>
           
-          <h3 className="text-lg font-bold mb-4">{t.chapters}</h3>
+          <h3 className="text-lg font-bold mb-4">{t.chapters} ({filteredChapters.length})</h3>
           
           <div className="space-y-2">
-            {chapters.map((chap, idx) => {
-              const chapterNumber = idx + 1;
+            {filteredChapters.map((chap, idx) => {
+              const chapterNumber = chapters.findIndex(c => 
+                c.bookName === chap.bookName && c.chapterNumber === chap.chapterNumber
+              ) + 1;
               const isRead = readChapters.includes(chapterNumber);
               const isCurrent = currentChapter === chapterNumber;
               
               return (
                 <div 
-                  key={idx}
+                  key={chapterNumber}
                   className={`flex items-center gap-3 p-3 rounded-xl ${
                     isCurrent 
                       ? 'bg-indigo-100 dark:bg-indigo-900/30 border-2 border-indigo-300 dark:border-indigo-700' 
@@ -998,7 +1102,7 @@ const BibleReadingPlan = ({ book, onClose, t, theme, user, onUpdate }) => {
                   
                   <div className="flex-1">
                     <p className={`text-sm font-bold ${isRead ? 'line-through text-slate-400' : ''}`}>
-                      {t.chapter} {chapterNumber}: {chap.bookName}
+                      {chap.bookName} {chap.chapterNumber}
                     </p>
                   </div>
                   
@@ -1201,6 +1305,10 @@ export default function App() {
   const [bibleBook, setBibleBook] = useState(null);
   const [bibleData] = useState(bibleBooks);
 
+  // --- NUEVO ESTADO PARA MENÚ DE IDIOMA ---
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const languageMenuRef = useRef(null);
+
   const victoryAudio = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"));
   const videoRef = useRef(null);
   const notificationsModalRef = useRef(null);
@@ -1247,6 +1355,20 @@ export default function App() {
   };
 
   const themeClasses = getThemeClasses();
+
+  // --- Cerrar menú de idioma al hacer click fuera ---
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (languageMenuRef.current && !languageMenuRef.current.contains(event.target)) {
+        setShowLanguageMenu(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // --- FUNCIÓN PRIORIZADA: BUSCAR PORTADA (Open Library primero, luego Google Books) ---
   const getBestCoverForBook = async (bookId, bookData = null, langParam = lang) => {
@@ -3967,11 +4089,57 @@ export default function App() {
         </div>
       )}
 
-      {/* HEADER */}
+      {/* HEADER - MENÚ DE IDIOMA EN EL LOGO */}
       <header className={`sticky top-0 z-50 ${theme === 'dark' ? 'bg-gray-800/90' : theme === 'sunset' ? 'bg-orange-100/90' : 'bg-white/90'} backdrop-blur-md border-b ${themeClasses.border} px-6 py-4 flex items-center justify-between shadow-sm`}>
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl">
-            <img src="/logo.png" className="w-40 h-10 object-contain" alt="Sandbook" />
+          <div className="relative" ref={languageMenuRef}>
+            <button 
+              onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+              className="p-2 rounded-xl hover:bg-opacity-80 transition-colors flex items-center gap-2"
+            >
+              <img src="/logo.png" className="w-40 h-10 object-contain" alt="Sandbook" />
+              <ChevronDown size={16} className="text-slate-400" />
+            </button>
+            
+            {showLanguageMenu && (
+              <div className={`absolute top-full left-0 mt-2 w-48 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl border ${themeClasses.border} z-50 overflow-hidden`}>
+                <div className="p-2">
+                  <p className="text-xs font-bold text-slate-400 dark:text-gray-400 px-3 py-2">
+                    {t.language}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setLang('es');
+                      setShowLanguageMenu(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-sm flex items-center gap-2 ${
+                      lang === 'es' 
+                        ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' 
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="text-lg">🇪🇸</span>
+                    Español
+                    {lang === 'es' && <CheckCircle size={14} className="ml-auto text-indigo-600" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLang('en');
+                      setShowLanguageMenu(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-sm flex items-center gap-2 ${
+                      lang === 'en' 
+                        ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' 
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="text-lg">🇬🇧</span>
+                    English
+                    {lang === 'en' && <CheckCircle size={14} className="ml-auto text-indigo-600" />}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
