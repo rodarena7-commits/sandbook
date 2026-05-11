@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -93,6 +93,7 @@ const i18n = {
     authors: "Autores", author_details: "Detalles del autor",
     books_by_author: "Libros del autor", loading_more: "Cargando más...",
     search: "Buscar",
+    bible: "Biblia", bible_select: "Selecciona un libro bíblico", bible_chapters: "Capítulos", bible_create_plan: "Crear plan bíblico", bible_plan: "Plan Bíblico",
     friends: "Amigos", following: "Siguiendo", followers_list: "Seguidores",
     find_friends: "Encontrar amigos", friend_requests: "Solicitudes",
     remove_friend: "Eliminar amigo", add_friend: "Agregar amigo",
@@ -267,6 +268,7 @@ const i18n = {
     authors: "Authors", author_details: "Author details",
     books_by_author: "Author's books", loading_more: "Loading more...",
     search: "Search",
+    bible: "Bible", bible_select: "Select a biblical book", bible_chapters: "Chapters", bible_create_plan: "Create Bible plan", bible_plan: "Bible Plan",
     friends: "Friends", following: "Following", followers_list: "Followers",
     find_friends: "Find friends", friend_requests: "Friend requests",
     remove_friend: "Remove friend", add_friend: "Add friend",
@@ -438,27 +440,27 @@ const BADGE_DEFS = {
 const BadgeIcon = ({ badgeId, unlocked = false, size = 24 }) => {
   const getBadgeSvg = (id) => {
     switch(id) {
-      case 1: return <Trophy size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 2: return <Target size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 3: return <Star size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 4: return <Flame size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 5: return <Clock size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 6: return <Calendar size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 7: return <Award size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 8: return <CheckCircle size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 9: return <TrendingUp size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 10: return <TrendingUp size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 11: return <Award size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 12: return <Award size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 13: return <Sparkles size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 14: return <Camera size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 15: return <Camera size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 16: return <Camera size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 17: return <Camera size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 18: return <Camera size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 19: return <Camera size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      case 20: return <Handshake size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
-      default: return <Trophy size={size} className={unlocked ? 'text-amber-600' : 'text-stone-400'} />;
+      case 1: return <Trophy size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 2: return <Target size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 3: return <Star size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 4: return <Flame size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 5: return <Clock size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 6: return <Calendar size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 7: return <Award size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 8: return <CheckCircle size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 9: return <TrendingUp size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 10: return <TrendingUp size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 11: return <Award size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 12: return <Award size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 13: return <Sparkles size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 14: return <Camera size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 15: return <Camera size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 16: return <Camera size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 17: return <Camera size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 18: return <Camera size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 19: return <Camera size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      case 20: return <Handshake size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
+      default: return <Trophy size={size} className={unlocked ? 'text-yellow-400' : 'text-gray-400'} />;
     }
   };
   
@@ -466,7 +468,7 @@ const BadgeIcon = ({ badgeId, unlocked = false, size = 24 }) => {
     <div className={`relative flex items-center justify-center ${unlocked ? 'opacity-100' : 'opacity-50'}`}>
       {getBadgeSvg(badgeId)}
       {!unlocked && (
-        <Lock size={size/3} className="absolute -bottom-1 -right-1 text-stone-400" />
+        <Lock size={size/3} className="absolute -bottom-1 -right-1 text-gray-500" />
       )}
     </div>
   );
@@ -516,7 +518,7 @@ const StarRating = ({ rating, onRate, interactive = true, size = 20 }) => (
         key={s} 
         size={size} 
         onClick={() => interactive && onRate(s)}
-        className={`${interactive ? 'cursor-pointer transition-all active:scale-125' : ''} ${s <= rating ? 'fill-amber-500 text-amber-500' : 'text-stone-300'}`}
+        className={`${interactive ? 'cursor-pointer transition-all active:scale-125' : ''} ${s <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`}
       />
     ))}
   </div>
@@ -550,6 +552,7 @@ const convertToGrayscale = (imageDataUrl) => {
   });
 };
 
+// --- FUNCIÓN PARA VERIFICAR SI LA IMAGEN ESTÁ EN BLANCO ---
 const isImageBlank = (imgElement) => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
@@ -575,6 +578,7 @@ const isImageBlank = (imgElement) => {
   });
 };
 
+// --- FUNCIÓN PRIORIZADA: BUSCAR PORTADA (Open Library primero, luego Google Books) ---
 const getBestCoverForBook = async (bookId, bookData = null, lang = 'es') => {
   // 1. Portada de la comunidad
   if (window.communityCovers && window.communityCovers[bookId]?.thumbnail) {
@@ -699,7 +703,7 @@ const CoverZoomModal = ({ imageUrl, title, onClose, t }) => {
   
   return (
     <div 
-      className="fixed inset-0 z-[1000] bg-stone-900/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-in fade-in"
+      className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-in fade-in"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -707,28 +711,28 @@ const CoverZoomModal = ({ imageUrl, title, onClose, t }) => {
       <div className="absolute top-4 right-4 flex gap-2">
         <button
           onClick={handleZoomIn}
-          className="p-3 bg-stone-800/50 hover:bg-stone-700 text-white rounded-full transition-all"
+          className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
           title={t.zoom_image}
         >
           <ZoomIn size={24} />
         </button>
         <button
           onClick={handleZoomOut}
-          className="p-3 bg-stone-800/50 hover:bg-stone-700 text-white rounded-full transition-all"
+          className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
           title={t.zoom_image}
         >
           <ZoomOut size={24} />
         </button>
         <button
           onClick={handleDownload}
-          className="p-3 bg-stone-800/50 hover:bg-stone-700 text-white rounded-full transition-all"
+          className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
           title={t.download}
         >
           <Download size={24} />
         </button>
         <button
           onClick={onClose}
-          className="p-3 bg-stone-800/50 hover:bg-stone-700 text-white rounded-full transition-all"
+          className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
           title={t.close}
         >
           <X size={24} />
@@ -752,9 +756,62 @@ const CoverZoomModal = ({ imageUrl, title, onClose, t }) => {
         />
       </div>
       
-      <p className="absolute bottom-4 left-4 text-stone-400/80 text-sm max-w-md truncate">
+      <p className="absolute bottom-4 left-4 text-white/50 text-sm max-w-md truncate">
         {title}
       </p>
+    </div>
+  );
+};
+
+// --- MODAL PARA MOSTRAR LISTA DE USUARIOS QUE REACCIONARON ---
+const ReactionListModal = ({ title, users, onClose, theme, t, onViewProfile }) => {
+  return (
+    <div className="fixed inset-0 z-[450] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-white'} w-full max-w-md max-h-[70vh] rounded-[2rem] overflow-hidden flex flex-col shadow-2xl`}>
+        <div className={`relative p-4 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
+          <h2 className="text-lg font-black text-white text-center">{title}</h2>
+          <button onClick={onClose} className="absolute top-4 right-4 p-1 bg-white/20 text-white rounded-full">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          {users.length === 0 ? (
+            <p className="text-center text-sm text-slate-500 py-8">
+              {t.no_friends || 'No hay usuarios'}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {users.map(user => (
+                <div key={user.userId} className={`flex items-center justify-between p-3 rounded-xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-100' : 'bg-slate-100'}`}>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={user.profilePic || 'https://via.placeholder.com/40'}
+                      className="w-10 h-10 rounded-full object-cover cursor-pointer"
+                      onClick={() => {
+                        onClose();
+                        onViewProfile(user);
+                      }}
+                    />
+                    <div>
+                      <p
+                        className="text-sm font-bold cursor-pointer hover:text-indigo-600"
+                        onClick={() => {
+                          onClose();
+                          onViewProfile(user);
+                        }}
+                      >
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-slate-500">{user.readCount || 0} {t.read?.toLowerCase() || 'leídos'}</p>
+                    </div>
+                  </div>
+                  <img src={getLevelSymbol(user.readCount)} className="w-5 h-5 object-contain" alt="Nivel" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -805,12 +862,12 @@ const BookCoverDisplay = ({ bookId, bookData, theme, myBooks, lang, onZoom, onCl
         }}
       />
       {coverInfo.source === 'openlibrary' && (
-        <div className="absolute -bottom-8 left-24 bg-emerald-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+        <div className="absolute -bottom-8 left-24 bg-blue-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
           OL
         </div>
       )}
       {coverInfo.source === 'google' && (
-        <div className="absolute -bottom-8 left-24 bg-amber-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+        <div className="absolute -bottom-8 left-24 bg-red-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
           G
         </div>
       )}
@@ -876,7 +933,7 @@ const SearchBookCover = ({ book, alreadyHave, t, lang, onViewDetails, onAuthorCl
       <img 
         ref={imgRef}
         src={coverInfo.url} 
-        className={`w-24 h-36 object-contain rounded-xl shadow-md cursor-pointer hover:scale-105 transition-all bg-white ${isLoading ? 'animate-pulse' : ''}`}
+        className={`w-24 h-36 object-contain rounded-2xl shadow-md cursor-pointer hover:scale-105 transition-all bg-white ${isLoading ? 'animate-pulse' : ''}`}
         style={{ filter: isLoading ? 'blur(4px)' : 'none' }}
         onClick={() => onViewDetails(book)}
         onError={(e) => {
@@ -884,12 +941,12 @@ const SearchBookCover = ({ book, alreadyHave, t, lang, onViewDetails, onAuthorCl
         }}
       />
       {coverInfo.source === 'google' && (
-        <div className="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+        <div className="absolute -top-2 -right-2 bg-red-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
           G
         </div>
       )}
       {coverInfo.source === 'openlibrary' && (
-        <div className="absolute -top-2 -right-2 bg-emerald-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+        <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-[8px] font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
           OL
         </div>
       )}
@@ -919,41 +976,41 @@ const UserReadingProgress = ({ book, theme, t }) => {
   const daysLeft = totalDays - completedDays;
   
   return (
-    <div className={`mt-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'}`}>
+    <div className={`mt-3 p-3 rounded-xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'}`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400">
+        <span className="text-[10px] font-bold text-slate-500 dark:text-gray-400">
           {t.reading_progress}
         </span>
-        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+        <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">
           {progress}%
         </span>
       </div>
       
-      <div className="h-1.5 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden mb-2">
+      <div className="h-1.5 bg-slate-200 dark:bg-gray-600 rounded-full overflow-hidden mb-2">
         <div 
-          className="h-full bg-emerald-500 transition-all duration-700" 
+          className="h-full bg-indigo-500 transition-all duration-700" 
           style={{ width: `${progress}%` }} 
         />
       </div>
       
       <div className="flex justify-between text-[10px]">
-        <span className="text-stone-500 dark:text-stone-400">
+        <span className="text-slate-500 dark:text-gray-400">
           {completedDays} {t.days_completed} / {totalDays} {t.total_days}
         </span>
-        <span className="font-bold text-amber-600 dark:text-amber-500">
+        <span className="font-bold text-orange-500 dark:text-orange-400">
           {daysLeft} {t.days_left}
         </span>
       </div>
       
       {book.planStartDate && (
-        <p className="text-[9px] text-stone-400 dark:text-stone-500 mt-2">
+        <p className="text-[9px] text-slate-400 dark:text-gray-500 mt-2">
           {t.started_on}: {new Date(book.planStartDate).toLocaleDateString()}
         </p>
       )}
       
       {/* Mostrar página actual si está disponible */}
       {book.currentPage && (
-        <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-2">
+        <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mt-2">
           {t.current_page}: {book.currentPage}
         </p>
       )}
@@ -983,27 +1040,27 @@ const ReadingPlanDetail = ({ book, onToggleCheckpoint, onSaveNote, onSavePage, t
   return (
     <div className="mt-4 space-y-4">
       {/* Resumen del plan */}
-      <div className={`p-4 rounded-xl ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'}`}>
+      <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'}`}>
         <div className="flex justify-between items-center mb-2">
-          <p className="text-xs font-bold text-stone-500 dark:text-stone-400">{t.reading_plan_status}</p>
-          <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+          <p className="text-xs font-bold text-slate-500 dark:text-gray-400">{t.reading_plan_status}</p>
+          <p className="text-sm font-black text-indigo-600 dark:text-indigo-400">
             {completedCount}/{totalDays} {t.days_completed}
           </p>
         </div>
-        <div className="h-2 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-200 dark:bg-gray-600 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-emerald-500 transition-all" 
+            className="h-full bg-indigo-500 transition-all" 
             style={{ width: `${(completedCount / totalDays) * 100}%` }} 
           />
         </div>
-        <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-2">
+        <p className="text-[10px] text-slate-500 dark:text-gray-400 mt-2">
           {daysLeft} {t.days_left} • {book.pagesPerDay} {t.pages.toLowerCase()}/{t.day?.toLowerCase() || 'día'}
         </p>
       </div>
 
       {/* Lista de checkpoints */}
       <div className="space-y-2">
-        <p className="font-bold text-xs uppercase tracking-widest text-stone-500">{t.daily_notes}</p>
+        <p className="font-bold text-xs uppercase tracking-widest">{t.daily_notes}</p>
         {sortedCheckpoints.map((cp, idx) => {
           const isCurrentDay = idx === currentDayIndex && !cp.completed;
           const todayKey = `${book.bookId}-${cp.dayNumber}`;
@@ -1014,12 +1071,12 @@ const ReadingPlanDetail = ({ book, onToggleCheckpoint, onSaveNote, onSavePage, t
           return (
             <div 
               key={idx} 
-              className={`rounded-xl border overflow-hidden transition-all ${
+              className={`rounded-2xl border overflow-hidden transition-all ${
                 cp.completed 
-                  ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' 
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
                   : isCurrentDay 
-                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' 
-                    : theme === 'dark' ? 'bg-stone-800 border-stone-700' : 'bg-white border-stone-200'
+                    ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' 
+                    : theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'
               }`}
             >
               {/* Header del checkpoint - siempre visible */}
@@ -1035,16 +1092,16 @@ const ReadingPlanDetail = ({ book, onToggleCheckpoint, onSaveNote, onSavePage, t
                     }}
                     className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                       cp.completed 
-                        ? 'bg-emerald-500 text-white' 
-                        : 'bg-stone-200 dark:bg-stone-700 text-stone-500 dark:text-stone-400'
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-slate-200 dark:bg-gray-600 text-slate-500 dark:text-gray-300'
                     }`}
                   >
                     <CheckCircle size={16} className={cp.completed ? 'fill-white' : ''} />
                   </button>
                   <div className="text-left">
-                    <p className="font-bold text-sm text-stone-800 dark:text-stone-200">{cp.title || `Día ${cp.dayNumber}`}</p>
+                    <p className="font-bold text-sm">{cp.title || `Día ${cp.dayNumber}`}</p>
                     {cp.date && (
-                      <p className="text-[10px] text-stone-500 dark:text-stone-400">
+                      <p className="text-[10px] text-slate-500 dark:text-gray-400">
                         {new Date(cp.date).toLocaleDateString()}
                       </p>
                     )}
@@ -1052,7 +1109,7 @@ const ReadingPlanDetail = ({ book, onToggleCheckpoint, onSaveNote, onSavePage, t
                 </div>
                 <div className="flex items-center gap-2">
                   {cp.currentPage && (
-                    <span className="text-[10px] text-stone-500 dark:text-stone-400">
+                    <span className="text-[10px] text-slate-500 dark:text-gray-400">
                       P. {cp.currentPage}
                     </span>
                   )}
@@ -1062,10 +1119,10 @@ const ReadingPlanDetail = ({ book, onToggleCheckpoint, onSaveNote, onSavePage, t
 
               {/* Contenido expandible */}
               {isExpanded && (
-                <div className="px-3 pb-3 space-y-3 border-t border-stone-200 dark:border-stone-700 pt-3">
+                <div className="px-3 pb-3 space-y-3 border-t border-slate-200 dark:border-gray-700 pt-3">
                   {/* Input para página actual */}
                   <div>
-                    <label className="text-[10px] font-bold text-stone-500 dark:text-stone-400 mb-1 block">
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 mb-1 block">
                       {t.current_page_progress}
                     </label>
                     <div className="flex gap-2">
@@ -1077,12 +1134,12 @@ const ReadingPlanDetail = ({ book, onToggleCheckpoint, onSaveNote, onSavePage, t
                           // Esto se manejará desde el componente padre
                         }}
                         onBlur={(e) => onSavePage(book.bookId, cp.dayNumber, e.target.value, book.totalPages)}
-                        className={`flex-1 rounded-xl px-3 py-2 text-xs outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : 'bg-white text-stone-900 border-stone-200'} border`}
+                        className={`flex-1 rounded-xl px-3 py-2 text-xs outline-none ${theme === 'dark' ? 'bg-gray-600 text-gray-100 border-gray-500' : 'bg-white text-slate-900 border-slate-200'} border`}
                         placeholder={t.page_input_placeholder}
                         min="1"
                         max={book.totalPages}
                       />
-                      <span className="text-xs text-stone-500 dark:text-stone-400 self-center">
+                      <span className="text-xs text-slate-500 dark:text-gray-400 self-center">
                         / {book.totalPages}
                       </span>
                     </div>
@@ -1090,13 +1147,13 @@ const ReadingPlanDetail = ({ book, onToggleCheckpoint, onSaveNote, onSavePage, t
 
                   {/* Área de notas */}
                   <div>
-                    <label className="text-[10px] font-bold text-stone-500 dark:text-stone-400 mb-1 block">
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 mb-1 block">
                       {t.my_notes}
                     </label>
                     <textarea 
                       defaultValue={noteValue}
                       onBlur={(e) => onSaveNote(book.bookId, cp.dayNumber, e.target.value)}
-                      className={`w-full rounded-xl p-3 text-xs outline-none min-h-[60px] ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : 'bg-white text-stone-900 border-stone-200'} border`}
+                      className={`w-full rounded-xl p-3 text-xs outline-none min-h-[60px] ${theme === 'dark' ? 'bg-gray-600 text-gray-100 border-gray-500' : 'bg-white text-slate-900 border-slate-200'} border`}
                       placeholder={t.checkpoint_notes_placeholder}
                     />
                   </div>
@@ -1117,42 +1174,42 @@ const BookActionButtons = ({ book, myBook, onAddToLibrary, onToggleFavorite, onT
     <div className="relative">
       <button 
         onClick={() => setShowOptions(!showOptions)}
-        className="p-2 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full transition-colors"
+        className="p-2 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-full transition-colors"
       >
         <MoreVertical size={18} />
       </button>
       {showOptions && (
-        <div className={`absolute right-0 top-full mt-2 w-48 rounded-xl shadow-xl border ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-white'} z-10`}>
+        <div className={`absolute right-0 top-full mt-2 w-48 rounded-2xl shadow-xl border ${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-white'} z-10`}>
           {!myBook && (
             <button 
               onClick={() => { onAddToLibrary(); setShowOptions(false); }}
-              className="w-full px-4 py-3 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-700 flex items-center gap-2 rounded-t-xl"
+              className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-700 flex items-center gap-2 rounded-t-2xl"
             >
               <BookOpen size={14} /> {t.add_to_library}
             </button>
           )}
           <button 
             onClick={() => { onToggleFavorite(); setShowOptions(false); }}
-            className="w-full px-4 py-3 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-700 flex items-center gap-2"
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-700 flex items-center gap-2"
           >
-            <Star size={14} className={myBook?.isFavorite ? 'fill-amber-500 text-amber-500' : ''} /> 
+            <Star size={14} className={myBook?.isFavorite ? 'fill-yellow-400 text-yellow-400' : ''} /> 
             {myBook?.isFavorite ? t.remove_from_library : t.favorites}
           </button>
           <button 
             onClick={() => { onToggleLike(); setShowOptions(false); }}
-            className="w-full px-4 py-3 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-700 flex items-center gap-2"
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-700 flex items-center gap-2"
           >
             <ThumbsUp size={14} /> {t.like}
           </button>
           <button 
             onClick={() => { onToggleDislike(); setShowOptions(false); }}
-            className="w-full px-4 py-3 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-700 flex items-center gap-2"
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-700 flex items-center gap-2"
           >
             <ThumbsDown size={14} /> {t.dislike}
           </button>
           <button 
             onClick={() => { onStartPlan(); setShowOptions(false); }}
-            className="w-full px-4 py-3 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-700 flex items-center gap-2 rounded-b-xl"
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-700 flex items-center gap-2 rounded-b-2xl"
           >
             <Calendar size={14} /> {t.reading_plan}
           </button>
@@ -1213,7 +1270,8 @@ export default function App() {
   const [planDays, setPlanDays] = useState(7);
   const [planStartDate, setPlanStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [showStartDateOptions, setShowStartDateOptions] = useState(false);
-  
+  const [planType, setPlanType] = useState('standard'); // 'standard' o 'relax'
+
   const [expandedBooks, setExpandedBooks] = useState(new Set());
   const [bookComments, setBookComments] = useState({});
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -1363,6 +1421,80 @@ export default function App() {
   const [usersWhoLiked, setUsersWhoLiked] = useState([]);
   const [usersWhoDisliked, setUsersWhoDisliked] = useState([]);
   const [usersWithBook, setUsersWithBook] = useState([]);
+
+  // --- ESTADOS PARA BIBLIA ---
+  const [showBibleModal, setShowBibleModal] = useState(false);
+  const [selectedBibleBook, setSelectedBibleBook] = useState(null);
+  const bibleBooks = [
+    // Antiguo Testamento
+    { name: 'Génesis', chapters: 50 },
+    { name: 'Éxodo', chapters: 40 },
+    { name: 'Levítico', chapters: 27 },
+    { name: 'Números', chapters: 36 },
+    { name: 'Deuteronomio', chapters: 34 },
+    { name: 'Josué', chapters: 24 },
+    { name: 'Jueces', chapters: 21 },
+    { name: 'Rut', chapters: 4 },
+    { name: '1 Samuel', chapters: 31 },
+    { name: '2 Samuel', chapters: 24 },
+    { name: '1 Reyes', chapters: 22 },
+    { name: '2 Reyes', chapters: 25 },
+    { name: '1 Crónicas', chapters: 29 },
+    { name: '2 Crónicas', chapters: 36 },
+    { name: 'Esdras', chapters: 10 },
+    { name: 'Nehemías', chapters: 13 },
+    { name: 'Ester', chapters: 10 },
+    { name: 'Job', chapters: 42 },
+    { name: 'Salmos', chapters: 150 },
+    { name: 'Proverbios', chapters: 31 },
+    { name: 'Eclesiastés', chapters: 12 },
+    { name: 'Cantar de los Cantares', chapters: 8 },
+    { name: 'Isaías', chapters: 66 },
+    { name: 'Jeremías', chapters: 52 },
+    { name: 'Lamentaciones', chapters: 5 },
+    { name: 'Ezequiel', chapters: 48 },
+    { name: 'Daniel', chapters: 12 },
+    { name: 'Oseas', chapters: 14 },
+    { name: 'Joel', chapters: 3 },
+    { name: 'Amós', chapters: 9 },
+    { name: 'Abdías', chapters: 1 },
+    { name: 'Jonás', chapters: 4 },
+    { name: 'Miqueas', chapters: 7 },
+    { name: 'Nahúm', chapters: 3 },
+    { name: 'Habacuc', chapters: 3 },
+    { name: 'Sofonías', chapters: 3 },
+    { name: 'Ageo', chapters: 2 },
+    { name: 'Zacarías', chapters: 14 },
+    { name: 'Malaquías', chapters: 4 },
+    // Nuevo Testamento
+    { name: 'Mateo', chapters: 28 },
+    { name: 'Marcos', chapters: 16 },
+    { name: 'Lucas', chapters: 24 },
+    { name: 'Juan', chapters: 21 },
+    { name: 'Hechos', chapters: 28 },
+    { name: 'Romanos', chapters: 16 },
+    { name: '1 Corintios', chapters: 16 },
+    { name: '2 Corintios', chapters: 13 },
+    { name: 'Gálatas', chapters: 6 },
+    { name: 'Efesios', chapters: 6 },
+    { name: 'Filipenses', chapters: 4 },
+    { name: 'Colosenses', chapters: 4 },
+    { name: '1 Tesalonicenses', chapters: 5 },
+    { name: '2 Tesalonicenses', chapters: 3 },
+    { name: '1 Timoteo', chapters: 6 },
+    { name: '2 Timoteo', chapters: 4 },
+    { name: 'Tito', chapters: 3 },
+    { name: 'Filemón', chapters: 1 },
+    { name: 'Hebreos', chapters: 13 },
+    { name: 'Santiago', chapters: 5 },
+    { name: '1 Pedro', chapters: 5 },
+    { name: '2 Pedro', chapters: 3 },
+    { name: '1 Juan', chapters: 5 },
+    { name: '2 Juan', chapters: 1 },
+    { name: '3 Juan', chapters: 1 },
+    { name: 'Judas', chapters: 1 },
+    { name: 'Apocalipsis', chapters: 22 }
+  ];
   const [showUserListModal, setShowUserListModal] = useState(false);
   const [userListTitle, setUserListTitle] = useState('');
   const [userListData, setUserListData] = useState([]);
@@ -1375,39 +1507,39 @@ export default function App() {
     switch(theme) {
       case 'dark':
         return {
-          bg: 'bg-stone-900',
-          text: 'text-stone-100',
-          card: 'bg-stone-800 text-stone-100',
-          border: 'border-stone-700',
-          input: 'bg-stone-700 border-stone-600 text-stone-100',
-          button: 'bg-stone-700 hover:bg-stone-600 text-stone-100',
-          primary: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-          secondary: 'bg-stone-600 hover:bg-stone-500 text-stone-100',
-          accent: 'bg-amber-600 hover:bg-amber-700 text-white'
+          bg: 'bg-gray-900',
+          text: 'text-gray-100',
+          card: 'bg-gray-800 text-gray-100',
+          border: 'border-gray-700',
+          input: 'bg-gray-700 border-gray-600 text-gray-100',
+          button: 'bg-gray-700 hover:bg-gray-600 text-gray-100',
+          primary: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+          secondary: 'bg-gray-600 hover:bg-gray-500 text-gray-100',
+          accent: 'bg-purple-600 hover:bg-purple-700 text-white'
         };
       case 'sunset':
         return {
-          bg: 'bg-amber-50',
-          text: 'text-stone-800',
-          card: 'bg-amber-50 text-stone-800',
+          bg: 'bg-orange-50',
+          text: 'text-gray-800',
+          card: 'bg-amber-50 text-gray-800',
           border: 'border-amber-200',
-          input: 'bg-amber-100 border-amber-300 text-stone-800',
+          input: 'bg-amber-100 border-amber-300 text-gray-800',
           button: 'bg-amber-500 hover:bg-amber-400 text-white',
-          primary: 'bg-amber-600 hover:bg-amber-700 text-white',
-          secondary: 'bg-amber-400 hover:bg-amber-300 text-stone-800',
-          accent: 'bg-amber-600 hover:bg-amber-700 text-white'
+          primary: 'bg-orange-500 hover:bg-orange-600 text-white',
+          secondary: 'bg-amber-400 hover:bg-amber-300 text-gray-800',
+          accent: 'bg-pink-500 hover:bg-pink-600 text-white'
         };
       default:
         return {
-          bg: 'bg-stone-50',
-          text: 'text-stone-900',
-          card: 'bg-white text-stone-900',
-          border: 'border-stone-200',
-          input: 'bg-stone-50 border-stone-200 text-stone-900',
-          button: 'bg-stone-100 hover:bg-stone-200 text-stone-700',
-          primary: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-          secondary: 'bg-stone-200 hover:bg-stone-300 text-stone-700',
-          accent: 'bg-amber-600 hover:bg-amber-700 text-white'
+          bg: 'bg-slate-50',
+          text: 'text-slate-900',
+          card: 'bg-white text-slate-900',
+          border: 'border-slate-200',
+          input: 'bg-slate-50 border-slate-200 text-slate-900',
+          button: 'bg-slate-100 hover:bg-slate-200 text-slate-700',
+          primary: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+          secondary: 'bg-slate-200 hover:bg-slate-300 text-slate-700',
+          accent: 'bg-purple-600 hover:bg-purple-700 text-white'
         };
     }
   };
@@ -2631,6 +2763,111 @@ export default function App() {
     setManualPages("");
     setPlanDays(7);
     setPlanStartDate(new Date().toISOString().split('T')[0]);
+    setPlanType('standard');
+    setActiveTab('library');
+  };
+
+  // --- FUNCIÓN PLAN RELAX (SIN CHECKPOINTS DIARIOS) ---
+  const saveRelaxPlan = async () => {
+    if (!user || !planningBook) return;
+    const pages = parseInt(manualPages);
+    if (isNaN(pages) || pages <= 0) return;
+
+    const bookId = planningBook.id || planningBook.bookId;
+    const bookExists = myBooks.find(b => b.bookId === bookId);
+    if (!bookExists) {
+      await handleAddBook(planningBook, 'reading', false, true);
+    }
+
+    await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), {
+      status: 'reading',
+      planType: 'relax',
+      totalPages: pages,
+      currentPage: 0,
+      relaxStartDate: new Date().toISOString()
+    });
+
+    await createNotification(
+      user.uid,
+      'reading_plan_started',
+      lang === 'es' ? '¡Plan Relax iniciado!' : 'Relax plan started!',
+      lang === 'es'
+        ? `Comenzaste a leer "${planningBook.volumeInfo?.title || planningBook.title}". Meta: ${pages} páginas.`
+        : `You started reading "${planningBook.volumeInfo?.title || planningBook.title}". Goal: ${pages} pages.`,
+      { bookId }
+    );
+
+    setPlanningBook(null);
+    setManualPages("");
+    setPlanType('standard');
+    setActiveTab('library');
+  };
+
+  // --- FUNCIÓN PARA GUARDAR PLAN DE LECTURA BÍBLICO ---
+  const saveBibleReadingPlan = async () => {
+    if (!user || !selectedBibleBook) return;
+    const days = parseInt(planDays);
+    if (isNaN(days) || days <= 0) return;
+
+    const totalChapters = selectedBibleBook.chapters;
+    const chaptersPerDay = Math.ceil(totalChapters / days);
+    const checkpoints = [];
+    const startDate = new Date(planStartDate);
+
+    for (let i = 1; i <= days; i++) {
+      const startChapter = (i - 1) * chaptersPerDay + 1;
+      const endChapter = Math.min(i * chaptersPerDay, totalChapters);
+      const checkpointDate = new Date(startDate);
+      checkpointDate.setDate(startDate.getDate() + i - 1);
+      checkpoints.push({
+        title: `Día ${i}: Capítulos ${startChapter}-${endChapter}`,
+        completed: false,
+        note: "",
+        dayNumber: i,
+        chapters: `${startChapter}-${endChapter}`,
+        startChapter,
+        endChapter,
+        date: checkpointDate.toISOString()
+      });
+    }
+
+    const bibleBookId = `bible_${selectedBibleBook.name.toLowerCase().replace(/\s+/g, '_')}`;
+
+    await setDoc(doc(db, 'users', user.uid, 'myBooks', bibleBookId), {
+      bookId: bibleBookId,
+      title: selectedBibleBook.name,
+      authors: ['La Biblia'],
+      isBible: true,
+      totalChapters: totalChapters,
+      status: 'reading',
+      checkpoints: checkpoints,
+      planStartDate: startDate.toISOString(),
+      planDays: days,
+      chaptersPerDay: chaptersPerDay,
+      planEndDate: new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString(),
+      currentChapter: 0,
+      addedAt: new Date().toISOString(),
+      thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150"%3E%3Crect fill="%234B2C1F" width="100" height="150"/%3E%3Ctext x="50" y="75" font-size="40" fill="white" text-anchor="middle" dy=".3em"%3E📖%3C/text%3E%3C/svg%3E'
+    });
+
+    await updateDoc(doc(db, 'profiles', user.uid), {
+      planCount: increment(1)
+    });
+
+    await createNotification(
+      user.uid,
+      'bible_plan_started',
+      lang === 'es' ? '¡Plan Bíblico iniciado!' : 'Bible reading plan started!',
+      lang === 'es'
+        ? `Comenzaste a leer "${selectedBibleBook.name}". Meta: ${totalChapters} capítulos en ${days} días.`
+        : `You started reading "${selectedBibleBook.name}". Goal: ${totalChapters} chapters in ${days} days.`,
+      { bookId: bibleBookId }
+    );
+
+    setShowBibleModal(false);
+    setSelectedBibleBook(null);
+    setPlanDays(7);
+    setPlanStartDate(new Date().toISOString().split('T')[0]);
     setActiveTab('library');
   };
 
@@ -3524,8 +3761,8 @@ export default function App() {
   const renderFollowModal = (title, list, type) => {
     return (
       <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-        <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-          <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+        <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+          <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
             <h2 className="text-xl font-black text-white text-center">{title}</h2>
             <button onClick={() => {
               if (type === 'following') setShowFollowingModal(false);
@@ -3538,15 +3775,15 @@ export default function App() {
           <div className="flex-1 overflow-y-auto p-6">
             {list.length === 0 ? (
               <div className="text-center py-12">
-                <Users className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>
+                <Users className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>
                   {lang === 'es' ? `No hay ${type === 'following' ? 'personas que sigues' : type === 'followers' ? 'seguidores' : 'amigos mutuos'}` : `No ${type === 'following' ? 'people you follow' : type === 'followers' ? 'followers' : 'mutual friends'}`}
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {list.map(user => (
-                  <div key={user.userId} className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}>
+                  <div key={user.userId} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}>
                     <div className="flex items-center gap-3">
                       <img 
                         src={user.profilePic || 'https://via.placeholder.com/40'} 
@@ -3557,7 +3794,7 @@ export default function App() {
                         <p className="text-sm font-bold cursor-pointer" onClick={() => openUserProfileModal(user)}>
                           {user.name}
                         </p>
-                        <p className="text-xs text-stone-500 dark:text-stone-400">
+                        <p className="text-xs text-slate-500 dark:text-gray-400">
                           {user.readCount || 0} {t.read.toLowerCase()} • {getLevelTitle(user.readCount, lang)}
                           <img src={getLevelSymbol(user.readCount)} className="w-3 h-3 object-contain inline-block ml-1" alt="Nivel" />
                         </p>
@@ -3566,7 +3803,7 @@ export default function App() {
                     <div className="flex gap-2">
                       <button 
                         onClick={() => openUserProfileModal(user)}
-                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                        className="px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold"
                         title={lang === 'es' ? 'Ver perfil' : 'View profile'}
                       >
                         <Eye size={14} />
@@ -3576,7 +3813,7 @@ export default function App() {
                           setSelectedUserForMessage(user);
                           setShowNewMessageModal(true);
                         }}
-                        className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold"
+                        className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-bold"
                         title={t.send_message}
                       >
                         <MessageSquare size={14} />
@@ -3701,20 +3938,20 @@ export default function App() {
     return (
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-black text-sm uppercase tracking-widest border-b pb-2 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400">{title}</h3>
+          <h3 className="font-black text-sm uppercase tracking-widest border-b pb-2 border-slate-200 dark:border-gray-700">{title}</h3>
           {totalPages > 1 && (
             <div className="flex gap-2">
               <button 
                 onClick={prevPage} 
                 disabled={currentPage === 0}
-                className={`p-1 rounded-full ${currentPage === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-stone-100 dark:hover:bg-stone-700'}`}
+                className={`p-1 rounded-full ${currentPage === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-gray-700'}`}
               >
                 <ChevronLeft size={18} />
               </button>
               <button 
                 onClick={nextPage} 
                 disabled={currentPage >= totalPages - 1}
-                className={`p-1 rounded-full ${currentPage >= totalPages - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-stone-100 dark:hover:bg-stone-700'}`}
+                className={`p-1 rounded-full ${currentPage >= totalPages - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-gray-700'}`}
               >
                 <ChevronRight size={18} />
               </button>
@@ -3725,7 +3962,7 @@ export default function App() {
           {displayedBooks.map((book, idx) => (
             <div 
               key={idx} 
-              className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-2 rounded-xl border ${themeClasses.border} cursor-pointer hover:scale-105 transition-all`}
+              className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-2 rounded-xl border ${themeClasses.border} cursor-pointer hover:scale-105 transition-all`}
               onClick={() => onBookClick(book)}
             >
               <div className="aspect-[2/3] mb-2 bg-white rounded-lg overflow-hidden">
@@ -3738,9 +3975,9 @@ export default function App() {
                   }}
                 />
               </div>
-              <p className="text-xs font-bold line-clamp-2 text-stone-800 dark:text-stone-200">{book.title}</p>
+              <p className="text-xs font-bold line-clamp-2">{book.title}</p>
               <p 
-                className="text-[8px] text-stone-500 dark:text-stone-400 mt-1 line-clamp-1 cursor-pointer hover:text-emerald-600"
+                className="text-[8px] text-slate-500 dark:text-gray-400 mt-1 line-clamp-1 cursor-pointer hover:text-indigo-500"
                 onClick={(e) => {
                   e.stopPropagation();
                   viewAuthor(Array.isArray(book.authors) ? book.authors[0] : book.authors);
@@ -3749,7 +3986,7 @@ export default function App() {
                 {Array.isArray(book.authors) ? book.authors[0] : book.authors}
               </p>
               {book.firstPublishYear && (
-                <p className="text-[8px] text-stone-400 dark:text-stone-500 mt-1">
+                <p className="text-[8px] text-slate-400 dark:text-gray-500 mt-1">
                   {book.firstPublishYear}
                 </p>
               )}
@@ -3765,8 +4002,8 @@ export default function App() {
     if (!users || users.length === 0) return null;
     return (
       <div className="fixed inset-0 z-[1002] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-        <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-          <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+        <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+          <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
             <h2 className="text-xl font-black text-white text-center">{title}</h2>
             <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
               <X size={24}/>
@@ -3775,7 +4012,7 @@ export default function App() {
           <div className="flex-1 overflow-y-auto p-6">
             <div className="space-y-4">
               {users.map(user => (
-                <div key={user.userId} className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}>
+                <div key={user.userId} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}>
                   <div className="flex items-center gap-3">
                     <img 
                       src={user.profilePic || 'https://via.placeholder.com/40'} 
@@ -3792,7 +4029,7 @@ export default function App() {
                       }}>
                         {user.name}
                       </p>
-                      <p className="text-xs text-stone-500 dark:text-stone-400">
+                      <p className="text-xs text-slate-500 dark:text-gray-400">
                         {user.readCount || 0} {t.read.toLowerCase()} • {getLevelTitle(user.readCount, lang)}
                         <img src={getLevelSymbol(user.readCount)} className="w-3 h-3 object-contain inline-block ml-1" alt="Nivel" />
                       </p>
@@ -3804,7 +4041,7 @@ export default function App() {
                         onClose();
                         openUserProfileModal(user);
                       }}
-                      className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                      className="px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold"
                       title={lang === 'es' ? 'Ver perfil' : 'View profile'}
                     >
                       <Eye size={14} />
@@ -3815,7 +4052,7 @@ export default function App() {
                         setSelectedUserForMessage(user);
                         setShowNewMessageModal(true);
                       }}
-                      className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold"
+                      className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-bold"
                       title={t.send_message}
                     >
                       <MessageSquare size={14} />
@@ -3833,19 +4070,19 @@ export default function App() {
   // --- LOADER DE AUTENTICACIÓN ---
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900 flex flex-col items-center justify-center p-8">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex flex-col items-center justify-center p-8">
         <div className="relative animate-bounce">
-          <BookOpen size={80} className="text-amber-500 animate-pulse" />
+          <BookOpen size={80} className="text-white animate-pulse" />
           <div className="absolute -top-2 -right-2">
-            <div className="w-4 h-4 bg-amber-400 rounded-full animate-ping"></div>
-            <div className="w-4 h-4 bg-amber-400 rounded-full absolute inset-0"></div>
+            <div className="w-4 h-4 bg-yellow-400 rounded-full animate-ping"></div>
+            <div className="w-4 h-4 bg-yellow-400 rounded-full absolute inset-0"></div>
           </div>
         </div>
         <h1 className="mt-8 text-3xl font-black text-white tracking-tighter animate-pulse">
           Sandbook
         </h1>
         <div className="mt-8 w-48 h-2 bg-white/20 rounded-full overflow-hidden">
-          <div className="h-full w-1/2 bg-amber-500 rounded-full animate-[loading_1.5s_ease-in-out_infinite]"></div>
+          <div className="h-full w-1/2 bg-white rounded-full animate-[loading_1.5s_ease-in-out_infinite]"></div>
         </div>
         <p className="mt-4 text-white/70 text-sm font-medium">
           {lang === 'es' ? 'Cargando tu biblioteca...' : 'Loading your library...'}
@@ -3855,7 +4092,7 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen ${themeClasses.bg} ${themeClasses.text} pb-24 font-sans overflow-x-hidden selection:bg-amber-200 selection:text-stone-900`}>
+    <div className={`min-h-screen ${themeClasses.bg} ${themeClasses.text} pb-24 font-sans overflow-x-hidden selection:bg-indigo-200 selection:text-white`}>
       
       {/* MODAL ZOOM DE PORTADA */}
       {zoomImage && (
@@ -3870,8 +4107,8 @@ export default function App() {
       {/* MODAL DE INSIGNIA */}
       {showBadgeModal && selectedBadge && (
         <div className="fixed inset-0 z-[1001] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-amber-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-amber-600'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-yellow-800' : theme === 'sunset' ? 'bg-amber-500' : 'bg-yellow-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{selectedBadge.name}</h2>
               <button onClick={() => setShowBadgeModal(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -3879,13 +4116,13 @@ export default function App() {
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <div className="text-center mb-6">
-                <div className={`w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center ${userProfile.badges?.includes(parseInt(selectedBadge.id)) ? 'bg-amber-100 dark:bg-amber-900' : 'bg-stone-200 dark:bg-stone-700'}`}>
+                <div className={`w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center ${userProfile.badges?.includes(parseInt(selectedBadge.id)) ? 'bg-yellow-100 dark:bg-yellow-900' : 'bg-gray-200 dark:bg-gray-700'}`}>
                   <BadgeIcon badgeId={parseInt(selectedBadge.id)} unlocked={userProfile.badges?.includes(parseInt(selectedBadge.id))} size={48} />
                 </div>
-                <p className="text-sm text-stone-600 dark:text-stone-300 mb-4">{selectedBadge.desc}</p>
+                <p className="text-sm text-slate-600 dark:text-gray-300 mb-4">{selectedBadge.desc}</p>
                 
-                <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-stone-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'}`}>
-                  <p className="text-xs font-bold text-stone-500 dark:text-stone-400 mb-2">{t.badge_requirement}</p>
+                <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'}`}>
+                  <p className="text-xs font-bold text-slate-500 dark:text-gray-400 mb-2">{t.badge_requirement}</p>
                   <p className="text-sm font-bold">
                     {selectedBadge.requirement.type === 'read_count' && `${selectedBadge.requirement.value} ${t.read.toLowerCase()}`}
                     {selectedBadge.requirement.type === 'scan_count' && `${selectedBadge.requirement.value} ${lang === 'es' ? 'libros escaneados' : 'scanned books'}`}
@@ -3896,10 +4133,10 @@ export default function App() {
                 </div>
                 
                 <div className="mt-4">
-                  <p className="text-xs font-bold text-stone-500 dark:text-stone-400 mb-2">{t.badge_progress}</p>
-                  <div className="h-3 bg-stone-200 dark:bg-stone-600 rounded-full overflow-hidden">
+                  <p className="text-xs font-bold text-slate-500 dark:text-gray-400 mb-2">{t.badge_progress}</p>
+                  <div className="h-3 bg-slate-200 dark:bg-gray-600 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-amber-500 transition-all duration-1000" 
+                      className="h-full bg-yellow-400 transition-all duration-1000" 
                       style={{ width: `${badgeProgress[selectedBadge.id] || 0}%` }} 
                     />
                   </div>
@@ -3907,12 +4144,12 @@ export default function App() {
                 </div>
                 
                 {userProfile.badges?.includes(parseInt(selectedBadge.id)) ? (
-                  <div className="mt-4 p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl">
-                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{t.badge_unlocked}</p>
+                  <div className="mt-4 p-3 bg-green-100 dark:bg-green-900/30 rounded-2xl">
+                    <p className="text-sm font-bold text-green-700 dark:text-green-300">{t.badge_unlocked}</p>
                   </div>
                 ) : (
-                  <div className="mt-4 p-3 bg-stone-100 dark:bg-stone-700 rounded-2xl">
-                    <p className="text-sm font-bold text-stone-600 dark:text-stone-400">{t.badge_locked}</p>
+                  <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-2xl">
+                    <p className="text-sm font-bold text-gray-600 dark:text-gray-400">{t.badge_locked}</p>
                   </div>
                 )}
               </div>
@@ -3924,8 +4161,8 @@ export default function App() {
       {/* MODAL EDITAR PUBLICACIÓN */}
       {editingPost && (
         <div className="fixed inset-0 z-[1001] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 max-h-[90vh]`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 max-h-[90vh]`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.edit_post}</h2>
               <button onClick={() => {setEditingPost(null); setEditPostContent('');}} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -3935,12 +4172,12 @@ export default function App() {
               <textarea 
                 value={editPostContent}
                 onChange={(e) => setEditPostContent(e.target.value)}
-                className={`w-full rounded-2xl p-4 text-sm outline-none min-h-[200px] ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                className={`w-full rounded-2xl p-4 text-sm outline-none min-h-[200px] ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                 maxLength={2500}
               />
               <div className="flex justify-between mt-2 mb-4">
-                <p className="text-xs text-stone-400">{t.max_characters}</p>
-                <p className={`text-xs font-bold ${editPostContent.length >= 2500 ? 'text-red-500' : 'text-stone-400'}`}>
+                <p className="text-xs text-slate-400">{t.max_characters}</p>
+                <p className={`text-xs font-bold ${editPostContent.length >= 2500 ? 'text-red-500' : 'text-slate-400'}`}>
                   {editPostContent.length}/2500
                 </p>
               </div>
@@ -3949,8 +4186,8 @@ export default function App() {
                 disabled={!editPostContent.trim()}
                 className={`w-full py-4 rounded-2xl font-black text-sm uppercase shadow-md flex items-center justify-center gap-2 transition-all ${
                   !editPostContent.trim()
-                    ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                 }`}
               >
                 <Edit size={16}/> {t.save}
@@ -3963,14 +4200,14 @@ export default function App() {
       {/* MODAL CONFIRMAR ELIMINAR PUBLICACIÓN */}
       {postToDelete && (
         <div className="fixed inset-0 z-[1001] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-sm rounded-3xl p-8 text-center shadow-2xl border ${themeClasses.border}`}>
+          <div className={`${themeClasses.card} w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl border ${themeClasses.border}`}>
             <Trash2 size={40} className="text-red-500 mx-auto mb-4" />
             <h3 className="font-black text-xl mb-2 uppercase">{t.confirm_delete_post}</h3>
-            <p className="text-stone-400 text-sm mb-8 leading-relaxed">{t.confirm_delete_post_desc}</p>
+            <p className="text-slate-400 text-sm mb-8 leading-relaxed">{t.confirm_delete_post_desc}</p>
             <div className="flex gap-3">
               <button 
                 onClick={() => setPostToDelete(null)} 
-                className={`flex-1 py-4 rounded-2xl ${theme === 'dark' ? 'bg-stone-700 hover:bg-stone-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-stone-100 hover:bg-stone-200'} font-bold ${theme === 'dark' ? 'text-stone-300' : 'text-stone-500'} uppercase text-[10px] transition-colors`}
+                className={`flex-1 py-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-100 hover:bg-slate-200'} font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-slate-500'} uppercase text-[10px] transition-colors`}
               >
                 {t.cancel}
               </button>
@@ -3989,8 +4226,8 @@ export default function App() {
       {/* MODAL PERFIL DE USUARIO (MEJORADO PARA MOSTRAR TODOS SUS LIBROS) */}
       {showUserProfileModal && userProfileModalData && (
         <div className="fixed inset-0 z-[1002] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-stone-800 to-stone-900' : theme === 'sunset' ? 'bg-gradient-to-br from-amber-500 to-amber-700' : 'bg-gradient-to-br from-stone-700 to-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[90vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-indigo-800 to-purple-900' : theme === 'sunset' ? 'bg-gradient-to-br from-orange-400 to-pink-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600'} flex-shrink-0`}>
               <button onClick={() => setShowUserProfileModal(false)} className="absolute top-4 right-4 p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors">
                 <X size={24}/>
               </button>
@@ -4002,13 +4239,13 @@ export default function App() {
                   className="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover mx-auto"
                   alt={userProfileModalData.name}
                 />
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white dark:bg-stone-800 rounded-full p-1 shadow-lg">
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 rounded-full p-1 shadow-lg">
                   <VerificationCheck count={userProfileModalData.readCount || 0} size={20} />
                 </div>
               </div>
               <div className="text-center">
                 <h2 className="font-black text-xl">{userProfileModalData.name}</h2>
-                <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
+                <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
                   {getLevelTitle(userProfileModalData.readCount || 0, lang)}
                 </p>
                 <div className="grid grid-cols-3 gap-4 mt-4">
@@ -4017,21 +4254,21 @@ export default function App() {
                     className="text-center hover:opacity-70 transition-opacity"
                   >
                     <p className="font-black text-lg">{userProfileModalData.readCount || 0}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.user_read_books}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.user_read_books}</p>
                   </button>
                   <button 
                     onClick={() => setSelectedUserFilter('in_plan')}
                     className="text-center hover:opacity-70 transition-opacity"
                   >
                     <p className="font-black text-lg">{userProfileModalData.planCount || 0}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.user_plan_books}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.user_plan_books}</p>
                   </button>
                   <button 
                     onClick={() => setSelectedUserFilter('liked')}
                     className="text-center hover:opacity-70 transition-opacity"
                   >
                     <p className="font-black text-lg">{userProfileModalData.likes?.length || 0}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.user_liked_books}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.user_liked_books}</p>
                   </button>
                 </div>
               </div>
@@ -4043,7 +4280,7 @@ export default function App() {
                   <button 
                     key={type} 
                     onClick={() => setSelectedUserFilter(type)} 
-                    className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedUserFilter === type ? 'bg-emerald-600 text-white shadow-md' : 'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}`}
+                    className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedUserFilter === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'}`}
                   >
                     {type === 'all' ? t.all : type === 'read' ? t.read : type === 'in_plan' ? t.in_plan : type === 'in_library' ? t.in_library : type === 'favorite' ? t.favorites : type === 'liked' ? t.liked : t.dislike}
                   </button>
@@ -4055,13 +4292,13 @@ export default function App() {
                 <h3 className="font-black text-sm uppercase tracking-widest mb-4">{t.user_books} {userProfileModalData.name}</h3>
                 {selectedUserBooks.length === 0 ? (
                   <div className="text-center py-8">
-                    <BookOpen className="mx-auto text-stone-300 dark:text-stone-600 mb-2" size={32} />
-                    <p className="text-xs text-stone-400">{lang === 'es' ? 'No hay libros' : 'No books'}</p>
+                    <BookOpen className="mx-auto text-slate-300 dark:text-gray-600 mb-2" size={32} />
+                    <p className="text-xs text-slate-400">{lang === 'es' ? 'No hay libros' : 'No books'}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
                     {filteredExternalBooks.map((book) => (
-                      <div key={book.bookId} className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl border ${themeClasses.border}`}>
+                      <div key={book.bookId} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl border ${themeClasses.border}`}>
                         <div className="flex gap-4">
                           <img 
                             src={book.thumbnail || 'https://via.placeholder.com/150x200?text=NO+COVER'} 
@@ -4078,7 +4315,7 @@ export default function App() {
                               openBookDetailModal(book);
                             }}>{book.title}</h3>
                             <p 
-                              className="text-xs text-stone-500 dark:text-stone-400 truncate cursor-pointer hover:text-emerald-600"
+                              className="text-xs text-slate-500 dark:text-gray-400 truncate cursor-pointer hover:text-indigo-500"
                               onClick={() => {
                                 const authorName = Array.isArray(book.authors) ? book.authors[0] : book.authors;
                                 if (authorName) {
@@ -4091,13 +4328,13 @@ export default function App() {
                             </p>
                             <div className="flex items-center gap-2 mt-2">
                               <span className={`px-2 py-1 rounded-full text-[8px] font-bold uppercase ${
-                                book.status === 'read' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 
-                                book.status === 'reading' ? 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300' : 
-                                'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'
+                                book.status === 'read' ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300' : 
+                                book.status === 'reading' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 
+                                'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'
                               }`}>
                                 {book.status === 'read' ? t.read : book.status === 'reading' ? t.in_plan : t.in_library}
                               </span>
-                              {book.isFavorite && <Star size={12} className="text-amber-500 fill-amber-500" />}
+                              {book.isFavorite && <Star size={12} className="text-yellow-400 fill-yellow-400" />}
                             </div>
                             
                             {/* Mostrar progreso del plan si está en lectura */}
@@ -4112,7 +4349,7 @@ export default function App() {
                                   setBookToBorrow({ ...book, ownerId: userProfileModalData.userId, ownerName: userProfileModalData.name });
                                   setShowBorrowModal(true);
                                 }}
-                                className="mt-3 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all"
+                                className="mt-3 w-full py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-all"
                               >
                                 {t.borrow_book}
                               </button>
@@ -4129,11 +4366,11 @@ export default function App() {
               <div className="mt-6">
                 <h3 className="font-black text-sm uppercase tracking-widest mb-4">{t.user_reviews}</h3>
                 {Object.values(bookComments).flat().filter(c => c.userId === userProfileModalData.userId).length === 0 ? (
-                  <p className="text-xs text-stone-400 text-center py-4">{lang === 'es' ? 'No hay reseñas' : 'No reviews'}</p>
+                  <p className="text-xs text-slate-400 text-center py-4">{lang === 'es' ? 'No hay reseñas' : 'No reviews'}</p>
                 ) : (
                   <div className="space-y-3">
                     {Object.values(bookComments).flat().filter(c => c.userId === userProfileModalData.userId).slice(0, 3).map((review, idx) => (
-                      <div key={idx} className={`p-3 rounded-2xl ${theme === 'dark' ? 'bg-stone-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'}`}>
+                      <div key={idx} className={`p-3 rounded-2xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'}`}>
                         <p className="text-xs font-bold">{review.text}</p>
                         <div className="flex items-center gap-1 mt-1">
                           <StarRating rating={review.rating} interactive={false} size={10} />
@@ -4148,7 +4385,7 @@ export default function App() {
               <div className="mt-6">
                 <h3 className="font-black text-sm uppercase tracking-widest mb-4">{t.favorite_writers}</h3>
                 {userProfileModalData.favoriteWriters?.length === 0 ? (
-                  <p className="text-xs text-stone-400 text-center py-4">{lang === 'es' ? 'No hay escritores favoritos' : 'No favorite writers'}</p>
+                  <p className="text-xs text-slate-400 text-center py-4">{lang === 'es' ? 'No hay escritores favoritos' : 'No favorite writers'}</p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {userProfileModalData.favoriteWriters?.slice(0, 5).map((writer, idx) => (
@@ -4158,7 +4395,7 @@ export default function App() {
                           setShowUserProfileModal(false);
                           viewAuthor(writer);
                         }}
-                        className="px-3 py-2 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-bold"
+                        className="px-3 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold"
                       >
                         {writer}
                       </button>
@@ -4176,8 +4413,8 @@ export default function App() {
                   }}
                   className={`flex-1 py-3 rounded-2xl font-bold text-sm uppercase transition-all ${
                     userProfile.following?.includes(userProfileModalData.userId)
-                      ? 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
-                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      ? 'bg-gray-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
                   }`}
                 >
                   {userProfile.following?.includes(userProfileModalData.userId) ? t.unfollow : t.add_friend}
@@ -4188,7 +4425,7 @@ export default function App() {
                     setSelectedUserForMessage(userProfileModalData);
                     setShowNewMessageModal(true);
                   }}
-                  className="flex-1 py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm uppercase transition-all"
+                  className="flex-1 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm uppercase transition-all"
                 >
                   <MessageSquare size={16} className="inline mr-2" /> {t.send_message}
                 </button>
@@ -4201,8 +4438,8 @@ export default function App() {
       {/* MODAL DETALLE DE LIBRO (MEJORADO) - AHORA CON SCROLL Y SIN PORTADA FIJA */}
       {showBookDetailModal && bookDetailData && (
         <div className="fixed inset-0 z-[1002] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-stone-800 to-stone-900' : theme === 'sunset' ? 'bg-gradient-to-br from-amber-500 to-amber-700' : 'bg-gradient-to-br from-stone-700 to-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[90vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-indigo-800 to-purple-900' : theme === 'sunset' ? 'bg-gradient-to-br from-orange-400 to-pink-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600'} flex-shrink-0`}>
               <button onClick={() => setShowBookDetailModal(false)} className="absolute top-4 right-4 p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors">
                 <X size={24}/>
               </button>
@@ -4212,7 +4449,7 @@ export default function App() {
                 <div className="relative group">
                   <img 
                     src={bookDetailData.thumbnail || bookDetailData.volumeInfo?.imageLinks?.thumbnail || 'https://via.placeholder.com/150x200?text=NO+COVER'} 
-                    className="w-40 h-56 object-contain rounded-2xl shadow-2xl border-4 border-white dark:border-stone-800 cursor-grab active:cursor-grabbing hover:scale-105 transition-all"
+                    className="w-40 h-56 object-contain rounded-2xl shadow-2xl border-4 border-white dark:border-gray-800 cursor-grab active:cursor-grabbing hover:scale-105 transition-all"
                     alt={bookDetailData.title || bookDetailData.volumeInfo?.title}
                     onClick={() => handleZoomImage(
                       bookDetailData.thumbnail || bookDetailData.volumeInfo?.imageLinks?.thumbnail || 'https://via.placeholder.com/150x200?text=NO+COVER',
@@ -4260,7 +4497,7 @@ export default function App() {
                 <h2 className="font-black text-lg">{bookDetailData.title || bookDetailData.volumeInfo?.title}</h2>
                 <div className="flex items-center justify-center gap-2 mt-1">
                   <p 
-                    className="text-sm text-stone-500 dark:text-stone-400 cursor-pointer hover:text-emerald-600"
+                    className="text-sm text-slate-500 dark:text-gray-400 cursor-pointer hover:text-indigo-500"
                     onClick={() => {
                       const authorName = Array.isArray(bookDetailData.authors || bookDetailData.volumeInfo?.authors) 
                         ? (bookDetailData.authors || bookDetailData.volumeInfo?.authors)[0]
@@ -4287,7 +4524,7 @@ export default function App() {
                     title={t.view_likes}
                   >
                     <p className="font-black text-lg">{usersWhoRead.length}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.readers_count}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.readers_count}</p>
                   </button>
                   <button 
                     onClick={() => {
@@ -4299,7 +4536,7 @@ export default function App() {
                     title={t.view_likes}
                   >
                     <p className="font-black text-lg">{usersWhoLiked.length}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.like}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.like}</p>
                   </button>
                   <button 
                     onClick={() => {
@@ -4311,7 +4548,7 @@ export default function App() {
                     title={t.view_likes}
                   >
                     <p className="font-black text-lg">{usersWhoDisliked.length}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.dislike}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.dislike}</p>
                   </button>
                 </div>
                 <div className="flex justify-center gap-4 mt-2">
@@ -4325,7 +4562,7 @@ export default function App() {
                     title={t.view_likes}
                   >
                     <p className="font-black text-lg">{usersWhoFavorited.length}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.favorites}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.favorites}</p>
                   </button>
                   <button 
                     onClick={() => {
@@ -4337,7 +4574,7 @@ export default function App() {
                     title={t.view_likes}
                   >
                     <p className="font-black text-lg">{usersWithBook.length}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.in_library}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.in_library}</p>
                   </button>
                 </div>
               </div>
@@ -4351,8 +4588,8 @@ export default function App() {
                       onClick={() => toggleFavoriteBook(bookDetailData.bookId || bookDetailData.id)}
                       className={`px-4 py-2 rounded-2xl text-xs font-bold uppercase transition-all ${
                         myBooks.find(b => b.bookId === (bookDetailData.bookId || bookDetailData.id))?.isFavorite
-                          ? 'bg-amber-500 text-white'
-                          : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+                          ? 'bg-yellow-500 text-white'
+                          : 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
                       }`}
                     >
                       <Star size={14} className={myBooks.find(b => b.bookId === (bookDetailData.bookId || bookDetailData.id))?.isFavorite ? 'fill-white' : ''} />
@@ -4361,8 +4598,8 @@ export default function App() {
                       onClick={() => handleGlobalBookReaction(bookDetailData.bookId || bookDetailData.id, 'like')}
                       className={`px-4 py-2 rounded-2xl text-xs font-bold uppercase transition-all ${
                         globalLikes[bookDetailData.bookId || bookDetailData.id]?.likes?.includes(user?.uid)
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
                       }`}
                     >
                       <ThumbsUp size={14} />
@@ -4372,7 +4609,7 @@ export default function App() {
                       className={`px-4 py-2 rounded-2xl text-xs font-bold uppercase transition-all ${
                         globalLikes[bookDetailData.bookId || bookDetailData.id]?.dislikes?.includes(user?.uid)
                           ? 'bg-red-500 text-white'
-                          : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+                          : 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
                       }`}
                     >
                       <ThumbsDown size={14} />
@@ -4382,13 +4619,13 @@ export default function App() {
                   <>
                     <button 
                       onClick={() => handleAddBook(bookDetailData, 'library', false, true)}
-                      className="px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase transition-all"
+                      className="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold uppercase transition-all"
                     >
                       {t.add_to_library}
                     </button>
                     <button 
                       onClick={() => {setPlanningBook(bookDetailData); setShowBookDetailModal(false);}}
-                      className="px-4 py-2 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase transition-all"
+                      className="px-4 py-2 rounded-2xl bg-green-500 hover:bg-green-600 text-white text-xs font-bold uppercase transition-all"
                     >
                       {t.reading_plan}
                     </button>
@@ -4396,7 +4633,7 @@ export default function App() {
                 )}
                 <button 
                   onClick={() => setShowRecommendList(true)}
-                  className="px-4 py-2 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase transition-all"
+                  className="px-4 py-2 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold uppercase transition-all"
                 >
                   {t.recommend}
                 </button>
@@ -4418,8 +4655,8 @@ export default function App() {
               
               {/* Descripción (portada) */}
               <div className="mb-6">
-                <h3 className="font-black text-sm uppercase tracking-widest mb-2 text-stone-600 dark:text-stone-400">{lang === 'es' ? 'Descripción' : 'Description'}</h3>
-                <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
+                <h3 className="font-black text-sm uppercase tracking-widest mb-2">{lang === 'es' ? 'Descripción' : 'Description'}</h3>
+                <p className="text-sm text-slate-600 dark:text-gray-300 leading-relaxed">
                   {bookDetailData.description || bookDetailData.volumeInfo?.description || (lang === 'es' ? 'Sin descripción disponible' : 'No description available')}
                 </p>
               </div>
@@ -4427,8 +4664,8 @@ export default function App() {
               {/* Contraportada (si existe) */}
               {(bookDetailData.backCover || bookDetailData.volumeInfo?.backCover) && (
                 <div className="mb-6">
-                  <h3 className="font-black text-sm uppercase tracking-widest mb-2 text-stone-600 dark:text-stone-400">{t.back_cover}</h3>
-                  <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
+                  <h3 className="font-black text-sm uppercase tracking-widest mb-2">{t.back_cover}</h3>
+                  <p className="text-sm text-slate-600 dark:text-gray-300 leading-relaxed">
                     {bookDetailData.backCover || bookDetailData.volumeInfo?.backCover}
                   </p>
                   {bookDetailData.backCoverImage && (
@@ -4444,12 +4681,12 @@ export default function App() {
               
               {/* Información adicional */}
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-stone-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'}`}>
-                  <p className="text-[10px] text-stone-500 dark:text-stone-400 uppercase">{t.pages}</p>
+                <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'}`}>
+                  <p className="text-[10px] text-slate-500 dark:text-gray-400 uppercase">{t.pages}</p>
                   <p className="font-bold text-lg">{bookDetailData.totalPages || bookDetailData.volumeInfo?.pageCount || '-'}</p>
                 </div>
-                <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-stone-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'}`}>
-                  <p className="text-[10px] text-stone-500 dark:text-stone-400 uppercase">{lang === 'es' ? 'Fecha' : 'Date'}</p>
+                <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'}`}>
+                  <p className="text-[10px] text-slate-500 dark:text-gray-400 uppercase">{lang === 'es' ? 'Fecha' : 'Date'}</p>
                   <p className="font-bold text-lg">{bookDetailData.volumeInfo?.publishedDate || bookDetailData.publishedDate || '-'}</p>
                 </div>
               </div>
@@ -4496,15 +4733,15 @@ export default function App() {
               
               {/* Reseñas */}
               <div className="space-y-4">
-                <h3 className="font-black text-sm uppercase tracking-widest border-b pb-2 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400">{t.reviews}</h3>
+                <h3 className="font-black text-sm uppercase tracking-widest border-b pb-2 border-slate-200 dark:border-gray-700">{t.reviews}</h3>
                 {(bookComments[bookDetailData.bookId || bookDetailData.id] || []).length === 0 ? (
                   <div className="text-center py-8">
-                    <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-2`} size={32} />
-                    <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'Sin reseñas' : 'No reviews'}</p>
+                    <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-2`} size={32} />
+                    <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'Sin reseñas' : 'No reviews'}</p>
                   </div>
                 ) : (
                   (bookComments[bookDetailData.bookId || bookDetailData.id] || []).map((c) => (
-                    <div key={c.id} className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl`}>
+                    <div key={c.id} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl`}>
                       <div className="flex items-center gap-3 mb-2">
                         <img src={c.userPic || 'https://via.placeholder.com/30'} className="w-8 h-8 rounded-full object-cover" alt={c.userName} />
                         <div>
@@ -4512,22 +4749,22 @@ export default function App() {
                           <StarRating rating={c.rating} interactive={false} size={12} />
                         </div>
                       </div>
-                      <p className="text-sm text-stone-600 dark:text-stone-300">{c.text}</p>
+                      <p className="text-sm text-slate-600 dark:text-gray-300">{c.text}</p>
                     </div>
                   ))
                 )}
               </div>
               
               {/* Escribir reseña */}
-              <div className="mt-6 pt-6 border-t border-stone-200 dark:border-stone-700">
-                <h3 className="font-black text-sm uppercase tracking-widest mb-4 text-stone-600 dark:text-stone-400">{t.my_review}</h3>
+              <div className="mt-6 pt-6 border-t border-slate-200 dark:border-gray-700">
+                <h3 className="font-black text-sm uppercase tracking-widest mb-4">{t.my_review}</h3>
                 <div className="flex justify-center mb-4">
                   <StarRating rating={userRating} onRate={setUserRating} />
                 </div>
                 <textarea 
                   value={userComment} 
                   onChange={(e) => setUserComment(e.target.value)} 
-                  className={`w-full rounded-2xl p-4 text-sm outline-none min-h-[100px] ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                  className={`w-full rounded-2xl p-4 text-sm outline-none min-h-[100px] ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                   placeholder={lang === 'es' ? 'Escribe tu opinión...' : 'Write your review...'}
                 />
                 <button 
@@ -4535,8 +4772,8 @@ export default function App() {
                   disabled={!userRating}
                   className={`w-full mt-4 py-3 rounded-2xl font-black text-sm uppercase shadow-md transition-all ${
                     !userRating 
-                      ? 'bg-stone-300 text-stone-500 cursor-not-allowed' 
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                   }`}
                 >
                   {t.save}
@@ -4550,14 +4787,14 @@ export default function App() {
       {/* MODAL CONFIRMAR ELIMINAR */}
       {bookToDelete && (
         <div className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-sm rounded-3xl p-8 text-center shadow-2xl border ${themeClasses.border}`}>
+          <div className={`${themeClasses.card} w-full max-w-sm rounded-[2.5rem] p-8 text-center shadow-2xl border ${themeClasses.border}`}>
             <Trash2 size={40} className="text-red-500 mx-auto mb-4" />
             <h3 className="font-black text-xl mb-2 uppercase">{t.delete_q}</h3>
-            <p className="text-stone-400 text-sm mb-8 leading-relaxed">{t.delete_desc}</p>
+            <p className="text-slate-400 text-sm mb-8 leading-relaxed">{t.delete_desc}</p>
             <div className="flex gap-3">
               <button 
                 onClick={() => setBookToDelete(null)} 
-                className={`flex-1 py-4 rounded-2xl ${theme === 'dark' ? 'bg-stone-700 hover:bg-stone-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-stone-100 hover:bg-stone-200'} font-bold ${theme === 'dark' ? 'text-stone-300' : 'text-stone-500'} uppercase text-[10px] transition-colors`}
+                className={`flex-1 py-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-100 hover:bg-slate-200'} font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-slate-500'} uppercase text-[10px] transition-colors`}
               >
                 {t.cancel}
               </button>
@@ -4580,8 +4817,8 @@ export default function App() {
       {/* MODAL PLANIFICAR (MEJORADO) */}
       {planningBook && (
         <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 max-h-[90vh]`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 max-h-[90vh]`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.reading_plan}</h2>
               <button onClick={() => setPlanningBook(null)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -4598,7 +4835,7 @@ export default function App() {
                 <div className="text-center">
                   <h3 className="font-black text-lg">{planningBook.volumeInfo?.title || planningBook.title}</h3>
                   <p 
-                    className="text-xs text-stone-500 dark:text-stone-400 cursor-pointer hover:text-emerald-600"
+                    className="text-xs text-slate-500 dark:text-gray-400 cursor-pointer hover:text-indigo-500"
                     onClick={() => {
                       const authorName = (planningBook.volumeInfo?.authors || planningBook.authors)?.[0];
                       if (authorName) {
@@ -4613,71 +4850,100 @@ export default function App() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase mb-2">{t.manual_p}</label>
-                  <input 
-                    type="number" 
-                    value={manualPages} 
-                    onChange={(e) => setManualPages(e.target.value)} 
-                    className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{lang === 'es' ? 'Tipo de Plan' : 'Plan Type'}</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setPlanType('standard')}
+                      className={`flex-1 py-3 rounded-xl font-bold text-sm uppercase transition-all ${
+                        planType === 'standard'
+                          ? theme === 'dark' ? 'bg-indigo-600 text-white' : theme === 'sunset' ? 'bg-orange-500 text-white' : 'bg-indigo-600 text-white'
+                          : theme === 'dark' ? 'bg-gray-700 text-gray-300' : theme === 'sunset' ? 'bg-amber-100 text-gray-700' : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {lang === 'es' ? 'Estándar' : 'Standard'}
+                    </button>
+                    <button
+                      onClick={() => setPlanType('relax')}
+                      className={`flex-1 py-3 rounded-xl font-bold text-sm uppercase transition-all ${
+                        planType === 'relax'
+                          ? theme === 'dark' ? 'bg-green-600 text-white' : theme === 'sunset' ? 'bg-green-500 text-white' : 'bg-green-600 text-white'
+                          : theme === 'dark' ? 'bg-gray-700 text-gray-300' : theme === 'sunset' ? 'bg-amber-100 text-gray-700' : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {lang === 'es' ? 'Relax' : 'Relax'}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.manual_p}</label>
+                  <input
+                    type="number"
+                    value={manualPages}
+                    onChange={(e) => setManualPages(e.target.value)}
+                    className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                     placeholder="Ej: 300"
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase mb-2">{t.days}</label>
-                  <input 
-                    type="number" 
-                    value={planDays} 
-                    onChange={(e) => setPlanDays(e.target.value)} 
-                    className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
-                    placeholder="7"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase mb-2">{t.start_date}</label>
-                  <div className="relative">
-                    <input 
-                      id="start-date-picker"
-                      type="date" 
-                      value={planStartDate} 
-                      onChange={(e) => setPlanStartDate(e.target.value)} 
-                      className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                {planType === 'standard' && (
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.days}</label>
+                    <input
+                      type="number"
+                      value={planDays}
+                      onChange={(e) => setPlanDays(e.target.value)}
+                      className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
+                      placeholder="7"
                     />
-                    <button 
-                      onClick={() => setShowStartDateOptions(!showStartDateOptions)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full"
-                    >
-                      <ChevronDown size={16} className={theme === 'dark' ? 'text-stone-400' : 'text-stone-400'} />
-                    </button>
                   </div>
-                  {showStartDateOptions && (
-                    <div className={`mt-2 p-2 rounded-xl ${theme === 'dark' ? 'bg-stone-700' : theme === 'sunset' ? 'bg-amber-100' : 'bg-stone-50'} space-y-1`}>
-                      <button onClick={() => setQuickStartDate('today')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-stone-200' : 'text-stone-700'}`}>
-                        {t.today}
-                      </button>
-                      <button onClick={() => setQuickStartDate('tomorrow')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-stone-200' : 'text-stone-700'}`}>
-                        {t.tomorrow}
-                      </button>
-                      <button onClick={() => setQuickStartDate('next_week')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-stone-200' : 'text-stone-700'}`}>
-                        {t.next_week}
+                )}
+                {planType === 'standard' && (
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.start_date}</label>
+                    <div className="relative">
+                      <input
+                        id="start-date-picker"
+                        type="date"
+                        value={planStartDate}
+                        onChange={(e) => setPlanStartDate(e.target.value)}
+                        className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
+                      />
+                      <button
+                        onClick={() => setShowStartDateOptions(!showStartDateOptions)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full"
+                      >
+                        <ChevronDown size={16} className={theme === 'dark' ? 'text-gray-400' : 'text-slate-400'} />
                       </button>
                     </div>
-                  )}
-                </div>
-                {manualPages && planDays && (
-                  <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-emerald-900/30' : theme === 'sunset' ? 'bg-orange-100' : 'bg-emerald-50'}`}>
+                    {showStartDateOptions && (
+                      <div className={`mt-2 p-2 rounded-xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-100' : 'bg-slate-50'} space-y-1`}>
+                        <button onClick={() => setQuickStartDate('today')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>
+                          {t.today}
+                        </button>
+                        <button onClick={() => setQuickStartDate('tomorrow')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>
+                          {t.tomorrow}
+                        </button>
+                        <button onClick={() => setQuickStartDate('next_week')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>
+                          {t.next_week}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {planType === 'standard' && manualPages && planDays && (
+                  <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-indigo-900/30' : theme === 'sunset' ? 'bg-orange-100' : 'bg-indigo-50'}`}>
                     <p className="text-xs text-center">
                       <span className="font-bold">{Math.ceil(parseInt(manualPages) / parseInt(planDays))}</span> {lang === 'es' ? 'páginas por día' : 'pages per day'}
                     </p>
                   </div>
                 )}
               </div>
-              <button 
-                onClick={saveReadingPlan}
-                disabled={!manualPages || !planDays}
+              <button
+                onClick={planType === 'standard' ? saveReadingPlan : saveRelaxPlan}
+                disabled={planType === 'standard' ? (!manualPages || !planDays) : !manualPages}
                 className={`w-full mt-6 py-4 rounded-2xl font-black text-sm uppercase shadow-md flex items-center justify-center gap-2 transition-all ${
-                  !manualPages || !planDays
-                    ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  (planType === 'standard' ? (!manualPages || !planDays) : !manualPages)
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : planType === 'standard' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'
                 }`}
               >
                 <Calendar size={18}/> {t.start}
@@ -4687,11 +4953,115 @@ export default function App() {
         </div>
       )}
 
+      {/* MODAL BIBLIA - SELECCIONAR LIBRO Y CREAR PLAN */}
+      {showBibleModal && !selectedBibleBook && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className={`${themeClasses.card} w-full max-w-2xl max-h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-amber-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-amber-600'} flex-shrink-0`}>
+              <h2 className="text-xl font-black text-white text-center">{t.bible_select}</h2>
+              <button onClick={() => setShowBibleModal(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full hover:bg-white/30">
+                <X size={24}/>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-2 gap-3">
+                {bibleBooks.map((book, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedBibleBook(book)}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                      theme === 'dark'
+                        ? 'bg-gray-800 border-gray-700 hover:border-amber-500'
+                        : theme === 'sunset'
+                        ? 'bg-amber-50 border-amber-200 hover:border-orange-400'
+                        : 'bg-slate-50 border-slate-200 hover:border-amber-500'
+                    }`}
+                  >
+                    <p className="font-bold text-sm line-clamp-2">{book.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{book.chapters} {t.bible_chapters}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL BIBLIA - CREAR PLAN */}
+      {showBibleModal && selectedBibleBook && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 max-h-[90vh]`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-amber-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-amber-600'} flex-shrink-0`}>
+              <h2 className="text-xl font-black text-white text-center">{t.bible_create_plan}</h2>
+              <button onClick={() => {setShowBibleModal(false); setSelectedBibleBook(null);}} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full hover:bg-white/30">
+                <X size={24}/>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="text-5xl">📖</div>
+                <div className="text-center">
+                  <h3 className="font-black text-lg">{selectedBibleBook.name}</h3>
+                  <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{selectedBibleBook.chapters} {t.bible_chapters}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.days}</label>
+                  <input
+                    type="number"
+                    value={planDays}
+                    onChange={(e) => setPlanDays(e.target.value)}
+                    className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
+                    placeholder="30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.start_date}</label>
+                  <input
+                    type="date"
+                    value={planStartDate}
+                    onChange={(e) => setPlanStartDate(e.target.value)}
+                    className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
+                  />
+                </div>
+                {planDays && (
+                  <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-amber-900/30' : theme === 'sunset' ? 'bg-orange-100' : 'bg-amber-50'}`}>
+                    <p className="text-xs text-center">
+                      <span className="font-bold">{Math.ceil(selectedBibleBook.chapters / parseInt(planDays))}</span> {lang === 'es' ? 'capítulos por día' : 'chapters per day'}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={saveBibleReadingPlan}
+                disabled={!planDays}
+                className={`w-full mt-6 py-4 rounded-2xl font-black text-sm uppercase shadow-md flex items-center justify-center gap-2 transition-all ${
+                  !planDays
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-amber-600 hover:bg-amber-700 text-white'
+                }`}
+              >
+                <Calendar size={18}/> {t.start}
+              </button>
+              <button
+                onClick={() => setSelectedBibleBook(null)}
+                className={`w-full mt-3 py-3 rounded-2xl font-bold text-sm uppercase transition-all ${
+                  theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-100 hover:bg-slate-200'
+                }`}
+              >
+                {t.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL PERFIL EXTERNO (MEJORADO) */}
       {selectedUserProfile && (
         <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-stone-800 to-stone-900' : theme === 'sunset' ? 'bg-gradient-to-br from-amber-500 to-amber-700' : 'bg-gradient-to-br from-stone-700 to-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-indigo-800 to-purple-900' : theme === 'sunset' ? 'bg-gradient-to-br from-orange-400 to-pink-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600'} flex-shrink-0`}>
               <button onClick={() => setSelectedUserProfile(null)} className="absolute top-4 right-4 p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors">
                 <X size={24}/>
               </button>
@@ -4703,13 +5073,13 @@ export default function App() {
                   className="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover mx-auto"
                   alt={selectedUserProfile.name}
                 />
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white dark:bg-stone-800 rounded-full p-1 shadow-lg">
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 rounded-full p-1 shadow-lg">
                   <VerificationCheck count={selectedUserProfile.readCount || 0} size={20} />
                 </div>
               </div>
               <div className="text-center">
                 <h2 className="font-black text-xl">{selectedUserProfile.name}</h2>
-                <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
+                <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
                   {getLevelTitle(selectedUserProfile.readCount || 0, lang)}
                 </p>
                 <div className="grid grid-cols-3 gap-4 mt-4">
@@ -4718,21 +5088,21 @@ export default function App() {
                     className="text-center hover:opacity-70 transition-opacity"
                   >
                     <p className="font-black text-lg">{selectedUserProfile.readCount || 0}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.user_read_books}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.user_read_books}</p>
                   </button>
                   <button 
                     onClick={() => setSelectedUserFilter('in_plan')}
                     className="text-center hover:opacity-70 transition-opacity"
                   >
                     <p className="font-black text-lg">{selectedUserProfile.planCount || 0}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.user_plan_books}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.user_plan_books}</p>
                   </button>
                   <button 
                     onClick={() => setSelectedUserFilter('liked')}
                     className="text-center hover:opacity-70 transition-opacity"
                   >
                     <p className="font-black text-lg">{selectedUserProfile.likes?.length || 0}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.user_liked_books}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.user_liked_books}</p>
                   </button>
                 </div>
               </div>
@@ -4743,8 +5113,8 @@ export default function App() {
                   onClick={() => toggleFollow(selectedUserProfile.userId)}
                   className={`flex-1 py-3 rounded-2xl font-bold text-sm uppercase transition-all ${
                     userProfile.following?.includes(selectedUserProfile.userId)
-                      ? 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
-                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      ? 'bg-gray-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
                   }`}
                 >
                   {userProfile.following?.includes(selectedUserProfile.userId) ? t.unfollow : t.add_friend}
@@ -4754,7 +5124,7 @@ export default function App() {
                     setSelectedUserForMessage(selectedUserProfile);
                     setShowNewMessageModal(true);
                   }}
-                  className="flex-1 py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm uppercase transition-all"
+                  className="flex-1 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm uppercase transition-all"
                 >
                   <MessageSquare size={16} className="inline mr-2" /> {t.send_message}
                 </button>
@@ -4765,7 +5135,7 @@ export default function App() {
                   <button 
                     key={type} 
                     onClick={() => setSelectedUserFilter(type)} 
-                    className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedUserFilter === type ? 'bg-emerald-600 text-white shadow-md' : 'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}`}
+                    className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedUserFilter === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'}`}
                   >
                     {type === 'all' ? t.all : type === 'read' ? t.read : type === 'in_plan' ? t.in_plan : type === 'in_library' ? t.in_library : type === 'favorite' ? t.favorites : type === 'liked' ? t.liked : t.dislike}
                   </button>
@@ -4774,13 +5144,13 @@ export default function App() {
               
               {filteredExternalBooks.length === 0 ? (
                 <div className="text-center py-12">
-                  <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                  <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_friends}</p>
+                  <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_friends}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
                   {filteredExternalBooks.map((book) => (
-                    <div key={book.bookId} className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl border ${themeClasses.border}`}>
+                    <div key={book.bookId} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl border ${themeClasses.border}`}>
                       <div className="flex gap-4">
                         <img 
                           src={book.thumbnail || 'https://via.placeholder.com/150x200?text=NO+COVER'} 
@@ -4797,7 +5167,7 @@ export default function App() {
                             openBookDetailModal(book);
                           }}>{book.title}</h3>
                           <p 
-                            className="text-xs text-stone-500 dark:text-stone-400 truncate cursor-pointer hover:text-emerald-600"
+                            className="text-xs text-slate-500 dark:text-gray-400 truncate cursor-pointer hover:text-indigo-500"
                             onClick={() => {
                               const authorName = Array.isArray(book.authors) ? book.authors[0] : book.authors;
                               if (authorName) {
@@ -4810,13 +5180,13 @@ export default function App() {
                           </p>
                           <div className="flex items-center gap-2 mt-2">
                             <span className={`px-2 py-1 rounded-full text-[8px] font-bold uppercase ${
-                              book.status === 'read' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 
-                              book.status === 'reading' ? 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300' : 
-                              'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'
+                              book.status === 'read' ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300' : 
+                              book.status === 'reading' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 
+                              'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'
                             }`}>
                               {book.status === 'read' ? t.read : book.status === 'reading' ? t.in_plan : t.in_library}
                             </span>
-                            {book.isFavorite && <Star size={12} className="text-amber-500 fill-amber-500" />}
+                            {book.isFavorite && <Star size={12} className="text-yellow-400 fill-yellow-400" />}
                           </div>
                           
                           {/* Mostrar progreso del plan si está en lectura */}
@@ -4831,7 +5201,7 @@ export default function App() {
                                 setBookToBorrow({ ...book, ownerId: selectedUserProfile.userId, ownerName: selectedUserProfile.name });
                                 setShowBorrowModal(true);
                               }}
-                              className="mt-3 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all"
+                              className="mt-3 w-full py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-all"
                             >
                               {t.borrow_book}
                             </button>
@@ -4850,8 +5220,8 @@ export default function App() {
       {/* MODAL DETALLES DE LIBRO (VIEWINGBOOK) - MANTENER EL ORIGINAL, TAMBIÉN CON SCROLL Y SIN ZOOM */}
       {viewingBook && (
         <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-stone-800 to-stone-900' : theme === 'sunset' ? 'bg-gradient-to-br from-amber-500 to-amber-700' : 'bg-gradient-to-br from-stone-700 to-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[90vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-indigo-800 to-purple-900' : theme === 'sunset' ? 'bg-gradient-to-br from-orange-400 to-pink-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600'} flex-shrink-0`}>
               <button onClick={() => setViewingBook(null)} className="absolute top-4 right-4 p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors">
                 <X size={24}/>
               </button>
@@ -4860,7 +5230,7 @@ export default function App() {
               <div className="relative -mt-16 mb-4">
                 <img 
                   src={viewingBook.volumeInfo?.imageLinks?.thumbnail?.replace('http:', 'https:') || viewingBook.thumbnail || 'https://via.placeholder.com/150x200?text=NO+COVER'} 
-                  className="w-32 h-48 object-contain rounded-2xl shadow-2xl border-4 border-white dark:border-stone-800 mx-auto cursor-pointer hover:scale-105 transition-all"
+                  className="w-32 h-48 object-contain rounded-2xl shadow-2xl border-4 border-white dark:border-gray-800 mx-auto cursor-pointer hover:scale-105 transition-all"
                   alt={viewingBook.volumeInfo?.title || viewingBook.title}
                   onClick={() => handleZoomImage(
                     viewingBook.volumeInfo?.imageLinks?.thumbnail?.replace('http:', 'https:') || viewingBook.thumbnail || 'https://via.placeholder.com/150x200?text=NO+COVER',
@@ -4871,7 +5241,7 @@ export default function App() {
               <div className="text-center">
                 <h2 className="font-black text-lg">{viewingBook.volumeInfo?.title || viewingBook.title}</h2>
                 <p 
-                  className="text-sm text-stone-500 dark:text-stone-400 mt-1 cursor-pointer hover:text-emerald-600"
+                  className="text-sm text-slate-500 dark:text-gray-400 mt-1 cursor-pointer hover:text-indigo-500"
                   onClick={() => {
                     const authorName = (viewingBook.volumeInfo?.authors || viewingBook.authors)?.[0];
                     if (authorName) {
@@ -4885,7 +5255,7 @@ export default function App() {
                 <div className="flex justify-center gap-4 mt-3">
                   <div className="text-center">
                     <p className="font-black text-lg">{getReadersCount(viewingBook.id || viewingBook.bookId)}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.readers_count}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.readers_count}</p>
                   </div>
                 </div>
               </div>
@@ -4894,13 +5264,13 @@ export default function App() {
               <div className="flex justify-center gap-3 mb-6 flex-wrap">
                 <button 
                   onClick={() => handleAddBook(viewingBook, 'library', false, true)}
-                  className="px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase transition-all"
+                  className="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold uppercase transition-all"
                 >
                   {t.add_to_library}
                 </button>
                 <button 
                   onClick={() => {setPlanningBook(viewingBook); setViewingBook(null);}}
-                  className="px-4 py-2 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase transition-all"
+                  className="px-4 py-2 rounded-2xl bg-green-500 hover:bg-green-600 text-white text-xs font-bold uppercase transition-all"
                 >
                   {t.reading_plan}
                 </button>
@@ -4908,8 +5278,8 @@ export default function App() {
                   onClick={() => handleGlobalBookReaction(viewingBook.id || viewingBook.bookId, 'like')}
                   className={`px-4 py-2 rounded-2xl text-xs font-bold uppercase transition-all ${
                     globalLikes[viewingBook.id || viewingBook.bookId]?.likes?.includes(user?.uid)
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
                   }`}
                 >
                   <ThumbsUp size={14} /> {globalLikes[viewingBook.id || viewingBook.bookId]?.likes?.length || 0}
@@ -4919,14 +5289,14 @@ export default function App() {
                   className={`px-4 py-2 rounded-2xl text-xs font-bold uppercase transition-all ${
                     globalLikes[viewingBook.id || viewingBook.bookId]?.dislikes?.includes(user?.uid)
                       ? 'bg-red-500 text-white'
-                      : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+                      : 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
                   }`}
                 >
                   <ThumbsDown size={14} /> {globalLikes[viewingBook.id || viewingBook.bookId]?.dislikes?.length || 0}
                 </button>
                 <button 
                   onClick={() => setShowRecommendList(true)}
-                  className="px-4 py-2 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase transition-all"
+                  className="px-4 py-2 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold uppercase transition-all"
                 >
                   {t.recommend}
                 </button>
@@ -5007,15 +5377,15 @@ export default function App() {
               )}
               
               <div className="space-y-4">
-                <h3 className="font-black text-sm uppercase tracking-widest border-b pb-2 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400">{t.reviews}</h3>
+                <h3 className="font-black text-sm uppercase tracking-widest border-b pb-2 border-slate-200 dark:border-gray-700">{t.reviews}</h3>
                 {(bookComments[viewingBook.id || viewingBook.bookId] || []).length === 0 ? (
                   <div className="text-center py-8">
-                    <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-2`} size={32} />
-                    <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'Sin reseñas' : 'No reviews'}</p>
+                    <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-2`} size={32} />
+                    <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'Sin reseñas' : 'No reviews'}</p>
                   </div>
                 ) : (
                   (bookComments[viewingBook.id || viewingBook.bookId] || []).map((c) => (
-                    <div key={c.id} className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl`}>
+                    <div key={c.id} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl`}>
                       <div className="flex items-center gap-3 mb-2">
                         <img src={c.userPic || 'https://via.placeholder.com/30'} className="w-8 h-8 rounded-full object-cover" alt={c.userName} />
                         <div>
@@ -5023,21 +5393,21 @@ export default function App() {
                           <StarRating rating={c.rating} interactive={false} size={12} />
                         </div>
                       </div>
-                      <p className="text-sm text-stone-600 dark:text-stone-300">{c.text}</p>
+                      <p className="text-sm text-slate-600 dark:text-gray-300">{c.text}</p>
                     </div>
                   ))
                 )}
               </div>
               
-              <div className="mt-6 pt-6 border-t border-stone-200 dark:border-stone-700">
-                <h3 className="font-black text-sm uppercase tracking-widest mb-4 text-stone-600 dark:text-stone-400">{t.my_review}</h3>
+              <div className="mt-6 pt-6 border-t border-slate-200 dark:border-gray-700">
+                <h3 className="font-black text-sm uppercase tracking-widest mb-4">{t.my_review}</h3>
                 <div className="flex justify-center mb-4">
                   <StarRating rating={userRating} onRate={setUserRating} />
                 </div>
                 <textarea 
                   value={userComment} 
                   onChange={(e) => setUserComment(e.target.value)} 
-                  className={`w-full rounded-2xl p-4 text-sm outline-none min-h-[100px] ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                  className={`w-full rounded-2xl p-4 text-sm outline-none min-h-[100px] ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                   placeholder={lang === 'es' ? 'Escribe tu opinión...' : 'Write your review...'}
                 />
                 <button 
@@ -5045,8 +5415,8 @@ export default function App() {
                   disabled={!userRating}
                   className={`w-full mt-4 py-3 rounded-2xl font-black text-sm uppercase shadow-md transition-all ${
                     !userRating 
-                      ? 'bg-stone-300 text-stone-500 cursor-not-allowed' 
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                   }`}
                 >
                   {t.save}
@@ -5060,8 +5430,8 @@ export default function App() {
       {/* MODAL RECOMENDAR - AHORA CON Z-INDEX MÁS ALTO QUE EL MODAL DE LIBRO (z-[1002] vs z-[400]) */}
       {showRecommendList && (
         <div className="fixed inset-0 z-[1002] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-md h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-purple-800' : theme === 'sunset' ? 'bg-pink-500' : 'bg-purple-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.select_friend}</h2>
               <button onClick={() => setShowRecommendList(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -5071,13 +5441,13 @@ export default function App() {
               <textarea 
                 value={recommendMessage} 
                 onChange={(e) => setRecommendMessage(e.target.value)} 
-                className={`w-full rounded-2xl p-4 text-sm outline-none mb-4 ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                className={`w-full rounded-2xl p-4 text-sm outline-none mb-4 ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                 placeholder={t.message_placeholder}
               />
               {friendsList.length === 0 ? (
                 <div className="text-center py-12">
-                  <Users className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                  <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_friends}</p>
+                  <Users className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_friends}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -5085,14 +5455,14 @@ export default function App() {
                     <button 
                       key={friend.userId} 
                       onClick={() => handleRecommendBook(friend.userId, friend.name)}
-                      className={`w-full p-4 rounded-2xl ${theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700' : theme === 'sunset' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-stone-50 hover:bg-stone-100'} flex items-center gap-4 transition-all`}
+                      className={`w-full p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : theme === 'sunset' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-slate-50 hover:bg-slate-100'} flex items-center gap-4 transition-all`}
                     >
                       <img src={friend.profilePic || 'https://via.placeholder.com/40'} className="w-12 h-12 rounded-full object-cover" alt={friend.name} />
                       <div className="flex-1 text-left">
                         <p className="font-bold text-sm">{friend.name}</p>
-                        <p className="text-xs text-stone-500 dark:text-stone-400">{friend.readCount || 0} {t.read.toLowerCase()}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">{friend.readCount || 0} {t.read.toLowerCase()}</p>
                       </div>
-                      <Send size={20} className="text-emerald-600" />
+                      <Send size={20} className="text-indigo-500" />
                     </button>
                   ))}
                 </div>
@@ -5121,8 +5491,8 @@ export default function App() {
       {/* MODAL ESCRITORES */}
       {showWriters && (
         <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.writers}</h2>
               <button onClick={() => setShowWriters(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -5130,13 +5500,13 @@ export default function App() {
             </div>
             <div className="flex-shrink-0 p-6">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20}/>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
                 <input 
                   type="text" 
                   value={writerSearch} 
                   onChange={(e) => setWriterSearch(e.target.value)} 
                   onKeyPress={(e) => e.key === 'Enter' && searchAuthors()}
-                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                   placeholder={t.search_writers}
                 />
               </div>
@@ -5145,8 +5515,8 @@ export default function App() {
                 disabled={authorSearchLoading || !writerSearch.trim()}
                 className={`w-full mt-3 py-3 rounded-2xl font-black text-sm uppercase transition-all ${
                   authorSearchLoading || !writerSearch.trim()
-                    ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                 }`}
               >
                 {authorSearchLoading ? <Loader2 className="animate-spin mx-auto" size={20}/> : t.search}
@@ -5155,8 +5525,8 @@ export default function App() {
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               {writerResults.length === 0 ? (
                 <div className="text-center py-12">
-                  <PenTool className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                  <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'Busca escritores' : 'Search writers'}</p>
+                  <PenTool className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'Busca escritores' : 'Search writers'}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -5164,7 +5534,7 @@ export default function App() {
                     <button 
                       key={idx} 
                       onClick={() => {viewAuthorDetails(writer.name); setShowWriters(false);}}
-                      className={`w-full p-4 rounded-2xl ${theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700' : theme === 'sunset' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-stone-50 hover:bg-stone-100'} flex items-center gap-4 transition-all`}
+                      className={`w-full p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : theme === 'sunset' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-slate-50 hover:bg-slate-100'} flex items-center gap-4 transition-all`}
                     >
                       <img 
                         src={writer.thumbnail || 'https://via.placeholder.com/40'} 
@@ -5176,9 +5546,9 @@ export default function App() {
                       />
                       <div className="flex-1 text-left">
                         <p className="font-bold text-sm">{writer.name}</p>
-                        <p className="text-xs text-stone-500 dark:text-stone-400">{writer.booksCount} {lang === 'es' ? 'libros' : 'books'}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">{writer.booksCount} {lang === 'es' ? 'libros' : 'books'}</p>
                       </div>
-                      <ChevronRight size={20} className="text-stone-400" />
+                      <ChevronRight size={20} className="text-slate-400" />
                     </button>
                   ))}
                 </div>
@@ -5191,8 +5561,8 @@ export default function App() {
       {/* MODAL DETALLES DE AUTOR */}
       {selectedAuthor && (
         <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-stone-800 to-stone-900' : theme === 'sunset' ? 'bg-gradient-to-br from-amber-500 to-amber-700' : 'bg-gradient-to-br from-stone-700 to-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[90vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative h-48 ${theme === 'dark' ? 'bg-gradient-to-br from-indigo-800 to-purple-900' : theme === 'sunset' ? 'bg-gradient-to-br from-orange-400 to-pink-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600'} flex-shrink-0`}>
               <button onClick={() => {setSelectedAuthor(null); setAuthorBooks([]); setAuthorDetails(null);}} className="absolute top-4 right-4 p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors">
                 <X size={24}/>
               </button>
@@ -5211,24 +5581,24 @@ export default function App() {
               <div className="text-center">
                 <h2 className="font-black text-xl">{selectedAuthor}</h2>
                 {authorDetails?.description && (
-                  <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">{authorDetails.description}</p>
+                  <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">{authorDetails.description}</p>
                 )}
                 <div className="flex justify-center gap-6 mt-4">
                   <div className="text-center">
                     <p className="font-black text-lg">{authorBooks.length}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.books_written}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.books_written}</p>
                   </div>
                   <div className="text-center">
                     <p className="font-black text-lg">{authorDetails?.age || '-'}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">{t.author_age}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">{t.author_age}</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => toggleFavoriteWriter(selectedAuthor)}
                   className={`mt-4 px-4 py-2 rounded-2xl text-xs font-bold uppercase transition-all ${
                     favoriteWritersList.includes(selectedAuthor)
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+                      ? 'bg-yellow-500 text-white'
+                      : 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
                   }`}
                 >
                   {favoriteWritersList.includes(selectedAuthor) ? t.remove_favorite_writer : t.mark_as_favorite_writer}
@@ -5238,23 +5608,23 @@ export default function App() {
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               {authorDetails?.biography && (
                 <div className="mb-6">
-                  <h3 className="font-black text-sm uppercase tracking-widest mb-2 text-stone-600 dark:text-stone-400">{t.biography}</h3>
-                  <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">{authorDetails.biography}</p>
+                  <h3 className="font-black text-sm uppercase tracking-widest mb-2">{t.biography}</h3>
+                  <p className="text-sm text-slate-600 dark:text-gray-300 leading-relaxed">{authorDetails.biography}</p>
                 </div>
               )}
               <div>
-                <h3 className="font-black text-sm uppercase tracking-widest mb-4 text-stone-600 dark:text-stone-400">{t.books_by_author}</h3>
+                <h3 className="font-black text-sm uppercase tracking-widest mb-4">{t.books_by_author}</h3>
                 {authorBooks.length === 0 ? (
                   <div className="text-center py-8">
-                    <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-2`} size={32} />
-                    <p className="text-xs text-stone-400">{lang === 'es' ? 'Cargando libros...' : 'Loading books...'}</p>
+                    <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-2`} size={32} />
+                    <p className="text-xs text-slate-400">{lang === 'es' ? 'Cargando libros...' : 'Loading books...'}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-3">
                     {authorBooks.map((book, idx) => (
                       <div 
                         key={idx} 
-                        className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-2 rounded-xl border ${themeClasses.border} cursor-pointer hover:scale-105 transition-all`}
+                        className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-2 rounded-xl border ${themeClasses.border} cursor-pointer hover:scale-105 transition-all`}
                         onClick={() => {
                           setSelectedAuthor(null);
                           setViewingBook(book);
@@ -5277,7 +5647,7 @@ export default function App() {
                   <button 
                     onClick={() => searchMoreBooksByAuthor(selectedAuthor, Math.floor(authorBooks.length / 20))}
                     disabled={moreBooksLoading}
-                    className="w-full mt-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm uppercase transition-all"
+                    className="w-full mt-4 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm uppercase transition-all"
                   >
                     {moreBooksLoading ? <Loader2 className="animate-spin mx-auto" size={20}/> : t.load_more}
                   </button>
@@ -5292,8 +5662,8 @@ export default function App() {
       {/* MODAL PUBLICAR */}
       {showPostModal && (
         <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md h-[90vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-md h-[90vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.post_quote}</h2>
               <button onClick={() => {setShowPostModal(false); setPostContent(''); setSelectedBookForPost(null); setBooksForPost([]); setPostSearch('');}} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -5303,7 +5673,7 @@ export default function App() {
               <div className="mb-4">
                 <button 
                   onClick={() => setShowBookSelector(!showBookSelector)}
-                  className={`w-full py-3 px-4 rounded-2xl flex items-center justify-between ${theme === 'dark' ? 'bg-stone-700 hover:bg-stone-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-stone-100 hover:bg-stone-200'} transition-all`}
+                  className={`w-full py-3 px-4 rounded-2xl flex items-center justify-between ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-100 hover:bg-slate-200'} transition-all`}
                 >
                   <span className="font-bold text-sm">
                     {selectedBookForPost 
@@ -5313,21 +5683,21 @@ export default function App() {
                   {showBookSelector ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </button>
                 {showBookSelector && (
-                  <div className={`mt-2 p-3 rounded-2xl ${theme === 'dark' ? 'bg-stone-700' : theme === 'sunset' ? 'bg-amber-100' : 'bg-stone-50'}`}>
+                  <div className={`mt-2 p-3 rounded-2xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-100' : 'bg-slate-50'}`}>
                     <div className="relative mb-3">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16}/>
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
                       <input 
                         type="text" 
                         value={postSearch} 
                         onChange={(e) => setPostSearch(e.target.value)} 
                         onKeyPress={(e) => e.key === 'Enter' && searchBooksForPost()}
-                        className={`w-full rounded-xl pl-9 pr-3 py-2 text-sm outline-none ${theme === 'dark' ? 'bg-stone-600 text-stone-100 border-stone-500' : theme === 'sunset' ? 'bg-amber-50 text-stone-800 border-amber-200' : 'bg-white text-stone-900 border-stone-200'} border`}
+                        className={`w-full rounded-xl pl-9 pr-3 py-2 text-sm outline-none ${theme === 'dark' ? 'bg-gray-600 text-gray-100 border-gray-500' : theme === 'sunset' ? 'bg-amber-50 text-gray-800 border-amber-200' : 'bg-white text-slate-900 border-slate-200'} border`}
                         placeholder={t.search}
                       />
                     </div>
                     <div className="max-h-48 overflow-y-auto space-y-2">
                       {booksForPost.length === 0 ? (
-                        <p className="text-center text-xs text-stone-400 py-4">{lang === 'es' ? 'Busca o selecciona un libro' : 'Search or select a book'}</p>
+                        <p className="text-center text-xs text-slate-400 py-4">{lang === 'es' ? 'Busca o selecciona un libro' : 'Search or select a book'}</p>
                       ) : (
                         booksForPost.map((book, idx) => (
                           <button 
@@ -5335,7 +5705,7 @@ export default function App() {
                             onClick={() => {setSelectedBookForPost(book); setShowBookSelector(false);}}
                             className={`w-full p-2 rounded-xl flex items-center gap-3 transition-all ${
                               selectedBookForPost?.id === book.id || selectedBookForPost?.bookId === book.bookId
-                                ? 'bg-emerald-100 dark:bg-emerald-900'
+                                ? 'bg-indigo-100 dark:bg-indigo-900'
                                 : 'hover:bg-white/10'
                             }`}
                           >
@@ -5347,7 +5717,7 @@ export default function App() {
                             <div className="flex-1 text-left">
                               <p className="text-xs font-bold line-clamp-1">{book.volumeInfo?.title || book.title}</p>
                               <p 
-                                className="text-[10px] text-stone-500 dark:text-stone-400 line-clamp-1 cursor-pointer hover:text-emerald-600"
+                                className="text-[10px] text-slate-500 dark:text-gray-400 line-clamp-1 cursor-pointer hover:text-indigo-500"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const authorName = (book.volumeInfo?.authors || book.authors)?.[0];
@@ -5370,13 +5740,13 @@ export default function App() {
               <textarea 
                 value={postContent} 
                 onChange={(e) => setPostContent(e.target.value)} 
-                className={`w-full rounded-2xl p-4 text-sm outline-none min-h-[200px] ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                className={`w-full rounded-2xl p-4 text-sm outline-none min-h-[200px] ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                 placeholder={t.write_quote}
                 maxLength={2500}
               />
               <div className="flex justify-between mt-2 mb-4">
-                <p className="text-xs text-stone-400">{t.max_characters}</p>
-                <p className={`text-xs font-bold ${postContent.length >= 2500 ? 'text-red-500' : 'text-stone-400'}`}>
+                <p className="text-xs text-slate-400">{t.max_characters}</p>
+                <p className={`text-xs font-bold ${postContent.length >= 2500 ? 'text-red-500' : 'text-slate-400'}`}>
                   {postContent.length}/2500
                 </p>
               </div>
@@ -5385,8 +5755,8 @@ export default function App() {
                 disabled={!postContent.trim()}
                 className={`w-full py-4 rounded-2xl font-black text-sm uppercase shadow-md flex items-center justify-center gap-2 transition-all ${
                   !postContent.trim()
-                    ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                 }`}
               >
                 <Send size={18}/> {t.post_quote}
@@ -5399,8 +5769,8 @@ export default function App() {
       {/* MODAL AMIGOS */}
       {showFriendsSection && (
         <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.friends}</h2>
               <button onClick={() => setShowFriendsSection(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -5408,12 +5778,12 @@ export default function App() {
             </div>
             <div className="flex-shrink-0 p-6">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20}/>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
                 <input 
                   type="text" 
                   value={friendsSearch} 
                   onChange={(e) => setFriendsSearch(e.target.value)} 
-                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                   placeholder={t.search_people}
                 />
               </div>
@@ -5422,7 +5792,7 @@ export default function App() {
                   <button 
                     key={type} 
                     onClick={() => setFriendsFilter(type)} 
-                    className={`px-3 py-2 rounded-xl text-xs font-bold uppercase transition-all ${friendsFilter === type ? 'bg-emerald-600 text-white shadow-md' : 'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}`}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold uppercase transition-all ${friendsFilter === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'}`}
                   >
                     {type === 'all' ? t.all_users : type === 'google' ? t.google_users : type === 'anonymous' ? t.anonymous_users : type === 'following' ? t.following : t.followers_list}
                   </button>
@@ -5432,21 +5802,21 @@ export default function App() {
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               {friendRequests.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="font-black text-sm uppercase tracking-widest mb-3 text-stone-600 dark:text-stone-400">{t.pending_requests}</h3>
+                  <h3 className="font-black text-sm uppercase tracking-widest mb-3">{t.pending_requests}</h3>
                   <div className="space-y-3">
                     {friendRequests.map((req) => (
-                      <div key={req.id} className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}>
+                      <div key={req.id} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}>
                         <div className="flex items-center gap-3">
                           <img src={req.senderPic || 'https://via.placeholder.com/40'} className="w-10 h-10 rounded-full object-cover" alt={req.senderName} />
                           <div>
                             <p className="font-bold text-sm">{req.senderName}</p>
-                            <p className="text-xs text-stone-500 dark:text-stone-400">{lang === 'es' ? 'Quiere ser tu amigo' : 'Wants to be your friend'}</p>
+                            <p className="text-xs text-slate-500 dark:text-gray-400">{lang === 'es' ? 'Quiere ser tu amigo' : 'Wants to be your friend'}</p>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <button 
                             onClick={() => acceptFriendRequest(req.id, req.senderId, req.senderName)}
-                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                            className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl text-xs font-bold"
                           >
                             {t.accept}
                           </button>
@@ -5464,8 +5834,8 @@ export default function App() {
               )}
               {filteredUsers.length === 0 ? (
                 <div className="text-center py-12">
-                  <Users className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                  <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_friends_yet}</p>
+                  <Users className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_friends_yet}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -5474,7 +5844,7 @@ export default function App() {
                     const hasSentRequest = sentFriendRequests.some(req => req.receiverId === p.userId);
                     const isMutualFriend = p.following?.includes(user?.uid) && userProfile.following?.includes(p.userId);
                     return (
-                      <div key={p.userId} className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}>
+                      <div key={p.userId} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}>
                         <div className="flex items-center gap-3">
                           <img 
                             src={p.profilePic || 'https://via.placeholder.com/40'} 
@@ -5484,7 +5854,7 @@ export default function App() {
                           />
                           <div>
                             <p className="font-bold text-sm cursor-pointer" onClick={() => openUserProfileModal(p)}>{p.name}</p>
-                            <p className="text-xs text-stone-500 dark:text-stone-400">
+                            <p className="text-xs text-slate-500 dark:text-gray-400">
                               {p.readCount || 0} {t.read.toLowerCase()} • {getLevelTitle(p.readCount, lang)}
                               <img src={getLevelSymbol(p.readCount)} className="w-3 h-3 object-contain inline-block ml-1" alt="Nivel" />
                             </p>
@@ -5501,21 +5871,21 @@ export default function App() {
                           ) : isFollowing ? (
                             <button 
                               onClick={() => toggleFollow(p.userId)}
-                              className="px-3 py-2 bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-bold"
+                              className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300 rounded-xl text-xs font-bold"
                             >
                               {t.unfollow}
                             </button>
                           ) : hasSentRequest ? (
                             <button 
                               onClick={() => cancelFriendRequest(sentFriendRequests.find(req => req.receiverId === p.userId)?.id)}
-                              className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold"
+                              className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-xs font-bold"
                             >
                               {t.request_sent}
                             </button>
                           ) : (
                             <button 
                               onClick={() => sendFriendRequest(p.userId, p.name)}
-                              className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold"
                             >
                               {t.send_request}
                             </button>
@@ -5525,7 +5895,7 @@ export default function App() {
                               setSelectedUserForMessage(p);
                               setShowNewMessageModal(true);
                             }}
-                            className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold"
+                            className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-bold"
                           >
                             <MessageSquare size={14} />
                           </button>
@@ -5543,8 +5913,8 @@ export default function App() {
       {/* MODAL MENSAJES */}
       {showMessages && (
         <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.messages}</h2>
               <button onClick={() => {setShowMessages(false); setSelectedConversation(null);}} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -5559,10 +5929,10 @@ export default function App() {
             <div className="flex-1 overflow-hidden flex flex-col">
               {selectedConversation ? (
                 <>
-                  <div className="flex-shrink-0 p-4 border-b border-stone-200 dark:border-stone-700 flex items-center gap-3">
+                  <div className="flex-shrink-0 p-4 border-b border-slate-200 dark:border-gray-700 flex items-center gap-3">
                     <button 
                       onClick={() => {setSelectedConversation(null); setActiveMessages([]);}}
-                      className="p-2 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full"
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-full"
                     >
                       <ChevronLeft size={20} />
                     </button>
@@ -5586,8 +5956,8 @@ export default function App() {
                   <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {activeMessages.length === 0 ? (
                       <div className="text-center py-12">
-                        <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                        <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_messages}</p>
+                        <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                        <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_messages}</p>
                       </div>
                     ) : (
                       activeMessages.map((msg) => (
@@ -5597,8 +5967,8 @@ export default function App() {
                         >
                           <div className={`max-w-[80%] p-3 rounded-2xl ${
                             msg.senderId === user?.uid 
-                              ? 'bg-emerald-600 text-white rounded-br-none' 
-                              : theme === 'dark' ? 'bg-stone-700 text-stone-100 rounded-bl-none' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 rounded-bl-none' : 'bg-stone-100 text-stone-900 rounded-bl-none'
+                              ? 'bg-indigo-600 text-white rounded-br-none' 
+                              : theme === 'dark' ? 'bg-gray-700 text-gray-100 rounded-bl-none' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 rounded-bl-none' : 'bg-slate-100 text-slate-900 rounded-bl-none'
                           }`}>
                             <p className="text-sm">{msg.text}</p>
                             <p className="text-[10px] opacity-60 mt-1">
@@ -5612,7 +5982,7 @@ export default function App() {
                       ))
                     )}
                   </div>
-                  <div className="flex-shrink-0 p-4 border-t border-stone-200 dark:border-stone-700">
+                  <div className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-gray-700">
                     <div className="flex gap-2">
                       <input 
                         type="text" 
@@ -5625,7 +5995,7 @@ export default function App() {
                             : selectedConversation.participantNames?.[0],
                           newMessage
                         )}
-                        className={`flex-1 rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                        className={`flex-1 rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                         placeholder={t.type_message}
                       />
                       <button 
@@ -5639,8 +6009,8 @@ export default function App() {
                         disabled={!newMessage.trim()}
                         className={`px-4 rounded-2xl font-bold transition-all ${
                           !newMessage.trim()
-                            ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                         }`}
                       >
                         <Send size={18}/>
@@ -5652,8 +6022,8 @@ export default function App() {
                 <div className="flex-1 overflow-y-auto p-6">
                   {conversations.length === 0 ? (
                     <div className="text-center py-12">
-                      <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                      <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_messages}</p>
+                      <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                      <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_messages}</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -5671,7 +6041,7 @@ export default function App() {
                               markMessagesAsRead(conv.id);
                               loadMessages(conv.id);
                             }}
-                            className={`w-full p-4 rounded-2xl ${theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700' : theme === 'sunset' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-stone-50 hover:bg-stone-100'} flex items-center gap-4 transition-all text-left`}
+                            className={`w-full p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : theme === 'sunset' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-slate-50 hover:bg-slate-100'} flex items-center gap-4 transition-all text-left`}
                           >
                             <img 
                               src={otherParticipant?.profilePic || 'https://via.placeholder.com/40'} 
@@ -5680,7 +6050,7 @@ export default function App() {
                             />
                             <div className="flex-1 min-w-0">
                               <p className="font-bold text-sm">{otherParticipantName}</p>
-                              <p className="text-xs text-stone-500 dark:text-stone-400 truncate">{conv.lastMessage}</p>
+                              <p className="text-xs text-slate-500 dark:text-gray-400 truncate">{conv.lastMessage}</p>
                             </div>
                             {unreadCount > 0 && (
                               <div className="w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
@@ -5702,8 +6072,8 @@ export default function App() {
       {/* MODAL NUEVO MENSAJE */}
       {showNewMessageModal && (
         <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 max-h-[90vh]`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 max-h-[90vh]`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.new_message}</h2>
               <button onClick={() => {setShowNewMessageModal(false); setSelectedUserForMessage(null); setMessageSearch('');}} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -5711,12 +6081,12 @@ export default function App() {
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <div className="relative mb-4">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20}/>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
                 <input 
                   type="text" 
                   value={messageSearch} 
                   onChange={(e) => setMessageSearch(e.target.value)} 
-                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                   placeholder={t.search_people}
                 />
               </div>
@@ -5739,12 +6109,12 @@ export default function App() {
                           loadMessages(existingConv.id);
                         }
                       }}
-                      className={`w-full p-4 rounded-2xl ${theme === 'dark' ? 'bg-stone-800 hover:bg-stone-700' : theme === 'sunset' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-stone-50 hover:bg-stone-100'} flex items-center gap-4 transition-all text-left`}
+                      className={`w-full p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : theme === 'sunset' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-slate-50 hover:bg-slate-100'} flex items-center gap-4 transition-all text-left`}
                     >
                       <img src={friend.profilePic || 'https://via.placeholder.com/40'} className="w-12 h-12 rounded-full object-cover" alt={friend.name} />
                       <div className="flex-1">
                         <p className="font-bold text-sm">{friend.name}</p>
-                        <p className="text-xs text-stone-500 dark:text-stone-400">{friend.readCount || 0} {t.read.toLowerCase()}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">{friend.readCount || 0} {t.read.toLowerCase()}</p>
                       </div>
                     </button>
                   ))}
@@ -5757,8 +6127,8 @@ export default function App() {
       {/* MODAL LIBROS LEÍDOS */}
       {viewingReadBooks && (
         <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.view_read_books}</h2>
               <button onClick={() => setViewingReadBooks(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -5767,15 +6137,15 @@ export default function App() {
             <div className="flex-1 overflow-y-auto p-6">
               {readBooksList.length === 0 ? (
                 <div className="text-center py-12">
-                  <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                  <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'No hay libros leídos' : 'No read books'}</p>
+                  <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'No hay libros leídos' : 'No read books'}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-3">
                   {readBooksList.map((book, idx) => (
                     <div 
                       key={idx} 
-                      className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-2 rounded-xl border ${themeClasses.border} cursor-pointer hover:scale-105 transition-all`}
+                      className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-2 rounded-xl border ${themeClasses.border} cursor-pointer hover:scale-105 transition-all`}
                       onClick={() => {
                         setViewingReadBooks(false);
                         openBookDetailModal(book);
@@ -5799,8 +6169,8 @@ export default function App() {
       {/* MODAL ESCRITORES FAVORITOS */}
       {showFavoriteWriters && (
         <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.favorite_writers}</h2>
               <button onClick={() => setShowFavoriteWriters(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -5808,12 +6178,12 @@ export default function App() {
             </div>
             <div className="flex-shrink-0 p-6">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20}/>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
                 <input 
                   type="text" 
                   value={writerSearch} 
                   onChange={(e) => setWriterSearch(e.target.value)} 
-                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                   placeholder={t.search_writers}
                 />
               </div>
@@ -5821,38 +6191,38 @@ export default function App() {
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               {filteredFavoriteWriters.length === 0 ? (
                 <div className="text-center py-12">
-                  <PenTool className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                  <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'No hay escritores favoritos' : 'No favorite writers'}</p>
+                  <PenTool className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'No hay escritores favoritos' : 'No favorite writers'}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {filteredFavoriteWriters.map((writer, idx) => (
                     <div 
                       key={idx} 
-                      className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}
+                      className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl border ${themeClasses.border} flex items-center justify-between`}
                     >
                       <div className="flex items-center gap-3">
                         {writerImages[writer] ? (
                           <img 
                             src={writerImages[writer]} 
                             alt={writer}
-                            className="w-12 h-12 rounded-full object-cover border-2 border-emerald-200 dark:border-emerald-800"
+                            className="w-12 h-12 rounded-full object-cover border-2 border-indigo-200 dark:border-indigo-800"
                             onError={(e) => {
                               e.target.style.display = 'none';
                               e.target.nextSibling.style.display = 'flex';
                             }}
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center">
-                            <PenTool size={20} className="text-emerald-600 dark:text-emerald-300" />
+                          <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                            <PenTool size={20} className="text-indigo-600 dark:text-indigo-300" />
                           </div>
                         )}
-                        <div style={{ display: writerImages[writer] ? 'none' : 'flex' }} className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900 items-center justify-center absolute left-7">
-                          <PenTool size={20} className="text-emerald-600 dark:text-emerald-300" />
+                        <div style={{ display: writerImages[writer] ? 'none' : 'flex' }} className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 items-center justify-center absolute left-7">
+                          <PenTool size={20} className="text-indigo-600 dark:text-indigo-300" />
                         </div>
                         <div>
                           <p className="font-bold text-sm">{writer}</p>
-                          <p className="text-xs text-stone-500 dark:text-stone-400">{lang === 'es' ? 'Escritor favorito' : 'Favorite writer'}</p>
+                          <p className="text-xs text-slate-500 dark:text-gray-400">{lang === 'es' ? 'Escritor favorito' : 'Favorite writer'}</p>
                         </div>
                       </div>
                       <button 
@@ -5873,8 +6243,8 @@ export default function App() {
       {/* MODAL FRASES GUARDADAS */}
       {showSavedPosts && (
         <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'} flex-shrink-0`}>
+          <div className={`${themeClasses.card} w-full max-w-lg h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
               <h2 className="text-xl font-black text-white text-center">{t.saved_posts}</h2>
               <button onClick={() => setShowSavedPosts(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -5883,13 +6253,13 @@ export default function App() {
             <div className="flex-1 overflow-y-auto p-6">
               {filteredSavedPosts.length === 0 ? (
                 <div className="text-center py-12">
-                  <Bookmark className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={48} />
-                  <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'No hay frases guardadas' : 'No saved quotes'}</p>
+                  <Bookmark className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={48} />
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'No hay frases guardadas' : 'No saved quotes'}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {filteredSavedPosts.map((post) => (
-                    <div key={post.id} className={`${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-stone-50'} p-4 rounded-2xl border ${themeClasses.border}`}>
+                    <div key={post.id} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} p-4 rounded-2xl border ${themeClasses.border}`}>
                       <div className="flex items-center gap-3 mb-3">
                         <img 
                           src={post.userPic || 'https://via.placeholder.com/40'} 
@@ -5899,7 +6269,7 @@ export default function App() {
                         />
                         <div>
                           <p className="font-bold text-sm cursor-pointer" onClick={() => openUserProfileModal({ name: post.userName, profilePic: post.userPic, userId: post.userId })}>{post.userName}</p>
-                          <p className="text-[10px] text-stone-400">{post.timestamp?.seconds ? new Date(post.timestamp.seconds * 1000).toLocaleDateString() : ''}</p>
+                          <p className="text-[10px] text-slate-400">{post.timestamp?.seconds ? new Date(post.timestamp.seconds * 1000).toLocaleDateString() : ''}</p>
                         </div>
                       </div>
                       {post.bookThumbnail && (
@@ -5910,21 +6280,21 @@ export default function App() {
                           onClick={() => openBookDetailModal({ title: post.bookTitle, thumbnail: post.bookThumbnail, authors: post.bookAuthors })}
                         />
                       )}
-                      <p className="text-sm text-stone-600 dark:text-stone-300 mb-3">{post.content}</p>
+                      <p className="text-sm text-slate-600 dark:text-gray-300 mb-3">{post.content}</p>
                       <div className="flex justify-between items-center">
                         <div className="flex gap-4">
                           <button 
                             onClick={() => likeWallPost(post.id, post.likes || 0, post.likesBy || [])}
-                            className={`flex items-center gap-1 text-xs ${(post.likesBy || []).includes(user?.uid) ? 'text-red-500' : 'text-stone-400'}`}
+                            className={`flex items-center gap-1 text-xs ${(post.likesBy || []).includes(user?.uid) ? 'text-red-500' : 'text-slate-400'}`}
                           >
                             <Heart size={14} className={(post.likesBy || []).includes(user?.uid) ? 'fill-red-500' : ''} />
                             {post.likes || 0}
                           </button>
                           <button 
                             onClick={() => toggleSavedPost(post.id)}
-                            className="flex items-center gap-1 text-xs text-amber-500"
+                            className="flex items-center gap-1 text-xs text-yellow-500"
                           >
-                            <Bookmark size={14} className="fill-amber-500" />
+                            <Bookmark size={14} className="fill-yellow-500" />
                             {t.saved}
                           </button>
                         </div>
@@ -5947,41 +6317,41 @@ export default function App() {
       {/* MODAL TUTORIAL */}
       {showTutorial && (
         <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-8 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'}`}>
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-8 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'}`}>
               <h2 className="text-2xl font-black text-white text-center">{t.tutorial_welcome}</h2>
             </div>
             <div className="p-8 text-center">
               <div className="mb-8">
                 {tutorialStep === 0 && (
                   <>
-                    <BookOpen size={64} className="mx-auto text-emerald-600 mb-4" />
+                    <BookOpen size={64} className="mx-auto text-indigo-500 mb-4" />
                     <p className="text-lg font-bold mb-2">{t.tutorial_step1}</p>
                   </>
                 )}
                 {tutorialStep === 1 && (
                   <>
-                    <Calendar size={64} className="mx-auto text-amber-600 mb-4" />
+                    <Calendar size={64} className="mx-auto text-green-500 mb-4" />
                     <p className="text-lg font-bold mb-2">{t.tutorial_step2}</p>
                   </>
                 )}
                 {tutorialStep === 2 && (
                   <>
-                    <Users size={64} className="mx-auto text-amber-600 mb-4" />
+                    <Users size={64} className="mx-auto text-purple-500 mb-4" />
                     <p className="text-lg font-bold mb-2">{t.tutorial_step3}</p>
                   </>
                 )}
                 {tutorialStep === 3 && (
                   <>
-                    <Trophy size={64} className="mx-auto text-amber-600 mb-4" />
+                    <Trophy size={64} className="mx-auto text-yellow-500 mb-4" />
                     <p className="text-lg font-bold mb-2">{t.tutorial_step4}</p>
                   </>
                 )}
                 {tutorialStep === 4 && (
                   <>
-                    <Sparkles size={64} className="mx-auto text-amber-600 mb-4" />
+                    <Sparkles size={64} className="mx-auto text-pink-500 mb-4" />
                     <p className="text-lg font-bold mb-2">{lang === 'es' ? '¡Listo para comenzar!' : 'Ready to start!'}</p>
-                    <p className="text-sm text-stone-500 dark:text-stone-400">{lang === 'es' ? 'Disfruta tu experiencia en Sandbook' : 'Enjoy your Sandbook experience'}</p>
+                    <p className="text-sm text-slate-500 dark:text-gray-400">{lang === 'es' ? 'Disfruta tu experiencia en Sandbook' : 'Enjoy your Sandbook experience'}</p>
                   </>
                 )}
               </div>
@@ -5989,20 +6359,20 @@ export default function App() {
                 {[0, 1, 2, 3, 4].map((step) => (
                   <div 
                     key={step} 
-                    className={`w-2 h-2 rounded-full ${step === tutorialStep ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-600'}`}
+                    className={`w-2 h-2 rounded-full ${step === tutorialStep ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-gray-600'}`}
                   />
                 ))}
               </div>
               <div className="flex gap-3">
                 <button 
                   onClick={handleTutorialSkip}
-                  className={`flex-1 py-3 rounded-2xl font-bold text-sm uppercase transition-all ${theme === 'dark' ? 'bg-stone-700 text-stone-300' : theme === 'sunset' ? 'bg-amber-100 text-amber-700' : 'bg-stone-100 text-stone-500'}`}
+                  className={`flex-1 py-3 rounded-2xl font-bold text-sm uppercase transition-all ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : theme === 'sunset' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}
                 >
                   {t.tutorial_skip}
                 </button>
                 <button 
                   onClick={handleTutorialNext}
-                  className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm uppercase transition-all"
+                  className="flex-1 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm uppercase transition-all"
                 >
                   {tutorialStep === 4 ? (lang === 'es' ? '¡Comenzar!' : 'Start!') : t.tutorial_next}
                 </button>
@@ -6015,8 +6385,8 @@ export default function App() {
       {/* MODAL PRÉSTAMO */}
       {showBorrowModal && bookToBorrow && (
         <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'}`}>
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'}`}>
               <h2 className="text-xl font-black text-white text-center">{t.borrow_book}</h2>
               <button onClick={() => {setShowBorrowModal(false); setBookToBorrow(null);}} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
                 <X size={24}/>
@@ -6031,10 +6401,10 @@ export default function App() {
                 />
                 <div className="text-center">
                   <h3 className="font-black text-lg">{bookToBorrow.title}</h3>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">{bookToBorrow.authors?.join(', ')}</p>
+                  <p className="text-xs text-slate-500 dark:text-gray-400">{bookToBorrow.authors?.join(', ')}</p>
                 </div>
               </div>
-              <p className="text-sm text-stone-600 dark:text-stone-300 text-center mb-6">
+              <p className="text-sm text-slate-600 dark:text-gray-300 text-center mb-6">
                 {lang === 'es' 
                   ? `¿Quieres pedir prestado este libro a ${bookToBorrow.ownerName || 'su dueño'}?`
                   : `Do you want to borrow this book from ${bookToBorrow.ownerName || 'its owner'}?`
@@ -6042,7 +6412,7 @@ export default function App() {
               </p>
               <button 
                 onClick={() => sendBorrowRequest(bookToBorrow, bookToBorrow.ownerId, bookToBorrow.ownerName)}
-                className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase transition-all"
+                className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm uppercase transition-all"
               >
                 {t.borrow_book}
               </button>
@@ -6053,26 +6423,26 @@ export default function App() {
 
       {/* MODAL NOTIFICACIONES */}
       {showNotifications && (
-        <div ref={notificationsModalRef} className="fixed top-20 right-4 z-[1000] w-80 max-h-[70vh] overflow-y-auto rounded-3xl shadow-2xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 animate-in fade-in slide-in-from-top-2">
-          <div className="p-4 border-b border-stone-200 dark:border-stone-700">
-            <h3 className="font-black text-sm uppercase text-stone-600 dark:text-stone-400">{lang === 'es' ? 'Notificaciones' : 'Notifications'}</h3>
+        <div ref={notificationsModalRef} className="fixed top-20 right-4 z-[1000] w-80 max-h-[70vh] overflow-y-auto rounded-3xl shadow-2xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 animate-in fade-in slide-in-from-top-2">
+          <div className="p-4 border-b border-slate-200 dark:border-gray-700">
+            <h3 className="font-black text-sm uppercase">{lang === 'es' ? 'Notificaciones' : 'Notifications'}</h3>
           </div>
           <div className="p-2">
             {notifications.length === 0 ? (
               <div className="text-center py-8">
-                <Bell className="mx-auto text-stone-300 dark:text-stone-600 mb-2" size={32} />
-                <p className="text-xs text-stone-400">{lang === 'es' ? 'Sin notificaciones' : 'No notifications'}</p>
+                <Bell className="mx-auto text-slate-300 dark:text-gray-600 mb-2" size={32} />
+                <p className="text-xs text-slate-400">{lang === 'es' ? 'Sin notificaciones' : 'No notifications'}</p>
               </div>
             ) : (
               notifications.map((notif) => (
                 <button 
                   key={notif.id} 
                   onClick={() => markNotificationAsRead(notif.id)}
-                  className="w-full p-3 rounded-2xl hover:bg-stone-50 dark:hover:bg-stone-700 text-left transition-all"
+                  className="w-full p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-gray-700 text-left transition-all"
                 >
-                  <p className="font-bold text-xs text-stone-800 dark:text-stone-200">{notif.title}</p>
-                  <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2">{notif.message}</p>
-                  <p className="text-[10px] text-stone-400 mt-1">
+                  <p className="font-bold text-xs">{notif.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-gray-400 line-clamp-2">{notif.message}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">
                     {notif.timestamp?.seconds 
                       ? new Date(notif.timestamp.seconds * 1000).toLocaleDateString()
                       : ''
@@ -6088,8 +6458,8 @@ export default function App() {
       {/* MODAL REQUIERE GOOGLE LOGIN */}
       {requireGoogleLogin && (
         <div className="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-8 ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-600' : 'bg-stone-800'}`}>
+          <div className={`${themeClasses.card} w-full max-w-md rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-8 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'}`}>
               <h2 className="text-2xl font-black text-white text-center">{t.require_google_login}</h2>
             </div>
             <div className="p-8 text-center">
@@ -6099,7 +6469,7 @@ export default function App() {
                   alt="Google" 
                   className="w-16 h-16 mx-auto mb-4"
                 />
-                <p className="text-sm text-stone-600 dark:text-stone-300 mb-4">
+                <p className="text-sm text-slate-600 dark:text-gray-300 mb-4">
                   {lang === 'es' 
                     ? 'Para acceder a todas las funciones de Sandbook, necesitas registrarte con Google.'
                     : 'To access all Sandbook features, you need to register with Google.'
@@ -6109,7 +6479,7 @@ export default function App() {
               <div className="space-y-3">
                 <button 
                   onClick={handleGoogleLogin}
-                  className="w-full py-4 rounded-2xl bg-white text-stone-900 font-black text-sm uppercase shadow-md flex items-center justify-center gap-3 hover:bg-stone-50 transition-all"
+                  className="w-full py-4 rounded-2xl bg-white text-slate-900 font-black text-sm uppercase shadow-md flex items-center justify-center gap-3 hover:bg-slate-50 transition-all"
                 >
                   <img 
                     src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" 
@@ -6120,7 +6490,7 @@ export default function App() {
                 </button>
                 <button 
                   onClick={continueWithoutAccount}
-                  className={`w-full py-4 rounded-2xl font-bold text-sm uppercase transition-all ${theme === 'dark' ? 'bg-stone-700 text-stone-300' : theme === 'sunset' ? 'bg-amber-100 text-amber-700' : 'bg-stone-100 text-stone-500'}`}
+                  className={`w-full py-4 rounded-2xl font-bold text-sm uppercase transition-all ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : theme === 'sunset' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}
                 >
                   {t.continue_without_account}
                 </button>
@@ -6145,7 +6515,7 @@ export default function App() {
       <header className={`fixed top-0 left-0 right-0 z-[100] ${themeClasses.card} shadow-lg border-b ${themeClasses.border}`}>
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <BookOpen className="text-white" size={20} />
             </div>
             <h1 className="font-black text-xl tracking-tight">Sandbook</h1>
@@ -6153,7 +6523,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
-              className={`relative p-2 rounded-xl ${theme === 'dark' ? 'hover:bg-stone-700' : theme === 'sunset' ? 'hover:bg-amber-100' : 'hover:bg-stone-100'} transition-colors`}
+              className={`relative p-2 rounded-xl ${theme === 'dark' ? 'hover:bg-gray-700' : theme === 'sunset' ? 'hover:bg-amber-100' : 'hover:bg-slate-100'} transition-colors`}
             >
               <Bell size={20} />
               {notifications.length > 0 && (
@@ -6164,7 +6534,7 @@ export default function App() {
             </button>
             <button 
               onClick={() => setShowMessages(true)}
-              className={`relative p-2 rounded-xl ${theme === 'dark' ? 'hover:bg-stone-700' : theme === 'sunset' ? 'hover:bg-amber-100' : 'hover:bg-stone-100'} transition-colors`}
+              className={`relative p-2 rounded-xl ${theme === 'dark' ? 'hover:bg-gray-700' : theme === 'sunset' ? 'hover:bg-amber-100' : 'hover:bg-slate-100'} transition-colors`}
             >
               <MessageSquare size={20} />
               {conversations.some(conv => (conv.unreadCount?.[user?.uid] || 0) > 0) && (
@@ -6178,19 +6548,19 @@ export default function App() {
                 const newTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'sunset' : 'dark';
                 changeTheme(newTheme);
               }}
-              className={`p-2 rounded-xl ${theme === 'dark' ? 'hover:bg-stone-700' : theme === 'sunset' ? 'hover:bg-amber-100' : 'hover:bg-stone-100'} transition-colors`}
+              className={`p-2 rounded-xl ${theme === 'dark' ? 'hover:bg-gray-700' : theme === 'sunset' ? 'hover:bg-amber-100' : 'hover:bg-slate-100'} transition-colors`}
             >
               {theme === 'dark' ? <Sun size={20} /> : theme === 'sunset' ? <Sunset size={20} /> : <Moon size={20} />}
             </button>
             <button 
               onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
-              className={`p-2 rounded-xl ${theme === 'dark' ? 'hover:bg-stone-700' : theme === 'sunset' ? 'hover:bg-amber-100' : 'hover:bg-stone-100'} transition-colors font-bold text-xs`}
+              className={`p-2 rounded-xl ${theme === 'dark' ? 'hover:bg-gray-700' : theme === 'sunset' ? 'hover:bg-amber-100' : 'hover:bg-slate-100'} transition-colors font-bold text-xs`}
             >
               {lang === 'es' ? 'EN' : 'ES'}
             </button>
             <img 
               src={userProfile.profilePic || 'https://via.placeholder.com/40'} 
-              className="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 cursor-pointer hover:scale-105 transition-all"
+              className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 cursor-pointer hover:scale-105 transition-all"
               style={{ aspectRatio: '1/1', minWidth: '40px', minHeight: '40px' }}
               alt={userProfile.name}
               onClick={() => setActiveTab('profile')}
@@ -6208,12 +6578,12 @@ export default function App() {
             {isLibraryLoading && (
               <div className={`${themeClasses.card} rounded-3xl p-4 shadow-md border ${themeClasses.border}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold text-stone-500 dark:text-stone-400">{t.loading_library}</p>
-                  <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{libraryLoadingProgress}%</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-gray-400">{t.loading_library}</p>
+                  <p className="text-sm font-black text-indigo-600 dark:text-indigo-400">{libraryLoadingProgress}%</p>
                 </div>
-                <div className="h-3 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
+                <div className="h-3 bg-slate-200 dark:bg-gray-600 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-emerald-500 to-amber-500 transition-all duration-300 ease-out" 
+                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300 ease-out" 
                     style={{ width: `${libraryLoadingProgress}%` }} 
                   />
                 </div>
@@ -6222,12 +6592,12 @@ export default function App() {
 
             <div className={`${themeClasses.card} rounded-3xl p-4 shadow-md border ${themeClasses.border}`}>
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20}/>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
                 <input 
                   type="text" 
                   value={librarySearch} 
                   onChange={(e) => setLibrarySearch(e.target.value)} 
-                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-stone-50 text-stone-900 border-stone-200'} border`}
+                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-slate-50 text-slate-900 border-slate-200'} border`}
                   placeholder={t.search_in_my_books}
                 />
               </div>
@@ -6238,7 +6608,7 @@ export default function App() {
                 <button 
                   key={type} 
                   onClick={() => setFilterType(type)} 
-                  className={`px-4 py-2 rounded-2xl text-xs font-bold uppercase transition-all ${filterType === type ? 'bg-emerald-600 text-white shadow-md' : 'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}`}
+                  className={`px-4 py-2 rounded-2xl text-xs font-bold uppercase transition-all ${filterType === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'}`}
                 >
                   {type === 'all' ? t.all : type === 'favorite' ? t.favorites : type === 'read' ? t.read : type === 'liked' ? t.liked : type === 'disliked' ? t.dislike : type === 'in_plan' ? t.in_plan : t.in_library}
                 </button>
@@ -6247,11 +6617,11 @@ export default function App() {
             
             {filteredMyBooks.length === 0 ? (
               <div className={`${themeClasses.card} rounded-3xl p-12 text-center shadow-md border ${themeClasses.border}`}>
-                <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={64} />
-                <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'Tu biblioteca está vacía' : 'Your library is empty'}</p>
+                <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={64} />
+                <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'Tu biblioteca está vacía' : 'Your library is empty'}</p>
                 <button 
                   onClick={() => setActiveTab('plan')} 
-                  className="mt-6 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm uppercase transition-all"
+                  className="mt-6 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm uppercase transition-all"
                 >
                   {t.search_now}
                 </button>
@@ -6270,7 +6640,7 @@ export default function App() {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-sm truncate cursor-pointer" onClick={() => openBookDetailModal(book)}>{book.title}</h3>
                         <p 
-                          className="text-xs text-stone-500 dark:text-stone-400 truncate cursor-pointer hover:text-emerald-600"
+                          className="text-xs text-slate-500 dark:text-gray-400 truncate cursor-pointer hover:text-indigo-500"
                           onClick={() => {
                             const authorName = Array.isArray(book.authors) ? book.authors[0] : book.authors;
                             if (authorName) viewAuthor(authorName);
@@ -6280,13 +6650,13 @@ export default function App() {
                         </p>
                         <div className="flex items-center gap-2 mt-2">
                           <span className={`px-2 py-1 rounded-full text-[8px] font-bold uppercase ${
-                            book.status === 'read' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 
-                            book.status === 'reading' ? 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300' : 
-                            'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'
+                            book.status === 'read' ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300' : 
+                            book.status === 'reading' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 
+                            'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'
                           }`}>
                             {book.status === 'read' ? t.read : book.status === 'reading' ? t.in_plan : t.in_library}
                           </span>
-                          {book.isFavorite && <Star size={12} className="text-amber-500 fill-amber-500" />}
+                          {book.isFavorite && <Star size={12} className="text-yellow-400 fill-yellow-400" />}
                         </div>
                         
                         {/* Mostrar plan de lectura detallado si está en reading */}
@@ -6308,7 +6678,7 @@ export default function App() {
                         <div className="flex gap-2 mt-3">
                           <button 
                             onClick={() => openBookDetailModal(book)}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold"
+                            className="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-[10px] font-bold"
                           >
                             {t.view_book_details}
                           </button>
@@ -6333,22 +6703,28 @@ export default function App() {
           <div className="space-y-6 animate-in slide-in-from-bottom-4">
             <div className={`${themeClasses.card} rounded-3xl p-4 shadow-md border ${themeClasses.border}`}>
               <div className="relative mb-4">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20}/>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
                 <input 
                   type="text" 
                   value={searchQuery} 
                   onChange={(e) => setSearchQuery(e.target.value)} 
                   onKeyPress={(e) => e.key === 'Enter' && performSearch()}
-                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-stone-50 text-stone-900 border-stone-200'} border`}
+                  className={`w-full rounded-2xl pl-12 pr-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-slate-50 text-slate-900 border-slate-200'} border`}
                   placeholder={t.search_p}
                 />
               </div>
+              <button
+                onClick={() => setShowBibleModal(true)}
+                className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm uppercase transition-all mb-4 flex items-center justify-center gap-2"
+              >
+                📖 {t.bible}
+              </button>
               <div className="flex gap-2 flex-wrap">
                 {['all', 'intitle', 'inauthor', 'isbn'].map((type) => (
                   <button 
                     key={type} 
                     onClick={() => setSearchType(type)} 
-                    className={`px-3 py-2 rounded-xl text-xs font-bold uppercase transition-all ${searchType === type ? 'bg-emerald-600 text-white shadow-md' : 'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}`}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold uppercase transition-all ${searchType === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'}`}
                   >
                     {type === 'all' ? t.global_f : type === 'intitle' ? t.title_f : type === 'inauthor' ? t.author_f : t.isbn_f}
                   </button>
@@ -6360,15 +6736,15 @@ export default function App() {
                   disabled={isSearching || !searchQuery.trim()}
                   className={`flex-1 py-3 rounded-2xl font-black text-sm uppercase transition-all ${
                     isSearching || !searchQuery.trim()
-                      ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                   }`}
                 >
                   {isSearching ? <Loader2 className="animate-spin mx-auto" size={20}/> : t.search}
                 </button>
                 <button 
                   onClick={startScanner}
-                  className="px-4 py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm uppercase transition-all"
+                  className="px-4 py-3 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm uppercase transition-all"
                 >
                   <Barcode size={20}/>
                 </button>
@@ -6377,7 +6753,7 @@ export default function App() {
             
             {searchResults.length > 0 && (
               <div className="space-y-4">
-                <h2 className="font-black text-sm uppercase tracking-widest text-stone-600 dark:text-stone-400">{t.search_now}</h2>
+                <h2 className="font-black text-sm uppercase tracking-widest">{t.search_now}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {searchResults.map((book) => {
                     const alreadyHave = myBooks.find(b => b.bookId === book.id);
@@ -6396,7 +6772,7 @@ export default function App() {
                           <div className="flex-1 min-w-0">
                             <h3 className="font-bold text-sm truncate cursor-pointer" onClick={() => openBookDetailModal(book)}>{book.volumeInfo?.title}</h3>
                             <p 
-                              className="text-xs text-stone-500 dark:text-stone-400 truncate cursor-pointer hover:text-emerald-600"
+                              className="text-xs text-slate-500 dark:text-gray-400 truncate cursor-pointer hover:text-indigo-500"
                               onClick={() => {
                                 const authorName = book.volumeInfo?.authors?.[0];
                                 if (authorName) viewAuthor(authorName);
@@ -6404,24 +6780,24 @@ export default function App() {
                             >
                               {book.volumeInfo?.authors?.join(', ')}
                             </p>
-                            <p className="text-[10px] text-stone-400 mt-1">{book.volumeInfo?.pageCount} {t.pages}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{book.volumeInfo?.pageCount} {t.pages}</p>
                             <div className="flex gap-2 mt-3 flex-wrap">
                               <button 
                                 onClick={() => handleAddBook(book, 'library', false, true)}
-                                className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all ${alreadyHave ? 'bg-stone-300 text-stone-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+                                className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all ${alreadyHave ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
                                 disabled={alreadyHave}
                               >
                                 {alreadyHave ? t.in_your_library : t.add_to_library}
                               </button>
                               <button 
                                 onClick={() => {setPlanningBook(book);}}
-                                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[10px] font-bold"
+                                className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-[10px] font-bold"
                               >
                                 {t.reading_plan}
                               </button>
                               <button 
                                 onClick={() => handleAddBook(book, 'library', true, true)}
-                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-bold"
+                                className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-[10px] font-bold"
                               >
                                 <Star size={10} />
                               </button>
@@ -6432,8 +6808,8 @@ export default function App() {
                                 onClick={() => handleGlobalBookReaction(book.id, 'like')}
                                 className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
                                   globalLikes[book.id]?.likes?.includes(user?.uid)
-                                    ? 'bg-emerald-500 text-white'
-                                    : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
                                 }`}
                               >
                                 <ThumbsUp size={12} /> {globalLikes[book.id]?.likes?.length || 0}
@@ -6443,7 +6819,7 @@ export default function App() {
                                 className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
                                   globalLikes[book.id]?.dislikes?.includes(user?.uid)
                                     ? 'bg-red-500 text-white'
-                                    : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
+                                    : 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'
                                 }`}
                               >
                                 <ThumbsDown size={12} /> {globalLikes[book.id]?.dislikes?.length || 0}
@@ -6461,7 +6837,7 @@ export default function App() {
             {searchError && (
               <div className={`${themeClasses.card} rounded-3xl p-8 text-center shadow-md border ${themeClasses.border}`}>
                 <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
-                <p className="text-stone-500 dark:text-stone-400">{searchError}</p>
+                <p className="text-slate-500 dark:text-gray-400">{searchError}</p>
               </div>
             )}
           </div>
@@ -6475,19 +6851,19 @@ export default function App() {
                 setBooksForPost(myBooks.slice(0, 10));
                 setShowPostModal(true);
               }}
-              className={`w-full py-4 rounded-3xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase shadow-md flex items-center justify-center gap-2 transition-all`}
+              className={`w-full py-4 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm uppercase shadow-md flex items-center justify-center gap-2 transition-all`}
             >
               <PenLine size={18}/> {t.post_quote}
             </button>
             
             {postsLoading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="animate-spin text-emerald-600" size={48} />
+                <Loader2 className="animate-spin text-indigo-500" size={48} />
               </div>
             ) : wallPosts.length === 0 ? (
               <div className={`${themeClasses.card} rounded-3xl p-12 text-center shadow-md border ${themeClasses.border}`}>
-                <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-stone-700' : theme === 'sunset' ? 'text-amber-200' : 'text-stone-200'} mb-4`} size={64} />
-                <p className={`${theme === 'dark' ? 'text-stone-400' : theme === 'sunset' ? 'text-amber-400' : 'text-stone-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_posts}</p>
+                <MessageSquare className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={64} />
+                <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{t.no_posts}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -6508,30 +6884,30 @@ export default function App() {
                           />
                           <div>
                             <p className="font-bold text-sm cursor-pointer" onClick={() => openUserProfileModal({ name: post.userName, profilePic: post.userPic, userId: post.userId, readCount: publicData.find(p => p.userId === post.userId)?.readCount || 0, followersCount: publicData.find(p => p.userId === post.userId)?.followersCount || 0, badges: publicData.find(p => p.userId === post.userId)?.badges || [] })}>{post.userName}</p>
-                            <p className="text-[10px] text-stone-400">{post.timestamp?.seconds ? new Date(post.timestamp.seconds * 1000).toLocaleDateString() : ''}</p>
+                            <p className="text-[10px] text-slate-400">{post.timestamp?.seconds ? new Date(post.timestamp.seconds * 1000).toLocaleDateString() : ''}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {post.isPublic === false && (
-                            <Lock size={14} className="text-stone-400" title={lang === 'es' ? 'Privado' : 'Private'} />
+                            <Lock size={14} className="text-slate-400" title={lang === 'es' ? 'Privado' : 'Private'} />
                           )}
                           {isOwnPost && (
                             <div className="relative">
                               <button 
                                 onClick={() => setShowPostOptions(showPostOptions === post.id ? null : post.id)}
-                                className="p-2 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full transition-colors"
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                               >
                                 <MoreVertical size={16} />
                               </button>
                               {showPostOptions === post.id && (
-                                <div className={`absolute right-0 top-full mt-2 w-48 rounded-2xl shadow-xl border ${themeClasses.border} ${theme === 'dark' ? 'bg-stone-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-white'} z-10`}>
+                                <div className={`absolute right-0 top-full mt-2 w-48 rounded-2xl shadow-xl border ${themeClasses.border} ${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-white'} z-10`}>
                                   <button 
                                     onClick={() => {
                                       setEditingPost(post.id);
                                       setEditPostContent(post.content);
                                       setShowPostOptions(null);
                                     }}
-                                    className="w-full px-4 py-3 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-700 flex items-center gap-2 rounded-t-2xl"
+                                    className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-700 flex items-center gap-2 rounded-t-2xl"
                                   >
                                     <Edit size={14} /> {t.edit_post}
                                   </button>
@@ -6540,7 +6916,7 @@ export default function App() {
                                       togglePostPrivacy(post.id, post.isPublic);
                                       setShowPostOptions(null);
                                     }}
-                                    className="w-full px-4 py-3 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-700 flex items-center gap-2"
+                                    className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-700 flex items-center gap-2"
                                   >
                                     {post.isPublic === false ? <Eye size={14} /> : <EyeOff size={14} />}
                                     {post.isPublic === false ? t.make_public : t.make_private}
@@ -6561,7 +6937,7 @@ export default function App() {
                         </div>
                       </div>
                       {(post.bookThumbnail || post.bookTitle) && (
-                        <div className="flex items-center gap-3 mb-3 p-3 bg-stone-50 dark:bg-stone-700/50 rounded-2xl">
+                        <div className="flex items-center gap-3 mb-3 p-3 bg-slate-50 dark:bg-gray-700/50 rounded-2xl">
                           {post.bookThumbnail && (
                             <img 
                               src={post.bookThumbnail} 
@@ -6576,7 +6952,7 @@ export default function App() {
                             )}
                             {post.bookAuthors && post.bookAuthors.length > 0 && (
                               <p 
-                                className="text-[10px] text-stone-500 dark:text-stone-400 cursor-pointer hover:text-emerald-600"
+                                className="text-[10px] text-slate-500 dark:text-gray-400 cursor-pointer hover:text-indigo-500"
                                 onClick={() => {
                                   const authorName = post.bookAuthors?.[0];
                                   if (authorName) viewAuthor(authorName);
@@ -6588,12 +6964,12 @@ export default function App() {
                           </div>
                         </div>
                       )}
-                      <p className="text-sm text-stone-600 dark:text-stone-300 mb-4 whitespace-pre-wrap">{post.content}</p>
-                      <div className="flex items-center justify-between pt-3 border-t border-stone-200 dark:border-stone-700">
+                      <p className="text-sm text-slate-600 dark:text-gray-300 mb-4 whitespace-pre-wrap">{post.content}</p>
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-gray-700">
                         <div className="flex gap-4">
                           <button 
                             onClick={() => likeWallPost(post.id, post.likes || 0, post.likesBy || [])}
-                            className={`flex items-center gap-1 text-xs transition-all ${isLiked ? 'text-red-500' : 'text-stone-400 hover:text-red-500'}`}
+                            className={`flex items-center gap-1 text-xs transition-all ${isLiked ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}
                           >
                             <Heart size={16} className={isLiked ? 'fill-red-500' : ''} />
                             {post.likes || 0}
@@ -6603,16 +6979,16 @@ export default function App() {
                               const input = document.getElementById(`comment-input-${post.id}`);
                               if (input) input.focus();
                             }}
-                            className="flex items-center gap-1 text-xs text-stone-400 hover:text-emerald-600 transition-all"
+                            className="flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-500 transition-all"
                           >
                             <MessageCircle size={16} />
                             {postComments.length}
                           </button>
                           <button 
                             onClick={() => toggleSavedPost(post.id)}
-                            className={`flex items-center gap-1 text-xs transition-all ${isSaved ? 'text-amber-500' : 'text-stone-400 hover:text-amber-500'}`}
+                            className={`flex items-center gap-1 text-xs transition-all ${isSaved ? 'text-yellow-500' : 'text-slate-400 hover:text-yellow-500'}`}
                           >
-                            <Bookmark size={16} className={isSaved ? 'fill-amber-500' : ''} />
+                            <Bookmark size={16} className={isSaved ? 'fill-yellow-500' : ''} />
                             {isSaved ? t.saved : t.save_post}
                           </button>
                         </div>
@@ -6629,12 +7005,12 @@ export default function App() {
                               />
                               <div className="flex-1">
                                 <p className="font-bold text-xs cursor-pointer" onClick={() => openUserProfileModal({ name: comment.userName, profilePic: comment.userPic, userId: comment.userId })}>{comment.userName}</p>
-                                <p className="text-xs text-stone-600 dark:text-stone-300">{comment.text}</p>
+                                <p className="text-xs text-slate-600 dark:text-gray-300">{comment.text}</p>
                               </div>
                             </div>
                           ))}
                           {postComments.length > 3 && (
-                            <p className="text-xs text-stone-400">{lang === 'es' ? `Ver ${postComments.length - 3} comentarios más` : `View ${postComments.length - 3} more comments`}</p>
+                            <p className="text-xs text-slate-400">{lang === 'es' ? `Ver ${postComments.length - 3} comentarios más` : `View ${postComments.length - 3} more comments`}</p>
                           )}
                         </div>
                       )}
@@ -6645,7 +7021,7 @@ export default function App() {
                           value={commentInputs[post.id] || ''} 
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))} 
                           onKeyPress={(e) => e.key === 'Enter' && addWallPostComment(post.id, commentInputs[post.id])}
-                          className={`flex-1 rounded-2xl px-4 py-2 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-stone-50 text-stone-900 border-stone-200'} border`}
+                          className={`flex-1 rounded-2xl px-4 py-2 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-slate-50 text-slate-900 border-slate-200'} border`}
                           placeholder={lang === 'es' ? 'Escribe un comentario...' : 'Write a comment...'}
                         />
                         <button 
@@ -6653,8 +7029,8 @@ export default function App() {
                           disabled={!commentInputs[post.id]?.trim()}
                           className={`px-4 rounded-2xl font-bold transition-all ${
                             !commentInputs[post.id]?.trim()
-                              ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                           }`}
                         >
                           <Send size={16}/>
@@ -6672,24 +7048,24 @@ export default function App() {
         {activeTab === 'profile' && (
           <div className="space-y-6 animate-in slide-in-from-bottom-4">
             <div className={`${themeClasses.card} rounded-3xl overflow-hidden shadow-md border ${themeClasses.border}`}>
-              <div className={`h-32 ${theme === 'dark' ? 'bg-gradient-to-br from-stone-800 to-stone-900' : theme === 'sunset' ? 'bg-gradient-to-br from-amber-500 to-amber-700' : 'bg-gradient-to-br from-stone-700 to-stone-800'}`}></div>
+              <div className={`h-32 ${theme === 'dark' ? 'bg-gradient-to-br from-indigo-800 to-purple-900' : theme === 'sunset' ? 'bg-gradient-to-br from-orange-400 to-pink-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600'}`}></div>
               <div className="px-6 pb-6">
                 <div className="relative -mt-16 mb-4 flex justify-between items-end">
                   <img 
                     src={userProfile.profilePic || 'https://via.placeholder.com/150'} 
-                    className="w-32 h-32 rounded-full border-4 border-white dark:border-stone-800 shadow-xl object-cover"
+                    className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-xl object-cover"
                     alt={userProfile.name}
                   />
                   <button 
                     onClick={() => setIsEditingProfile(!isEditingProfile)}
-                    className="p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-md transition-all"
+                    className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-md transition-all"
                   >
                     <Edit3 size={20}/>
                   </button>
                 </div>
                 <div className="text-center">
                   <h2 className="font-black text-2xl">{userProfile.name}</h2>
-                  <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
+                  <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
                     {getLevelTitle(userProfile.readCount || 0, lang)}
                     <img src={getLevelSymbol(userProfile.readCount || 0)} className="w-4 h-4 object-contain inline-block ml-1" alt="Nivel" />
                   </p>
@@ -6699,28 +7075,28 @@ export default function App() {
                       className="text-center hover:opacity-70 transition-opacity"
                     >
                       <p className="font-black text-lg">{followingList.length}</p>
-                      <p className="text-[10px] text-stone-400 uppercase">{t.following}</p>
+                      <p className="text-[10px] text-slate-400 uppercase">{t.following}</p>
                     </button>
                     <button 
                       onClick={() => setShowFollowersModal(true)}
                       className="text-center hover:opacity-70 transition-opacity"
                     >
                       <p className="font-black text-lg">{userProfile.followersCount || 0}</p>
-                      <p className="text-[10px] text-stone-400 uppercase">{t.followers}</p>
+                      <p className="text-[10px] text-slate-400 uppercase">{t.followers}</p>
                     </button>
                     <button 
                       onClick={() => setShowMutualFriendsModal(true)}
                       className="text-center hover:opacity-70 transition-opacity"
                     >
                       <p className="font-black text-lg">{mutualFriendsList.length}</p>
-                      <p className="text-[10px] text-stone-400 uppercase">{t.friends}</p>
+                      <p className="text-[10px] text-slate-400 uppercase">{t.friends}</p>
                     </button>
                     <button 
                       onClick={() => viewUserReadBooks(userProfile)}
                       className="text-center hover:opacity-70 transition-opacity"
                     >
                       <p className="font-black text-lg">{userProfile.readCount || 0}</p>
-                      <p className="text-[10px] text-stone-400 uppercase">{t.read}</p>
+                      <p className="text-[10px] text-slate-400 uppercase">{t.read}</p>
                     </button>
                   </div>
                 </div>
@@ -6728,19 +7104,19 @@ export default function App() {
                 {isEditingProfile && (
                   <div className="mt-6 space-y-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase mb-2">{lang === 'es' ? 'Nombre' : 'Name'}</label>
+                      <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{lang === 'es' ? 'Nombre' : 'Name'}</label>
                       <input 
                         type="text" 
                         value={userProfile.name} 
                         onChange={(e) => setUserProfile(p => ({ ...p, name: e.target.value }))} 
-                        className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-stone-700 text-stone-100 border-stone-600' : theme === 'sunset' ? 'bg-amber-100 text-stone-800 border-amber-300' : 'bg-white text-stone-900 border-stone-200'} border`}
+                        className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase mb-2">{lang === 'es' ? 'Foto de perfil' : 'Profile picture'}</label>
-                      <label className="flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed border-stone-300 dark:border-stone-600 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-700 transition-all">
-                        <Camera size={24} className="text-stone-400" />
-                        <span className="text-sm text-stone-500">{lang === 'es' ? 'Subir foto' : 'Upload photo'}</span>
+                      <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{lang === 'es' ? 'Foto de perfil' : 'Profile picture'}</label>
+                      <label className="flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed border-slate-300 dark:border-gray-600 cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-700 transition-all">
+                        <Camera size={24} className="text-slate-400" />
+                        <span className="text-sm text-slate-500">{lang === 'es' ? 'Subir foto' : 'Upload photo'}</span>
                         <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                       </label>
                     </div>
@@ -6751,7 +7127,7 @@ export default function App() {
                           setIsEditingProfile(false);
                         }
                       }}
-                      className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm uppercase transition-all"
+                      className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm uppercase transition-all"
                     >
                       {t.save}
                     </button>
@@ -6763,47 +7139,47 @@ export default function App() {
             <div className="grid grid-cols-3 gap-4">
               <div className={`${themeClasses.card} rounded-3xl p-4 text-center shadow-md border ${themeClasses.border}`}>
                 <p className="font-black text-2xl">{userStats.readCount}</p>
-                <p className="text-[10px] text-stone-400 uppercase">{t.read}</p>
+                <p className="text-[10px] text-slate-400 uppercase">{t.read}</p>
               </div>
               <div className={`${themeClasses.card} rounded-3xl p-4 text-center shadow-md border ${themeClasses.border}`}>
                 <p className="font-black text-2xl">{userStats.planCount}</p>
-                <p className="text-[10px] text-stone-400 uppercase">{t.in_plan}</p>
+                <p className="text-[10px] text-slate-400 uppercase">{t.in_plan}</p>
               </div>
               <div className={`${themeClasses.card} rounded-3xl p-4 text-center shadow-md border ${themeClasses.border}`}>
                 <p className="font-black text-2xl">{userStats.libraryCount}</p>
-                <p className="text-[10px] text-stone-400 uppercase">{t.in_library}</p>
+                <p className="text-[10px] text-slate-400 uppercase">{t.in_library}</p>
               </div>
               <div className={`${themeClasses.card} rounded-3xl p-4 text-center shadow-md border ${themeClasses.border}`}>
                 <p className="font-black text-2xl">{userStats.favoriteCount}</p>
-                <p className="text-[10px] text-stone-400 uppercase">{t.favorites}</p>
+                <p className="text-[10px] text-slate-400 uppercase">{t.favorites}</p>
               </div>
               <div className={`${themeClasses.card} rounded-3xl p-4 text-center shadow-md border ${themeClasses.border}`}>
                 <p className="font-black text-2xl">{userStats.likedCount}</p>
-                <p className="text-[10px] text-stone-400 uppercase">{t.like}</p>
+                <p className="text-[10px] text-slate-400 uppercase">{t.like}</p>
               </div>
               <div className={`${themeClasses.card} rounded-3xl p-4 text-center shadow-md border ${themeClasses.border}`}>
                 <p className="font-black text-2xl">{userStats.dislikedCount}</p>
-                <p className="text-[10px] text-stone-400 uppercase">{t.dislike}</p>
+                <p className="text-[10px] text-slate-400 uppercase">{t.dislike}</p>
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className={`${themeClasses.card} rounded-3xl p-6 text-center shadow-md border ${themeClasses.border}`}>
-                <BookOpen size={32} className="mx-auto text-emerald-600 mb-2" />
+                <BookOpen size={32} className="mx-auto text-indigo-500 mb-2" />
                 <p className="font-black text-3xl">{currentlyReadingCount}</p>
-                <p className="text-[10px] text-stone-400 uppercase">{t.currently_reading}</p>
+                <p className="text-[10px] text-slate-400 uppercase">{t.currently_reading}</p>
               </div>
               <div className={`${themeClasses.card} rounded-3xl p-6 text-center shadow-md border ${themeClasses.border}`}>
-                <CheckCircle size={32} className="mx-auto text-amber-600 mb-2" />
+                <CheckCircle size={32} className="mx-auto text-green-500 mb-2" />
                 <p className="font-black text-3xl">{booksThisMonth}</p>
-                <p className="text-[10px] text-stone-400 uppercase">{t.books_this_month}</p>
+                <p className="text-[10px] text-slate-400 uppercase">{t.books_this_month}</p>
               </div>
             </div>
             
             <div className={`${themeClasses.card} rounded-3xl p-6 shadow-md border ${themeClasses.border}`}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-black text-sm uppercase tracking-widest text-stone-600 dark:text-stone-400">{t.badges_title}</h3>
-                <p className="text-xs text-stone-400">{userProfile.badges?.length || 0}/20</p>
+                <h3 className="font-black text-sm uppercase tracking-widest">{t.badges_title}</h3>
+                <p className="text-xs text-slate-400">{userProfile.badges?.length || 0}/20</p>
               </div>
               <div className="grid grid-cols-5 gap-3">
                 {Object.entries(BADGE_DEFS).map(([id, def]) => {
@@ -6813,12 +7189,12 @@ export default function App() {
                     <button 
                       key={id}
                       onClick={() => openBadgeModal(id)}
-                      className={`aspect-square rounded-2xl flex items-center justify-center transition-all hover:scale-110 ${hasBadge ? 'bg-amber-100 dark:bg-amber-900' : 'bg-stone-100 dark:bg-stone-700'}`}
+                      className={`aspect-square rounded-2xl flex items-center justify-center transition-all hover:scale-110 ${hasBadge ? 'bg-yellow-100 dark:bg-yellow-900' : 'bg-gray-100 dark:bg-gray-700'}`}
                     >
                       <div className="relative">
                         <BadgeIcon badgeId={parseInt(id)} unlocked={hasBadge} size={24} />
                         {!hasBadge && progress > 0 && (
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-600 text-white rounded-full flex items-center justify-center text-[8px] font-bold">
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-indigo-500 text-white rounded-full flex items-center justify-center text-[8px] font-bold">
                             {Math.round(progress)}%
                           </div>
                         )}
@@ -6834,36 +7210,36 @@ export default function App() {
                 onClick={() => setShowFavoriteWriters(true)}
                 className={`${themeClasses.card} rounded-3xl p-6 text-center shadow-md border ${themeClasses.border} hover:scale-105 transition-all`}
               >
-                <PenTool size={32} className="mx-auto text-amber-600 mb-2" />
+                <PenTool size={32} className="mx-auto text-purple-500 mb-2" />
                 <p className="font-bold text-sm">{t.writers_section}</p>
-                <p className="text-xs text-stone-400">{favoriteWritersList.length}</p>
+                <p className="text-xs text-slate-400">{favoriteWritersList.length}</p>
               </button>
               <button 
                 onClick={() => setShowSavedPosts(true)}
                 className={`${themeClasses.card} rounded-3xl p-6 text-center shadow-md border ${themeClasses.border} hover:scale-105 transition-all`}
               >
-                <Bookmark size={32} className="mx-auto text-amber-600 mb-2" />
+                <Bookmark size={32} className="mx-auto text-yellow-500 mb-2" />
                 <p className="font-bold text-sm">{t.saved_section}</p>
-                <p className="text-xs text-stone-400">{savedPostsList.length}</p>
+                <p className="text-xs text-slate-400">{savedPostsList.length}</p>
               </button>
             </div>
             
             <div className="space-y-3">
               <button 
                 onClick={() => setShowWriters(true)}
-                className={`w-full py-4 rounded-3xl ${theme === 'dark' ? 'bg-stone-700 hover:bg-stone-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-stone-100 hover:bg-stone-200'} font-bold text-sm uppercase transition-all flex items-center justify-center gap-2`}
+                className={`w-full py-4 rounded-3xl ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-100 hover:bg-slate-200'} font-bold text-sm uppercase transition-all flex items-center justify-center gap-2`}
               >
                 <PenTool size={18}/> {t.writers}
               </button>
               <button 
                 onClick={() => setShowFriendsSection(true)}
-                className={`w-full py-4 rounded-3xl ${theme === 'dark' ? 'bg-stone-700 hover:bg-stone-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-stone-100 hover:bg-stone-200'} font-bold text-sm uppercase transition-all flex items-center justify-center gap-2`}
+                className={`w-full py-4 rounded-3xl ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-100 hover:bg-slate-200'} font-bold text-sm uppercase transition-all flex items-center justify-center gap-2`}
               >
                 <Users size={18}/> {t.find_friends}
               </button>
               <button 
                 onClick={inviteWhatsApp}
-                className="w-full py-4 rounded-3xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm uppercase transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-3xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm uppercase transition-all flex items-center justify-center gap-2"
               >
                 <Share2 size={18}/> {t.invite}
               </button>
@@ -6884,14 +7260,14 @@ export default function App() {
           <div className="flex justify-around py-2">
             {[
               { id: 'library', icon: BookOpen, label: t.library },
-              { id: 'plan', icon: Search, label: t.plan },
+              { id: 'plan', icon: Search, label: t.plan }, // Cambiado a Search y label a t.plan que es "Buscar"
               { id: 'social', icon: Users, label: t.social },
               { id: 'profile', icon: User, label: t.profile }
             ].map(({ id, icon: Icon, label }) => (
               <button 
                 key={id} 
                 onClick={() => setActiveTab(id)} 
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${activeTab === id ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300'}`}
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${activeTab === id ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-gray-300'}`}
               >
                 <Icon size={24} className={activeTab === id ? 'scale-110' : ''} />
                 <span className="text-[10px] font-bold uppercase">{label}</span>
