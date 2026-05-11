@@ -1011,7 +1011,8 @@ const ReadingPlanDetail = ({ book, onToggleCheckpoint, onSaveNote, onSavePage, t
           const todayKey = `${book.bookId}-${cp.dayNumber}`;
           const noteValue = checkpointNotes[todayKey] !== undefined ? checkpointNotes[todayKey] : cp.note || '';
           const pageValue = currentPageInputs[todayKey] !== undefined ? currentPageInputs[todayKey] : cp.currentPage || '';
-          const isExpanded = expandedCheckpoints[todayKey] !== false; // Por defecto expandido
+          const isExpanded = expandedCheckpoints[todayKey] === true; // Por defecto colapsado, solo hoy expandido
+          const shouldShowExpanded = isExpanded || isCurrentDay; // Mostrar hoy expandido siempre
 
           return (
             <div 
@@ -1063,7 +1064,7 @@ const ReadingPlanDetail = ({ book, onToggleCheckpoint, onSaveNote, onSavePage, t
               </button>
 
               {/* Contenido expandible */}
-              {isExpanded && (
+              {shouldShowExpanded && (
                 <div className="px-3 pb-3 space-y-3 border-t border-slate-200 dark:border-gray-700 pt-3">
                   {/* Input para página actual */}
                   <div>
