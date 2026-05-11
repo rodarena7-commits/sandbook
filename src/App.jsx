@@ -2638,6 +2638,52 @@ export default function App() {
   };
 
   // --- FUNCIÓN MEJORADA PARA ALTERNAR CHECKPOINT (COMPLETAR DÍA) ---
+  // --- FUNCIÓN PARA DESBLOQUEAR INSIGNIAS AUTOMÁTICAMENTE ---
+  const checkAndUnlockBadges = async (updatedProfile) => {
+    if (!user) return;
+    const newBadges = updatedProfile.badges || userProfile.badges || [];
+
+    Object.entries(BADGE_DEFS).forEach(([id, badge]) => {
+      const badgeId = parseInt(id);
+      const hasit = newBadges.includes(badgeId);
+
+      // No desbloquear si ya está desbloqueado
+      if (hasit) return;
+
+      let shouldUnlock = false;
+      const { type, value } = badge.requirement;
+
+      switch(type) {
+        case 'read_count':
+          shouldUnlock = (updatedProfile.readCount || 0) >= value;
+          break;
+        case 'yearly_books':
+          const thisYear = new Date().getFullYear();
+          const yearlyRead = myBooks.filter(b => {
+            if (b.status !== 'read') return false;
+            const finishDate = new Date(b.finishDate || b.addedAt);
+            return finishDate.getFullYear() === thisYear;
+          }).length;
+          shouldUnlock = yearlyRead >= value;
+          break;
+        case 'scan_count':
+          shouldUnlock = (updatedProfile.scannedCount || 0) >= value;
+          break;
+        case 'total_badges':
+          shouldUnlock = newBadges.length >= value;
+          break;
+      }
+
+      if (shouldUnlock) {
+        newBadges.push(badgeId);
+      }
+    });
+
+    if (newBadges.length > (updatedProfile.badges || []).length) {
+      await updateDoc(doc(db, 'profiles', user.uid), { badges: newBadges });
+    }
+  };
+
   const toggleCheckpoint = async (bookId, idx) => {
     if (!user) return;
     const book = myBooks.find(b => b.bookId === bookId);
@@ -2645,22 +2691,29 @@ export default function App() {
     nCP[idx].completed = !nCP[idx].completed;
     const allDone = nCP.every(c => c.completed);
     if (allDone) {
-      await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), { 
-        checkpoints: nCP, 
+      await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), {
+        checkpoints: nCP,
         status: 'read',
         finishDate: new Date().toISOString()
       });
       victoryAudio.current.play().catch(() => {});
-      await updateDoc(doc(db, 'profiles', user.uid), { 
-        readCount: increment(1), 
+      const updatedProfile = {
+        ...userProfile,
+        readCount: (userProfile.readCount || 0) + 1,
+        planCount: (userProfile.planCount || 0) - 1
+      };
+      await updateDoc(doc(db, 'profiles', user.uid), {
+        readCount: increment(1),
         planCount: increment(-1),
-        readBooksList: arrayUnion(bookId) 
+        readBooksList: arrayUnion(bookId)
       });
+      // Verificar y desbloquear insignias automáticamente
+      await checkAndUnlockBadges(updatedProfile);
       await createNotification(
         user.uid,
         'book_completed',
         lang === 'es' ? '¡Libro completado!' : 'Book completed!',
-        lang === 'es' 
+        lang === 'es'
           ? `Felicidades, completaste "${book.title}".`
           : `Congratulations, you completed "${book.title}".`,
         { bookId }
