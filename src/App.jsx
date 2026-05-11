@@ -233,11 +233,7 @@ const i18n = {
     save_note: "Guardar nota",
     page_input_placeholder: "Pág. actual",
     reading_plan_status: "Estado del plan",
-    current_book: "Leyendo actualmente",
-    bible: "Biblia", bible_select: "Selecciona un libro bíblico", bible_chapters: "Capítulos", bible_create_plan: "Crear plan bíblico", bible_plan: "Plan Bíblico",
-    book_comments: "Comentarios del libro", add_comment: "Añadir comentario", your_comment: "Tu comentario", my_comments: "Mis comentarios",
-    relax_plan: "Plan Relax", standard_plan: "Plan Estándar", plan_type: "Tipo de plan",
-    post_image: "Publicar con imagen", image_uploaded: "Imagen subida"
+    current_book: "Leyendo actualmente"
   },
   en: {
     library: "Library", plan: "Search", social: "Social", profile: "Me",
@@ -411,11 +407,7 @@ const i18n = {
     save_note: "Save note",
     page_input_placeholder: "Current page",
     reading_plan_status: "Plan status",
-    current_book: "Currently reading",
-    bible: "Bible", bible_select: "Select a biblical book", bible_chapters: "Chapters", bible_create_plan: "Create Bible plan", bible_plan: "Bible Plan",
-    book_comments: "Book comments", add_comment: "Add comment", your_comment: "Your comment", my_comments: "My comments",
-    relax_plan: "Relax Plan", standard_plan: "Standard Plan", plan_type: "Plan type",
-    post_image: "Post with image", image_uploaded: "Image uploaded"
+    current_book: "Currently reading"
   }
 };
 
@@ -1280,21 +1272,6 @@ export default function App() {
 
   const [showGoogleLens, setShowGoogleLens] = useState(false);
 
-  // --- ESTADOS PARA COMENTARIOS DE LIBROS POR USUARIO ---
-  const [userBookComments, setUserBookComments] = useState({});
-  const [userBookCommentInput, setUserBookCommentInput] = useState("");
-  const [userBookCommentRating, setUserBookCommentRating] = useState(0);
-  const [showBookCommentsModal, setShowBookCommentsModal] = useState(false);
-  const [commentsBook, setCommentsBook] = useState(null);
-  const [bookCommentsList, setBookCommentsList] = useState([]);
-
-  // --- ESTADOS PARA BIBLIA ---
-  const [showBibleModal, setShowBibleModal] = useState(false);
-  const [selectedBibleBook, setSelectedBibleBook] = useState(null);
-
-  // --- ESTADOS PARA PLAN RELAX ---
-  const [planType, setPlanType] = useState('standard');
-
   // --- NUEVOS ESTADOS PARA PÁGINA ACTUAL Y NOTAS ---
   const [currentPageInputs, setCurrentPageInputs] = useState({});
   const [checkpointNotes, setCheckpointNotes] = useState({}); // Para almacenar notas temporales
@@ -1373,26 +1350,6 @@ export default function App() {
 
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
-
-  // --- LISTA DE LIBROS BÍBLICOS ---
-  const bibleBooks = [
-    // Antiguo Testamento
-    { name: 'Génesis', chapters: 50 }, { name: 'Éxodo', chapters: 40 }, { name: 'Levítico', chapters: 27 }, { name: 'Números', chapters: 36 }, { name: 'Deuteronomio', chapters: 34 },
-    { name: 'Josué', chapters: 24 }, { name: 'Jueces', chapters: 21 }, { name: 'Rut', chapters: 4 }, { name: '1 Samuel', chapters: 31 }, { name: '2 Samuel', chapters: 24 },
-    { name: '1 Reyes', chapters: 22 }, { name: '2 Reyes', chapters: 25 }, { name: '1 Crónicas', chapters: 29 }, { name: '2 Crónicas', chapters: 36 }, { name: 'Esdras', chapters: 10 },
-    { name: 'Nehemías', chapters: 13 }, { name: 'Ester', chapters: 10 }, { name: 'Job', chapters: 42 }, { name: 'Salmos', chapters: 150 }, { name: 'Proverbios', chapters: 31 },
-    { name: 'Eclesiastés', chapters: 12 }, { name: 'Cantar de los Cantares', chapters: 8 }, { name: 'Isaías', chapters: 66 }, { name: 'Jeremías', chapters: 52 }, { name: 'Lamentaciones', chapters: 5 },
-    { name: 'Ezequiel', chapters: 48 }, { name: 'Daniel', chapters: 12 }, { name: 'Oseas', chapters: 14 }, { name: 'Joel', chapters: 3 }, { name: 'Amós', chapters: 9 },
-    { name: 'Abdías', chapters: 1 }, { name: 'Jonás', chapters: 4 }, { name: 'Miqueas', chapters: 7 }, { name: 'Nahúm', chapters: 3 }, { name: 'Habacuc', chapters: 3 },
-    { name: 'Sofonías', chapters: 3 }, { name: 'Ageo', chapters: 2 }, { name: 'Zacarías', chapters: 14 }, { name: 'Malaquías', chapters: 4 },
-    // Nuevo Testamento
-    { name: 'Mateo', chapters: 28 }, { name: 'Marcos', chapters: 16 }, { name: 'Lucas', chapters: 24 }, { name: 'Juan', chapters: 21 }, { name: 'Hechos', chapters: 28 },
-    { name: 'Romanos', chapters: 16 }, { name: '1 Corintios', chapters: 16 }, { name: '2 Corintios', chapters: 13 }, { name: 'Gálatas', chapters: 6 }, { name: 'Efesios', chapters: 6 },
-    { name: 'Filipenses', chapters: 4 }, { name: 'Colosenses', chapters: 4 }, { name: '1 Tesalonicenses', chapters: 5 }, { name: '2 Tesalonicenses', chapters: 3 }, { name: '1 Timoteo', chapters: 6 },
-    { name: '2 Timoteo', chapters: 4 }, { name: 'Tito', chapters: 3 }, { name: 'Filemón', chapters: 1 }, { name: 'Hebreos', chapters: 13 }, { name: 'Santiago', chapters: 5 },
-    { name: '1 Pedro', chapters: 5 }, { name: '2 Pedro', chapters: 3 }, { name: '1 Juan', chapters: 5 }, { name: '2 Juan', chapters: 1 }, { name: '3 Juan', chapters: 1 },
-    { name: 'Judas', chapters: 1 }, { name: 'Apocalipsis', chapters: 22 }
-  ];
 
   const [userStats, setUserStats] = useState({
     readCount: 0,
@@ -2716,124 +2673,16 @@ export default function App() {
     if (!userRating || !viewingBook || !user) return;
     const bookId = viewingBook.id || viewingBook.bookId;
     await addDoc(collection(db, 'comments'), {
-      bookId,
-      userId: user.uid,
-      userName: userProfile.name,
-      userPic: userProfile.profilePic,
-      text: userComment,
-      rating: userRating,
+      bookId, 
+      userId: user.uid, 
+      userName: userProfile.name, 
+      userPic: userProfile.profilePic, 
+      text: userComment, 
+      rating: userRating, 
       timestamp: serverTimestamp()
     });
     setUserComment("");
     setUserRating(0);
-  };
-
-  // --- FUNCIÓN PARA GUARDAR COMENTARIOS DE LIBROS POR USUARIO ---
-  const saveUserBookComment = async (bookId) => {
-    if (!user || !userBookCommentInput.trim()) return;
-    const commentKey = `${user.uid}_${bookId}`;
-    const newComment = {
-      userId: user.uid,
-      userName: userProfile.name,
-      userPic: userProfile.profilePic,
-      text: userBookCommentInput,
-      rating: userBookCommentRating,
-      timestamp: new Date().toISOString()
-    };
-    await setDoc(doc(db, 'users', user.uid, 'bookComments', bookId), newComment, { merge: true });
-    setUserBookCommentInput("");
-    setUserBookCommentRating(0);
-  };
-
-  // --- FUNCIÓN PARA GUARDAR PLAN RELAX (SIN CHECKPOINTS DIARIOS) ---
-  const saveRelaxPlan = async () => {
-    if (!user || !planningBook) return;
-    const pages = parseInt(manualPages);
-    if (isNaN(pages) || pages <= 0) return;
-    const bookId = planningBook.id || planningBook.bookId;
-    const bookExists = myBooks.find(b => b.bookId === bookId);
-    if (!bookExists) {
-      await handleAddBook(planningBook, 'reading', false, true);
-    }
-    await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), {
-      status: 'reading',
-      planType: 'relax',
-      totalPages: pages,
-      currentPage: 0,
-      relaxStartDate: new Date().toISOString()
-    });
-    await createNotification(
-      user.uid,
-      'reading_plan_started',
-      lang === 'es' ? '¡Plan Relax iniciado!' : 'Relax plan started!',
-      lang === 'es'
-        ? `Comenzaste a leer "${planningBook.volumeInfo?.title || planningBook.title}". Meta: ${pages} páginas.`
-        : `You started reading "${planningBook.volumeInfo?.title || planningBook.title}". Goal: ${pages} pages.`,
-      { bookId }
-    );
-    setPlanningBook(null);
-    setManualPages("");
-    setPlanType('standard');
-    setActiveTab('library');
-  };
-
-  // --- FUNCIÓN PARA GUARDAR PLAN DE LECTURA BÍBLICO ---
-  const saveBibleReadingPlan = async () => {
-    if (!user || !selectedBibleBook) return;
-    const days = parseInt(planDays);
-    if (isNaN(days) || days <= 0) return;
-    const totalChapters = selectedBibleBook.chapters;
-    const chaptersPerDay = Math.ceil(totalChapters / days);
-    const checkpoints = [];
-    const startDate = new Date(planStartDate);
-    for (let i = 1; i <= days; i++) {
-      const startChapter = (i - 1) * chaptersPerDay + 1;
-      const endChapter = Math.min(i * chaptersPerDay, totalChapters);
-      const checkpointDate = new Date(startDate);
-      checkpointDate.setDate(startDate.getDate() + i - 1);
-      checkpoints.push({
-        title: `Día ${i}: Capítulos ${startChapter}-${endChapter}`,
-        completed: false,
-        note: "",
-        dayNumber: i,
-        chapters: `${startChapter}-${endChapter}`,
-        startChapter,
-        endChapter,
-        date: checkpointDate.toISOString()
-      });
-    }
-    const bibleBookId = `bible_${selectedBibleBook.name.toLowerCase().replace(/\s+/g, '_')}`;
-    await setDoc(doc(db, 'users', user.uid, 'myBooks', bibleBookId), {
-      bookId: bibleBookId,
-      title: selectedBibleBook.name,
-      authors: ['La Biblia'],
-      isBible: true,
-      totalChapters: totalChapters,
-      status: 'reading',
-      checkpoints: checkpoints,
-      planStartDate: startDate.toISOString(),
-      planDays: days,
-      chaptersPerDay: chaptersPerDay,
-      planEndDate: new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString(),
-      currentChapter: 0,
-      addedAt: new Date().toISOString(),
-      thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150"%3E%3Crect fill="%234B2C1F" width="100" height="150"/%3E%3Ctext x="50" y="75" font-size="40" fill="white" text-anchor="middle" dy=".3em"%3E📖%3C/text%3E%3C/svg%3E'
-    });
-    await updateDoc(doc(db, 'profiles', user.uid), { planCount: increment(1) });
-    await createNotification(
-      user.uid,
-      'bible_plan_started',
-      lang === 'es' ? '¡Plan Bíblico iniciado!' : 'Bible reading plan started!',
-      lang === 'es'
-        ? `Comenzaste a leer "${selectedBibleBook.name}". Meta: ${totalChapters} capítulos en ${days} días.`
-        : `You started reading "${selectedBibleBook.name}". Goal: ${totalChapters} chapters in ${days} days.`,
-      { bookId: bibleBookId }
-    );
-    setShowBibleModal(false);
-    setSelectedBibleBook(null);
-    setPlanDays(7);
-    setPlanStartDate(new Date().toISOString().split('T')[0]);
-    setActiveTab('library');
   };
 
   const handleImageUpload = async (e) => {
