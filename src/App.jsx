@@ -93,7 +93,6 @@ const i18n = {
     authors: "Autores", author_details: "Detalles del autor",
     books_by_author: "Libros del autor", loading_more: "Cargando más...",
     search: "Buscar",
-    bible: "Biblia", bible_select: "Selecciona un libro bíblico", bible_chapters: "Capítulos", bible_create_plan: "Crear plan bíblico", bible_plan: "Plan Bíblico",
     friends: "Amigos", following: "Siguiendo", followers_list: "Seguidores",
     find_friends: "Encontrar amigos", friend_requests: "Solicitudes",
     remove_friend: "Eliminar amigo", add_friend: "Agregar amigo",
@@ -234,7 +233,11 @@ const i18n = {
     save_note: "Guardar nota",
     page_input_placeholder: "Pág. actual",
     reading_plan_status: "Estado del plan",
-    current_book: "Leyendo actualmente"
+    current_book: "Leyendo actualmente",
+    bible: "Biblia", bible_select: "Selecciona un libro bíblico", bible_chapters: "Capítulos", bible_create_plan: "Crear plan bíblico", bible_plan: "Plan Bíblico",
+    book_comments: "Comentarios del libro", add_comment: "Añadir comentario", your_comment: "Tu comentario", my_comments: "Mis comentarios",
+    relax_plan: "Plan Relax", standard_plan: "Plan Estándar", plan_type: "Tipo de plan",
+    post_image: "Publicar con imagen", image_uploaded: "Imagen subida"
   },
   en: {
     library: "Library", plan: "Search", social: "Social", profile: "Me",
@@ -268,7 +271,6 @@ const i18n = {
     authors: "Authors", author_details: "Author details",
     books_by_author: "Author's books", loading_more: "Loading more...",
     search: "Search",
-    bible: "Bible", bible_select: "Select a biblical book", bible_chapters: "Chapters", bible_create_plan: "Create Bible plan", bible_plan: "Bible Plan",
     friends: "Friends", following: "Following", followers_list: "Followers",
     find_friends: "Find friends", friend_requests: "Friend requests",
     remove_friend: "Remove friend", add_friend: "Add friend",
@@ -409,7 +411,11 @@ const i18n = {
     save_note: "Save note",
     page_input_placeholder: "Current page",
     reading_plan_status: "Plan status",
-    current_book: "Currently reading"
+    current_book: "Currently reading",
+    bible: "Bible", bible_select: "Select a biblical book", bible_chapters: "Chapters", bible_create_plan: "Create Bible plan", bible_plan: "Bible Plan",
+    book_comments: "Book comments", add_comment: "Add comment", your_comment: "Your comment", my_comments: "My comments",
+    relax_plan: "Relax Plan", standard_plan: "Standard Plan", plan_type: "Plan type",
+    post_image: "Post with image", image_uploaded: "Image uploaded"
   }
 };
 
@@ -759,59 +765,6 @@ const CoverZoomModal = ({ imageUrl, title, onClose, t }) => {
       <p className="absolute bottom-4 left-4 text-white/50 text-sm max-w-md truncate">
         {title}
       </p>
-    </div>
-  );
-};
-
-// --- MODAL PARA MOSTRAR LISTA DE USUARIOS QUE REACCIONARON ---
-const ReactionListModal = ({ title, users, onClose, theme, t, onViewProfile }) => {
-  return (
-    <div className="fixed inset-0 z-[450] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-      <div className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-white'} w-full max-w-md max-h-[70vh] rounded-[2rem] overflow-hidden flex flex-col shadow-2xl`}>
-        <div className={`relative p-4 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
-          <h2 className="text-lg font-black text-white text-center">{title}</h2>
-          <button onClick={onClose} className="absolute top-4 right-4 p-1 bg-white/20 text-white rounded-full">
-            <X size={20} />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-4">
-          {users.length === 0 ? (
-            <p className="text-center text-sm text-slate-500 py-8">
-              {t.no_friends || 'No hay usuarios'}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {users.map(user => (
-                <div key={user.userId} className={`flex items-center justify-between p-3 rounded-xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-100' : 'bg-slate-100'}`}>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={user.profilePic || 'https://via.placeholder.com/40'}
-                      className="w-10 h-10 rounded-full object-cover cursor-pointer"
-                      onClick={() => {
-                        onClose();
-                        onViewProfile(user);
-                      }}
-                    />
-                    <div>
-                      <p
-                        className="text-sm font-bold cursor-pointer hover:text-indigo-600"
-                        onClick={() => {
-                          onClose();
-                          onViewProfile(user);
-                        }}
-                      >
-                        {user.name}
-                      </p>
-                      <p className="text-xs text-slate-500">{user.readCount || 0} {t.read?.toLowerCase() || 'leídos'}</p>
-                    </div>
-                  </div>
-                  <img src={getLevelSymbol(user.readCount)} className="w-5 h-5 object-contain" alt="Nivel" />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 };
@@ -1270,8 +1223,7 @@ export default function App() {
   const [planDays, setPlanDays] = useState(7);
   const [planStartDate, setPlanStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [showStartDateOptions, setShowStartDateOptions] = useState(false);
-  const [planType, setPlanType] = useState('standard'); // 'standard' o 'relax'
-
+  
   const [expandedBooks, setExpandedBooks] = useState(new Set());
   const [bookComments, setBookComments] = useState({});
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -1327,6 +1279,21 @@ export default function App() {
   const [commentInputs, setCommentInputs] = useState({});
 
   const [showGoogleLens, setShowGoogleLens] = useState(false);
+
+  // --- ESTADOS PARA COMENTARIOS DE LIBROS POR USUARIO ---
+  const [userBookComments, setUserBookComments] = useState({});
+  const [userBookCommentInput, setUserBookCommentInput] = useState("");
+  const [userBookCommentRating, setUserBookCommentRating] = useState(0);
+  const [showBookCommentsModal, setShowBookCommentsModal] = useState(false);
+  const [commentsBook, setCommentsBook] = useState(null);
+  const [bookCommentsList, setBookCommentsList] = useState([]);
+
+  // --- ESTADOS PARA BIBLIA ---
+  const [showBibleModal, setShowBibleModal] = useState(false);
+  const [selectedBibleBook, setSelectedBibleBook] = useState(null);
+
+  // --- ESTADOS PARA PLAN RELAX ---
+  const [planType, setPlanType] = useState('standard');
 
   // --- NUEVOS ESTADOS PARA PÁGINA ACTUAL Y NOTAS ---
   const [currentPageInputs, setCurrentPageInputs] = useState({});
@@ -1407,6 +1374,26 @@ export default function App() {
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
 
+  // --- LISTA DE LIBROS BÍBLICOS ---
+  const bibleBooks = [
+    // Antiguo Testamento
+    { name: 'Génesis', chapters: 50 }, { name: 'Éxodo', chapters: 40 }, { name: 'Levítico', chapters: 27 }, { name: 'Números', chapters: 36 }, { name: 'Deuteronomio', chapters: 34 },
+    { name: 'Josué', chapters: 24 }, { name: 'Jueces', chapters: 21 }, { name: 'Rut', chapters: 4 }, { name: '1 Samuel', chapters: 31 }, { name: '2 Samuel', chapters: 24 },
+    { name: '1 Reyes', chapters: 22 }, { name: '2 Reyes', chapters: 25 }, { name: '1 Crónicas', chapters: 29 }, { name: '2 Crónicas', chapters: 36 }, { name: 'Esdras', chapters: 10 },
+    { name: 'Nehemías', chapters: 13 }, { name: 'Ester', chapters: 10 }, { name: 'Job', chapters: 42 }, { name: 'Salmos', chapters: 150 }, { name: 'Proverbios', chapters: 31 },
+    { name: 'Eclesiastés', chapters: 12 }, { name: 'Cantar de los Cantares', chapters: 8 }, { name: 'Isaías', chapters: 66 }, { name: 'Jeremías', chapters: 52 }, { name: 'Lamentaciones', chapters: 5 },
+    { name: 'Ezequiel', chapters: 48 }, { name: 'Daniel', chapters: 12 }, { name: 'Oseas', chapters: 14 }, { name: 'Joel', chapters: 3 }, { name: 'Amós', chapters: 9 },
+    { name: 'Abdías', chapters: 1 }, { name: 'Jonás', chapters: 4 }, { name: 'Miqueas', chapters: 7 }, { name: 'Nahúm', chapters: 3 }, { name: 'Habacuc', chapters: 3 },
+    { name: 'Sofonías', chapters: 3 }, { name: 'Ageo', chapters: 2 }, { name: 'Zacarías', chapters: 14 }, { name: 'Malaquías', chapters: 4 },
+    // Nuevo Testamento
+    { name: 'Mateo', chapters: 28 }, { name: 'Marcos', chapters: 16 }, { name: 'Lucas', chapters: 24 }, { name: 'Juan', chapters: 21 }, { name: 'Hechos', chapters: 28 },
+    { name: 'Romanos', chapters: 16 }, { name: '1 Corintios', chapters: 16 }, { name: '2 Corintios', chapters: 13 }, { name: 'Gálatas', chapters: 6 }, { name: 'Efesios', chapters: 6 },
+    { name: 'Filipenses', chapters: 4 }, { name: 'Colosenses', chapters: 4 }, { name: '1 Tesalonicenses', chapters: 5 }, { name: '2 Tesalonicenses', chapters: 3 }, { name: '1 Timoteo', chapters: 6 },
+    { name: '2 Timoteo', chapters: 4 }, { name: 'Tito', chapters: 3 }, { name: 'Filemón', chapters: 1 }, { name: 'Hebreos', chapters: 13 }, { name: 'Santiago', chapters: 5 },
+    { name: '1 Pedro', chapters: 5 }, { name: '2 Pedro', chapters: 3 }, { name: '1 Juan', chapters: 5 }, { name: '2 Juan', chapters: 1 }, { name: '3 Juan', chapters: 1 },
+    { name: 'Judas', chapters: 1 }, { name: 'Apocalipsis', chapters: 22 }
+  ];
+
   const [userStats, setUserStats] = useState({
     readCount: 0,
     planCount: 0,
@@ -1421,80 +1408,6 @@ export default function App() {
   const [usersWhoLiked, setUsersWhoLiked] = useState([]);
   const [usersWhoDisliked, setUsersWhoDisliked] = useState([]);
   const [usersWithBook, setUsersWithBook] = useState([]);
-
-  // --- ESTADOS PARA BIBLIA ---
-  const [showBibleModal, setShowBibleModal] = useState(false);
-  const [selectedBibleBook, setSelectedBibleBook] = useState(null);
-  const bibleBooks = [
-    // Antiguo Testamento
-    { name: 'Génesis', chapters: 50 },
-    { name: 'Éxodo', chapters: 40 },
-    { name: 'Levítico', chapters: 27 },
-    { name: 'Números', chapters: 36 },
-    { name: 'Deuteronomio', chapters: 34 },
-    { name: 'Josué', chapters: 24 },
-    { name: 'Jueces', chapters: 21 },
-    { name: 'Rut', chapters: 4 },
-    { name: '1 Samuel', chapters: 31 },
-    { name: '2 Samuel', chapters: 24 },
-    { name: '1 Reyes', chapters: 22 },
-    { name: '2 Reyes', chapters: 25 },
-    { name: '1 Crónicas', chapters: 29 },
-    { name: '2 Crónicas', chapters: 36 },
-    { name: 'Esdras', chapters: 10 },
-    { name: 'Nehemías', chapters: 13 },
-    { name: 'Ester', chapters: 10 },
-    { name: 'Job', chapters: 42 },
-    { name: 'Salmos', chapters: 150 },
-    { name: 'Proverbios', chapters: 31 },
-    { name: 'Eclesiastés', chapters: 12 },
-    { name: 'Cantar de los Cantares', chapters: 8 },
-    { name: 'Isaías', chapters: 66 },
-    { name: 'Jeremías', chapters: 52 },
-    { name: 'Lamentaciones', chapters: 5 },
-    { name: 'Ezequiel', chapters: 48 },
-    { name: 'Daniel', chapters: 12 },
-    { name: 'Oseas', chapters: 14 },
-    { name: 'Joel', chapters: 3 },
-    { name: 'Amós', chapters: 9 },
-    { name: 'Abdías', chapters: 1 },
-    { name: 'Jonás', chapters: 4 },
-    { name: 'Miqueas', chapters: 7 },
-    { name: 'Nahúm', chapters: 3 },
-    { name: 'Habacuc', chapters: 3 },
-    { name: 'Sofonías', chapters: 3 },
-    { name: 'Ageo', chapters: 2 },
-    { name: 'Zacarías', chapters: 14 },
-    { name: 'Malaquías', chapters: 4 },
-    // Nuevo Testamento
-    { name: 'Mateo', chapters: 28 },
-    { name: 'Marcos', chapters: 16 },
-    { name: 'Lucas', chapters: 24 },
-    { name: 'Juan', chapters: 21 },
-    { name: 'Hechos', chapters: 28 },
-    { name: 'Romanos', chapters: 16 },
-    { name: '1 Corintios', chapters: 16 },
-    { name: '2 Corintios', chapters: 13 },
-    { name: 'Gálatas', chapters: 6 },
-    { name: 'Efesios', chapters: 6 },
-    { name: 'Filipenses', chapters: 4 },
-    { name: 'Colosenses', chapters: 4 },
-    { name: '1 Tesalonicenses', chapters: 5 },
-    { name: '2 Tesalonicenses', chapters: 3 },
-    { name: '1 Timoteo', chapters: 6 },
-    { name: '2 Timoteo', chapters: 4 },
-    { name: 'Tito', chapters: 3 },
-    { name: 'Filemón', chapters: 1 },
-    { name: 'Hebreos', chapters: 13 },
-    { name: 'Santiago', chapters: 5 },
-    { name: '1 Pedro', chapters: 5 },
-    { name: '2 Pedro', chapters: 3 },
-    { name: '1 Juan', chapters: 5 },
-    { name: '2 Juan', chapters: 1 },
-    { name: '3 Juan', chapters: 1 },
-    { name: 'Judas', chapters: 1 },
-    { name: 'Apocalipsis', chapters: 22 }
-  ];
   const [showUserListModal, setShowUserListModal] = useState(false);
   const [userListTitle, setUserListTitle] = useState('');
   const [userListData, setUserListData] = useState([]);
@@ -2763,111 +2676,6 @@ export default function App() {
     setManualPages("");
     setPlanDays(7);
     setPlanStartDate(new Date().toISOString().split('T')[0]);
-    setPlanType('standard');
-    setActiveTab('library');
-  };
-
-  // --- FUNCIÓN PLAN RELAX (SIN CHECKPOINTS DIARIOS) ---
-  const saveRelaxPlan = async () => {
-    if (!user || !planningBook) return;
-    const pages = parseInt(manualPages);
-    if (isNaN(pages) || pages <= 0) return;
-
-    const bookId = planningBook.id || planningBook.bookId;
-    const bookExists = myBooks.find(b => b.bookId === bookId);
-    if (!bookExists) {
-      await handleAddBook(planningBook, 'reading', false, true);
-    }
-
-    await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), {
-      status: 'reading',
-      planType: 'relax',
-      totalPages: pages,
-      currentPage: 0,
-      relaxStartDate: new Date().toISOString()
-    });
-
-    await createNotification(
-      user.uid,
-      'reading_plan_started',
-      lang === 'es' ? '¡Plan Relax iniciado!' : 'Relax plan started!',
-      lang === 'es'
-        ? `Comenzaste a leer "${planningBook.volumeInfo?.title || planningBook.title}". Meta: ${pages} páginas.`
-        : `You started reading "${planningBook.volumeInfo?.title || planningBook.title}". Goal: ${pages} pages.`,
-      { bookId }
-    );
-
-    setPlanningBook(null);
-    setManualPages("");
-    setPlanType('standard');
-    setActiveTab('library');
-  };
-
-  // --- FUNCIÓN PARA GUARDAR PLAN DE LECTURA BÍBLICO ---
-  const saveBibleReadingPlan = async () => {
-    if (!user || !selectedBibleBook) return;
-    const days = parseInt(planDays);
-    if (isNaN(days) || days <= 0) return;
-
-    const totalChapters = selectedBibleBook.chapters;
-    const chaptersPerDay = Math.ceil(totalChapters / days);
-    const checkpoints = [];
-    const startDate = new Date(planStartDate);
-
-    for (let i = 1; i <= days; i++) {
-      const startChapter = (i - 1) * chaptersPerDay + 1;
-      const endChapter = Math.min(i * chaptersPerDay, totalChapters);
-      const checkpointDate = new Date(startDate);
-      checkpointDate.setDate(startDate.getDate() + i - 1);
-      checkpoints.push({
-        title: `Día ${i}: Capítulos ${startChapter}-${endChapter}`,
-        completed: false,
-        note: "",
-        dayNumber: i,
-        chapters: `${startChapter}-${endChapter}`,
-        startChapter,
-        endChapter,
-        date: checkpointDate.toISOString()
-      });
-    }
-
-    const bibleBookId = `bible_${selectedBibleBook.name.toLowerCase().replace(/\s+/g, '_')}`;
-
-    await setDoc(doc(db, 'users', user.uid, 'myBooks', bibleBookId), {
-      bookId: bibleBookId,
-      title: selectedBibleBook.name,
-      authors: ['La Biblia'],
-      isBible: true,
-      totalChapters: totalChapters,
-      status: 'reading',
-      checkpoints: checkpoints,
-      planStartDate: startDate.toISOString(),
-      planDays: days,
-      chaptersPerDay: chaptersPerDay,
-      planEndDate: new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString(),
-      currentChapter: 0,
-      addedAt: new Date().toISOString(),
-      thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150"%3E%3Crect fill="%234B2C1F" width="100" height="150"/%3E%3Ctext x="50" y="75" font-size="40" fill="white" text-anchor="middle" dy=".3em"%3E📖%3C/text%3E%3C/svg%3E'
-    });
-
-    await updateDoc(doc(db, 'profiles', user.uid), {
-      planCount: increment(1)
-    });
-
-    await createNotification(
-      user.uid,
-      'bible_plan_started',
-      lang === 'es' ? '¡Plan Bíblico iniciado!' : 'Bible reading plan started!',
-      lang === 'es'
-        ? `Comenzaste a leer "${selectedBibleBook.name}". Meta: ${totalChapters} capítulos en ${days} días.`
-        : `You started reading "${selectedBibleBook.name}". Goal: ${totalChapters} chapters in ${days} days.`,
-      { bookId: bibleBookId }
-    );
-
-    setShowBibleModal(false);
-    setSelectedBibleBook(null);
-    setPlanDays(7);
-    setPlanStartDate(new Date().toISOString().split('T')[0]);
     setActiveTab('library');
   };
 
@@ -2908,16 +2716,124 @@ export default function App() {
     if (!userRating || !viewingBook || !user) return;
     const bookId = viewingBook.id || viewingBook.bookId;
     await addDoc(collection(db, 'comments'), {
-      bookId, 
-      userId: user.uid, 
-      userName: userProfile.name, 
-      userPic: userProfile.profilePic, 
-      text: userComment, 
-      rating: userRating, 
+      bookId,
+      userId: user.uid,
+      userName: userProfile.name,
+      userPic: userProfile.profilePic,
+      text: userComment,
+      rating: userRating,
       timestamp: serverTimestamp()
     });
     setUserComment("");
     setUserRating(0);
+  };
+
+  // --- FUNCIÓN PARA GUARDAR COMENTARIOS DE LIBROS POR USUARIO ---
+  const saveUserBookComment = async (bookId) => {
+    if (!user || !userBookCommentInput.trim()) return;
+    const commentKey = `${user.uid}_${bookId}`;
+    const newComment = {
+      userId: user.uid,
+      userName: userProfile.name,
+      userPic: userProfile.profilePic,
+      text: userBookCommentInput,
+      rating: userBookCommentRating,
+      timestamp: new Date().toISOString()
+    };
+    await setDoc(doc(db, 'users', user.uid, 'bookComments', bookId), newComment, { merge: true });
+    setUserBookCommentInput("");
+    setUserBookCommentRating(0);
+  };
+
+  // --- FUNCIÓN PARA GUARDAR PLAN RELAX (SIN CHECKPOINTS DIARIOS) ---
+  const saveRelaxPlan = async () => {
+    if (!user || !planningBook) return;
+    const pages = parseInt(manualPages);
+    if (isNaN(pages) || pages <= 0) return;
+    const bookId = planningBook.id || planningBook.bookId;
+    const bookExists = myBooks.find(b => b.bookId === bookId);
+    if (!bookExists) {
+      await handleAddBook(planningBook, 'reading', false, true);
+    }
+    await updateDoc(doc(db, 'users', user.uid, 'myBooks', bookId), {
+      status: 'reading',
+      planType: 'relax',
+      totalPages: pages,
+      currentPage: 0,
+      relaxStartDate: new Date().toISOString()
+    });
+    await createNotification(
+      user.uid,
+      'reading_plan_started',
+      lang === 'es' ? '¡Plan Relax iniciado!' : 'Relax plan started!',
+      lang === 'es'
+        ? `Comenzaste a leer "${planningBook.volumeInfo?.title || planningBook.title}". Meta: ${pages} páginas.`
+        : `You started reading "${planningBook.volumeInfo?.title || planningBook.title}". Goal: ${pages} pages.`,
+      { bookId }
+    );
+    setPlanningBook(null);
+    setManualPages("");
+    setPlanType('standard');
+    setActiveTab('library');
+  };
+
+  // --- FUNCIÓN PARA GUARDAR PLAN DE LECTURA BÍBLICO ---
+  const saveBibleReadingPlan = async () => {
+    if (!user || !selectedBibleBook) return;
+    const days = parseInt(planDays);
+    if (isNaN(days) || days <= 0) return;
+    const totalChapters = selectedBibleBook.chapters;
+    const chaptersPerDay = Math.ceil(totalChapters / days);
+    const checkpoints = [];
+    const startDate = new Date(planStartDate);
+    for (let i = 1; i <= days; i++) {
+      const startChapter = (i - 1) * chaptersPerDay + 1;
+      const endChapter = Math.min(i * chaptersPerDay, totalChapters);
+      const checkpointDate = new Date(startDate);
+      checkpointDate.setDate(startDate.getDate() + i - 1);
+      checkpoints.push({
+        title: `Día ${i}: Capítulos ${startChapter}-${endChapter}`,
+        completed: false,
+        note: "",
+        dayNumber: i,
+        chapters: `${startChapter}-${endChapter}`,
+        startChapter,
+        endChapter,
+        date: checkpointDate.toISOString()
+      });
+    }
+    const bibleBookId = `bible_${selectedBibleBook.name.toLowerCase().replace(/\s+/g, '_')}`;
+    await setDoc(doc(db, 'users', user.uid, 'myBooks', bibleBookId), {
+      bookId: bibleBookId,
+      title: selectedBibleBook.name,
+      authors: ['La Biblia'],
+      isBible: true,
+      totalChapters: totalChapters,
+      status: 'reading',
+      checkpoints: checkpoints,
+      planStartDate: startDate.toISOString(),
+      planDays: days,
+      chaptersPerDay: chaptersPerDay,
+      planEndDate: new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString(),
+      currentChapter: 0,
+      addedAt: new Date().toISOString(),
+      thumbnail: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150"%3E%3Crect fill="%234B2C1F" width="100" height="150"/%3E%3Ctext x="50" y="75" font-size="40" fill="white" text-anchor="middle" dy=".3em"%3E📖%3C/text%3E%3C/svg%3E'
+    });
+    await updateDoc(doc(db, 'profiles', user.uid), { planCount: increment(1) });
+    await createNotification(
+      user.uid,
+      'bible_plan_started',
+      lang === 'es' ? '¡Plan Bíblico iniciado!' : 'Bible reading plan started!',
+      lang === 'es'
+        ? `Comenzaste a leer "${selectedBibleBook.name}". Meta: ${totalChapters} capítulos en ${days} días.`
+        : `You started reading "${selectedBibleBook.name}". Goal: ${totalChapters} chapters in ${days} days.`,
+      { bookId: bibleBookId }
+    );
+    setShowBibleModal(false);
+    setSelectedBibleBook(null);
+    setPlanDays(7);
+    setPlanStartDate(new Date().toISOString().split('T')[0]);
+    setActiveTab('library');
   };
 
   const handleImageUpload = async (e) => {
@@ -4850,86 +4766,57 @@ export default function App() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{lang === 'es' ? 'Tipo de Plan' : 'Plan Type'}</label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setPlanType('standard')}
-                      className={`flex-1 py-3 rounded-xl font-bold text-sm uppercase transition-all ${
-                        planType === 'standard'
-                          ? theme === 'dark' ? 'bg-indigo-600 text-white' : theme === 'sunset' ? 'bg-orange-500 text-white' : 'bg-indigo-600 text-white'
-                          : theme === 'dark' ? 'bg-gray-700 text-gray-300' : theme === 'sunset' ? 'bg-amber-100 text-gray-700' : 'bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {lang === 'es' ? 'Estándar' : 'Standard'}
-                    </button>
-                    <button
-                      onClick={() => setPlanType('relax')}
-                      className={`flex-1 py-3 rounded-xl font-bold text-sm uppercase transition-all ${
-                        planType === 'relax'
-                          ? theme === 'dark' ? 'bg-green-600 text-white' : theme === 'sunset' ? 'bg-green-500 text-white' : 'bg-green-600 text-white'
-                          : theme === 'dark' ? 'bg-gray-700 text-gray-300' : theme === 'sunset' ? 'bg-amber-100 text-gray-700' : 'bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {lang === 'es' ? 'Relax' : 'Relax'}
-                    </button>
-                  </div>
-                </div>
-                <div>
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.manual_p}</label>
-                  <input
-                    type="number"
-                    value={manualPages}
-                    onChange={(e) => setManualPages(e.target.value)}
+                  <input 
+                    type="number" 
+                    value={manualPages} 
+                    onChange={(e) => setManualPages(e.target.value)} 
                     className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                     placeholder="Ej: 300"
                   />
                 </div>
-                {planType === 'standard' && (
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.days}</label>
-                    <input
-                      type="number"
-                      value={planDays}
-                      onChange={(e) => setPlanDays(e.target.value)}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.days}</label>
+                  <input 
+                    type="number" 
+                    value={planDays} 
+                    onChange={(e) => setPlanDays(e.target.value)} 
+                    className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
+                    placeholder="7"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.start_date}</label>
+                  <div className="relative">
+                    <input 
+                      id="start-date-picker"
+                      type="date" 
+                      value={planStartDate} 
+                      onChange={(e) => setPlanStartDate(e.target.value)} 
                       className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
-                      placeholder="7"
                     />
+                    <button 
+                      onClick={() => setShowStartDateOptions(!showStartDateOptions)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full"
+                    >
+                      <ChevronDown size={16} className={theme === 'dark' ? 'text-gray-400' : 'text-slate-400'} />
+                    </button>
                   </div>
-                )}
-                {planType === 'standard' && (
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.start_date}</label>
-                    <div className="relative">
-                      <input
-                        id="start-date-picker"
-                        type="date"
-                        value={planStartDate}
-                        onChange={(e) => setPlanStartDate(e.target.value)}
-                        className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
-                      />
-                      <button
-                        onClick={() => setShowStartDateOptions(!showStartDateOptions)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full"
-                      >
-                        <ChevronDown size={16} className={theme === 'dark' ? 'text-gray-400' : 'text-slate-400'} />
+                  {showStartDateOptions && (
+                    <div className={`mt-2 p-2 rounded-xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-100' : 'bg-slate-50'} space-y-1`}>
+                      <button onClick={() => setQuickStartDate('today')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>
+                        {t.today}
+                      </button>
+                      <button onClick={() => setQuickStartDate('tomorrow')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>
+                        {t.tomorrow}
+                      </button>
+                      <button onClick={() => setQuickStartDate('next_week')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>
+                        {t.next_week}
                       </button>
                     </div>
-                    {showStartDateOptions && (
-                      <div className={`mt-2 p-2 rounded-xl ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-100' : 'bg-slate-50'} space-y-1`}>
-                        <button onClick={() => setQuickStartDate('today')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>
-                          {t.today}
-                        </button>
-                        <button onClick={() => setQuickStartDate('tomorrow')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>
-                          {t.tomorrow}
-                        </button>
-                        <button onClick={() => setQuickStartDate('next_week')} className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/10 ${theme === 'dark' ? 'text-gray-200' : 'text-slate-700'}`}>
-                          {t.next_week}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {planType === 'standard' && manualPages && planDays && (
+                  )}
+                </div>
+                {manualPages && planDays && (
                   <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-indigo-900/30' : theme === 'sunset' ? 'bg-orange-100' : 'bg-indigo-50'}`}>
                     <p className="text-xs text-center">
                       <span className="font-bold">{Math.ceil(parseInt(manualPages) / parseInt(planDays))}</span> {lang === 'es' ? 'páginas por día' : 'pages per day'}
@@ -4937,120 +4824,16 @@ export default function App() {
                   </div>
                 )}
               </div>
-              <button
-                onClick={planType === 'standard' ? saveReadingPlan : saveRelaxPlan}
-                disabled={planType === 'standard' ? (!manualPages || !planDays) : !manualPages}
+              <button 
+                onClick={saveReadingPlan}
+                disabled={!manualPages || !planDays}
                 className={`w-full mt-6 py-4 rounded-2xl font-black text-sm uppercase shadow-md flex items-center justify-center gap-2 transition-all ${
-                  (planType === 'standard' ? (!manualPages || !planDays) : !manualPages)
+                  !manualPages || !planDays
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : planType === 'standard' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                 }`}
               >
                 <Calendar size={18}/> {t.start}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL BIBLIA - SELECCIONAR LIBRO Y CREAR PLAN */}
-      {showBibleModal && !selectedBibleBook && (
-        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-2xl max-h-[85vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-amber-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-amber-600'} flex-shrink-0`}>
-              <h2 className="text-xl font-black text-white text-center">{t.bible_select}</h2>
-              <button onClick={() => setShowBibleModal(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full hover:bg-white/30">
-                <X size={24}/>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid grid-cols-2 gap-3">
-                {bibleBooks.map((book, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedBibleBook(book)}
-                    className={`p-4 rounded-2xl border-2 text-left transition-all ${
-                      theme === 'dark'
-                        ? 'bg-gray-800 border-gray-700 hover:border-amber-500'
-                        : theme === 'sunset'
-                        ? 'bg-amber-50 border-amber-200 hover:border-orange-400'
-                        : 'bg-slate-50 border-slate-200 hover:border-amber-500'
-                    }`}
-                  >
-                    <p className="font-bold text-sm line-clamp-2">{book.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{book.chapters} {t.bible_chapters}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL BIBLIA - CREAR PLAN */}
-      {showBibleModal && selectedBibleBook && (
-        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className={`${themeClasses.card} w-full max-w-md rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 max-h-[90vh]`}>
-            <div className={`relative p-6 ${theme === 'dark' ? 'bg-amber-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-amber-600'} flex-shrink-0`}>
-              <h2 className="text-xl font-black text-white text-center">{t.bible_create_plan}</h2>
-              <button onClick={() => {setShowBibleModal(false); setSelectedBibleBook(null);}} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full hover:bg-white/30">
-                <X size={24}/>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="flex flex-col items-center gap-4 mb-6">
-                <div className="text-5xl">📖</div>
-                <div className="text-center">
-                  <h3 className="font-black text-lg">{selectedBibleBook.name}</h3>
-                  <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{selectedBibleBook.chapters} {t.bible_chapters}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.days}</label>
-                  <input
-                    type="number"
-                    value={planDays}
-                    onChange={(e) => setPlanDays(e.target.value)}
-                    className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
-                    placeholder="30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">{t.start_date}</label>
-                  <input
-                    type="date"
-                    value={planStartDate}
-                    onChange={(e) => setPlanStartDate(e.target.value)}
-                    className={`w-full rounded-2xl px-4 py-3 text-sm outline-none ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
-                  />
-                </div>
-                {planDays && (
-                  <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-amber-900/30' : theme === 'sunset' ? 'bg-orange-100' : 'bg-amber-50'}`}>
-                    <p className="text-xs text-center">
-                      <span className="font-bold">{Math.ceil(selectedBibleBook.chapters / parseInt(planDays))}</span> {lang === 'es' ? 'capítulos por día' : 'chapters per day'}
-                    </p>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={saveBibleReadingPlan}
-                disabled={!planDays}
-                className={`w-full mt-6 py-4 rounded-2xl font-black text-sm uppercase shadow-md flex items-center justify-center gap-2 transition-all ${
-                  !planDays
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-amber-600 hover:bg-amber-700 text-white'
-                }`}
-              >
-                <Calendar size={18}/> {t.start}
-              </button>
-              <button
-                onClick={() => setSelectedBibleBook(null)}
-                className={`w-full mt-3 py-3 rounded-2xl font-bold text-sm uppercase transition-all ${
-                  theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-100 hover:bg-slate-200'
-                }`}
-              >
-                {t.cancel}
               </button>
             </div>
           </div>
@@ -6713,12 +6496,6 @@ export default function App() {
                   placeholder={t.search_p}
                 />
               </div>
-              <button
-                onClick={() => setShowBibleModal(true)}
-                className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm uppercase transition-all mb-4 flex items-center justify-center gap-2"
-              >
-                📖 {t.bible}
-              </button>
               <div className="flex gap-2 flex-wrap">
                 {['all', 'intitle', 'inauthor', 'isbn'].map((type) => (
                   <button 
