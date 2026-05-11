@@ -6257,6 +6257,106 @@ export default function App() {
 
       {/* CONTENIDO PRINCIPAL */}
       <main className="pt-20 px-4 max-w-5xl mx-auto">
+        {/* PÁGINA DE PERFIL DE USUARIO - PÁGINA COMPLETA (NO MODAL) */}
+        {selectedUserProfile && (
+          <div className="space-y-6 animate-in slide-in-from-bottom-4">
+            <button
+              onClick={() => setSelectedUserProfile(null)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <ArrowLeft size={18} /> {lang === 'es' ? 'Volver' : 'Back'}
+            </button>
+
+            {/* Header de perfil */}
+            <div className={`${themeClasses.card} rounded-3xl p-8 text-center shadow-md border ${themeClasses.border}`}>
+              <div className="mb-6">
+                <img
+                  src={selectedUserProfile.profilePic || 'https://via.placeholder.com/150'}
+                  className="w-32 h-32 rounded-full border-4 border-indigo-500 shadow-xl object-cover mx-auto"
+                  alt={selectedUserProfile.name}
+                />
+              </div>
+              <h1 className="font-black text-3xl mb-2">{selectedUserProfile.name}</h1>
+              <p className="text-lg text-slate-500 dark:text-gray-400 mb-6">{getLevelTitle(selectedUserProfile.readCount || 0, lang)}</p>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 rounded-2xl bg-slate-100 dark:bg-gray-800">
+                  <p className="font-black text-2xl text-indigo-600">{selectedUserProfile.readCount || 0}</p>
+                  <p className="text-xs text-slate-500 dark:text-gray-400 uppercase font-bold mt-1">{t.user_read_books}</p>
+                </div>
+                <div className="text-center p-4 rounded-2xl bg-slate-100 dark:bg-gray-800">
+                  <p className="font-black text-2xl text-blue-600">{selectedUserProfile.planCount || 0}</p>
+                  <p className="text-xs text-slate-500 dark:text-gray-400 uppercase font-bold mt-1">{t.user_plan_books}</p>
+                </div>
+                <div className="text-center p-4 rounded-2xl bg-slate-100 dark:bg-gray-800">
+                  <p className="font-black text-2xl text-yellow-600">{selectedUserProfile.likes?.length || 0}</p>
+                  <p className="text-xs text-slate-500 dark:text-gray-400 uppercase font-bold mt-1">{t.like}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Filtros de libros */}
+            <div className="flex justify-center gap-2 flex-wrap">
+              {['all', 'read', 'in_plan', 'in_library', 'favorite', 'liked', 'disliked'].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setSelectedUserFilter(type)}
+                  className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedUserFilter === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'}`}
+                >
+                  {type === 'all' ? t.all : type === 'read' ? t.read : type === 'in_plan' ? t.in_plan : type === 'in_library' ? t.in_library : type === 'favorite' ? t.favorites : type === 'liked' ? t.liked : t.dislike}
+                </button>
+              ))}
+            </div>
+
+            {/* Libros del usuario - GRILLA COMPLETA */}
+            {selectedUserBooks.length === 0 ? (
+              <div className={`${themeClasses.card} rounded-3xl p-12 text-center shadow-md border ${themeClasses.border}`}>
+                <BookOpen className={`mx-auto ${theme === 'dark' ? 'text-gray-700' : theme === 'sunset' ? 'text-amber-200' : 'text-slate-200'} mb-4`} size={64} />
+                <p className={`${theme === 'dark' ? 'text-gray-400' : theme === 'sunset' ? 'text-amber-400' : 'text-slate-400'} font-bold uppercase text-[10px] tracking-widest`}>{lang === 'es' ? 'No hay libros' : 'No books'}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredExternalBooks.map((book) => (
+                  <div key={book.bookId} className={`${themeClasses.card} rounded-2xl p-3 shadow-md border ${themeClasses.border} hover:shadow-lg transition-all`}>
+                    <img
+                      src={book.thumbnail || 'https://via.placeholder.com/150x200?text=NO+COVER'}
+                      className="w-full h-32 object-contain rounded-xl bg-white shadow-sm cursor-pointer hover:scale-105 transition-all mb-2"
+                      alt={book.title}
+                      onClick={() => openBookDetailModal(book)}
+                    />
+                    <h4 className="font-bold text-xs line-clamp-2 cursor-pointer hover:text-indigo-600" onClick={() => openBookDetailModal(book)}>{book.title}</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-gray-400 line-clamp-1">{Array.isArray(book.authors) ? book.authors[0] : book.authors}</p>
+                    <div className="mt-2 flex items-center gap-1">
+                      <span className={`px-2 py-1 rounded-full text-[8px] font-bold uppercase flex-1 ${
+                        book.status === 'read' ? 'bg-green-100 dark:bg-green-900 text-green-700' :
+                        book.status === 'reading' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700' :
+                        'bg-slate-100 dark:bg-gray-700'
+                      }`}>
+                        {book.status === 'read' ? t.read : book.status === 'reading' ? t.in_plan : t.in_library}
+                      </span>
+                    </div>
+                    {(book.status === 'library' || book.status === 'read') && book.userId !== user?.uid && (
+                      <button
+                        onClick={() => {
+                          setBookToBorrow({ ...book, ownerId: selectedUserProfile.userId, ownerName: selectedUserProfile.name });
+                          setShowBorrowModal(true);
+                        }}
+                        className="mt-2 w-full py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-[9px] font-bold transition-all"
+                      >
+                        {t.borrow_book}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TABS NORMALES - Solo si no estamos en perfil de usuario */}
+        {!selectedUserProfile && (
+          <>
         {/* PESTAÑA: BIBLIOTECA */}
         {activeTab === 'library' && (
           <div className="space-y-6 animate-in slide-in-from-bottom-4">
@@ -6931,6 +7031,8 @@ export default function App() {
               </button>
             </div>
           </div>
+        )}
+          </>
         )}
       </main>
 
