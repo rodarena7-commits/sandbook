@@ -8,6 +8,7 @@ import { useBookReviews } from '../../hooks/useBookReviews'
 import { useAuthor } from '../../hooks/useAuthor'
 import { useBookStats } from '../../hooks/useBookStats'
 import ImagePickerSheet from '../ui/ImagePickerSheet'
+import CreatePlanSheet from './CreatePlanSheet'
 import { getGlobalCover, saveGlobalCover, getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 
 const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca' }
@@ -347,9 +348,11 @@ function ReviewsSection({ bookId, bookMeta, myUid, myProfile }) {
 export default function BookDetailSheet({
   book, onClose,
   // Library mode
-  onStatusChange, onToggleFavorite, onSaveRating, onRemove,
+  onStatusChange, onToggleFavorite, onSaveRating, onRemove, onOpenPlan,
   // Search mode (book not yet saved)
   onAdd,
+  // Create plan from search (saves book + creates plan)
+  onCreatePlan,
 }) {
   const { user, profile } = useAuth()
   const [lightbox, setLightbox] = useState(false)
@@ -362,6 +365,7 @@ export default function BookDetailSheet({
   const [customThumb, setCustomThumb] = useState(book.customThumbnail || null)
   const [globalCover, setGlobalCover]   = useState(null)
   const [showImgPicker, setShowImgPicker] = useState(false)
+  const [showPlanForm, setShowPlanForm]   = useState(false)
 
   // Load global cover if no personal/book cover
   useEffect(() => {
@@ -547,23 +551,25 @@ export default function BookDetailSheet({
               <ReviewsSection bookId={book.bookId} bookMeta={book} myUid={user?.uid} myProfile={profile} />
             </div>
 
-            {/* Plan + Eliminar (library only) */}
+            {/* Crear plan desde búsqueda */}
+            {!isLibrary && onCreatePlan && (
+              <button
+                onClick={() => setShowPlanForm(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-sm font-medium w-full active:scale-95 transition-all mt-4"
+              >
+                <CalendarDays size={15} className="text-amber-500" />
+                Crear plan de lectura
+              </button>
+            )}
+
+            {/* Eliminar (library only) */}
             {isLibrary && (
-              <div className="mt-4 flex flex-col gap-2">
-                <button
-                  onClick={() => { onOpenPlan ? onOpenPlan(book) : onClose() }}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-sm font-medium w-full active:scale-95 transition-all"
-                >
-                  <CalendarDays size={15} className="text-amber-500" />
-                  {book.readingPlan ? 'Ver plan de lectura' : 'Crear plan de lectura'}
-                </button>
-                <button
-                  onClick={handleRemove}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 text-red-500 rounded-2xl text-sm font-medium w-full active:scale-95 transition-all"
-                >
-                  <Trash2 size={15} /> Eliminar de mi biblioteca
-                </button>
-              </div>
+              <button
+                onClick={handleRemove}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 text-red-500 rounded-2xl text-sm font-medium w-full active:scale-95 transition-all mt-4"
+              >
+                <Trash2 size={15} /> Eliminar de mi biblioteca
+              </button>
             )}
           </div>
         </div>
@@ -604,6 +610,24 @@ export default function BookDetailSheet({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Plan creation form (from search) — z-69 on top of this sheet */}
+      {showPlanForm && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-[68]" onClick={() => setShowPlanForm(false)} />
+          <div className="fixed inset-0 z-[69] flex items-end">
+            <CreatePlanSheet
+              book={book}
+              onSave={async (pages, days) => {
+                setShowPlanForm(false)
+                await onCreatePlan(pages, days)
+                onClose()
+              }}
+              onClose={() => setShowPlanForm(false)}
+            />
+          </div>
+        </>
       )}
 
       {/* Book image picker */}

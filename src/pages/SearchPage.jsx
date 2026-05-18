@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Search, X, BookOpen, Plus, Check, Loader2, Camera, Star, ThumbsUp, ThumbsDown, CalendarDays } from 'lucide-react'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import { createReadingPlan } from '../hooks/useReadingPlan'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
 import { useGoogleBooks } from '../hooks/useGoogleBooks'
@@ -173,6 +174,26 @@ export default function SearchPage({ onGoToPlan }) {
     })
   }
 
+  async function handleCreatePlan(book, pages, days) {
+    // Add to library first if not already there
+    if (!savedMap[book.bookId]) {
+      await addBook(user.uid, book.bookId, {
+        title: book.title,
+        authors: book.authors,
+        thumbnail: book.thumbnail,
+        description: book.description,
+        pageCount: book.pageCount || pages,
+        publishedDate: book.publishedDate,
+        categories: book.categories,
+        status: 'library',
+        isFavorite: false,
+        inLibrary: true,
+      })
+    }
+    // Create the reading plan
+    await createReadingPlan(user.uid, book.bookId, pages, days)
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -314,6 +335,7 @@ export default function SearchPage({ onGoToPlan }) {
             book={selectedBook}
             onClose={() => setSelectedBook(null)}
             onAdd={handleAdd}
+            onCreatePlan={(pages, days) => handleCreatePlan(selectedBook, pages, days)}
           />
         </>
       )}
@@ -326,6 +348,7 @@ export default function SearchPage({ onGoToPlan }) {
             book={{ ...viewBook, ...(savedMap[viewBook.bookId] || {}) }}
             onClose={() => setViewBook(null)}
             onAdd={savedMap[viewBook.bookId] ? undefined : handleAdd}
+            onCreatePlan={(pages, days) => handleCreatePlan(viewBook, pages, days)}
           />
         </>
       )}
