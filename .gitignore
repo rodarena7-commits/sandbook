@@ -3,3 +3,5 @@ dist/
 .env
 .env.local
 .env.*.local
+scripts/serviceAccount.json
+scripts/node_modules/
