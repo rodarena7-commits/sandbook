@@ -11,6 +11,7 @@ import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
 import { sendLoanRequest } from '../../hooks/useLoanRequests'
 import { isBibleBook, countCompleted, TOTAL_CHAPTERS } from '../../hooks/useBibleProgress'
 import BiblePlanView from '../books/BiblePlanView'
+import BookThread from './BookThread'
 
 const STATUS_LABELS = { reading:'Leyendo', read:'Leído', pending:'Pendiente', library:'Biblioteca' }
 
@@ -176,6 +177,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
       <div className="bg-white flex border-b border-slate-100 flex-shrink-0 sticky top-0 z-10">
         {[
           { key:'library', label:'Biblioteca' },
+          { key:'read',    label:`Leídos${books?.filter(b=>b.status==='read').length>0?` (${books.filter(b=>b.status==='read').length})`:''}`},
           { key:'reviews', label:`Reseñas${reviews.length>0?` (${reviews.length})`:''}` },
           { key:'authors', label:`Escritores${favAuthors.length>0?` (${favAuthors.length})`:''}` },
           { key:'bible',   label:'📖 Biblia' },
@@ -235,6 +237,64 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
             )}
           </>
         )}
+
+        {/* ── LEÍDOS con hilo de comentarios ── */}
+        {tab==='read' && (() => {
+          const readBooks = books?.filter(b => b.status === 'read') || []
+          if (!books) return <div className="flex justify-center py-10"><Loader2 size={22} className="animate-spin text-amber-400"/></div>
+          if (!showLibrary) return (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-center">
+              <p className="text-4xl mb-3">🔒</p>
+              <p className="font-semibold text-slate-500">Biblioteca privada</p>
+            </div>
+          )
+          if (readBooks.length === 0) return (
+            <p className="text-xs text-slate-400 text-center py-12">Este usuario no tiene libros leídos todavía</p>
+          )
+          return (
+            <div className="flex flex-col gap-3">
+              {readBooks.map(b => (
+                <div key={b.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                  {/* Book info */}
+                  <div className="flex gap-3 p-3">
+                    {b.customThumbnail || b.thumbnail ? (
+                      <img src={b.customThumbnail || b.thumbnail} alt=""
+                        className="w-12 h-16 object-cover rounded-xl flex-shrink-0 shadow-sm"/>
+                    ) : (
+                      <div className="w-12 h-16 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <BookOpen size={16} className="text-slate-300"/>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 line-clamp-2">{b.title}</p>
+                      {b.authors?.[0] && <p className="text-xs text-slate-400 mt-0.5">{b.authors[0]}</p>}
+                      {b.rating > 0 && (
+                        <p className="text-xs text-amber-500 mt-1">
+                          {'★'.repeat(b.rating)}{'☆'.repeat(5 - b.rating)}
+                        </p>
+                      )}
+                      {b.review && (
+                        <p className="text-xs text-slate-500 italic mt-1 line-clamp-2">"{b.review}"</p>
+                      )}
+                    </div>
+                    <button onClick={() => setLoanBook(b)}
+                      className="self-start flex-shrink-0 px-2 py-1 bg-slate-100 rounded-full text-[9px] text-slate-500 font-medium hover:bg-amber-50 hover:text-amber-600 transition-all">
+                      Pedir
+                    </button>
+                  </div>
+
+                  {/* Comment thread */}
+                  <BookThread
+                    ownerUid={targetUser.uid}
+                    bookId={b.bookId}
+                    myUid={me?.uid}
+                    myProfile={profile}
+                  />
+                </div>
+              ))}
+            </div>
+          )
+        })()}
 
         {/* ── ESCRITORES FAVORITOS ── */}
         {tab==='authors' && (
