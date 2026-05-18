@@ -16,14 +16,16 @@ const STATUS_TABS = [
   { key: 'read',    label: 'Leídos' },
   { key: 'pending', label: 'Pendientes' },
   { key: 'fav',     label: '⭐' },
+  { key: 'plan',    label: '📅 En plan' },
 ]
 
 const EMPTY_MESSAGES = {
-  all:     { icon: '📚', text: 'Tu biblioteca está vacía', sub: 'Buscá libros en la pestaña Buscar' },
-  reading: { icon: '📖', text: 'No estás leyendo nada', sub: 'Marcá un libro como "Leyendo"' },
-  read:    { icon: '✅', text: 'Todavía no leíste ningún libro', sub: 'Marcá un libro como "Leído"' },
-  pending: { icon: '🕐', text: 'No tenés libros pendientes', sub: 'Guardá libros para leer después' },
-  fav:     { icon: '⭐', text: 'No tenés favoritos', sub: 'Tocá la estrella en cualquier libro' },
+  all:     { icon: '📚', text: 'Tu biblioteca está vacía',           sub: 'Buscá libros en la pestaña Buscar' },
+  reading: { icon: '📖', text: 'No estás leyendo nada',              sub: 'Marcá un libro como "Leyendo"' },
+  read:    { icon: '✅', text: 'Todavía no leíste ningún libro',      sub: 'Marcá un libro como "Leído"' },
+  pending: { icon: '🕐', text: 'No tenés libros pendientes',          sub: 'Guardá libros para leer después' },
+  fav:     { icon: '⭐', text: 'No tenés favoritos',                  sub: 'Tocá la estrella en cualquier libro' },
+  plan:    { icon: '📅', text: 'No tenés libros con plan de lectura', sub: 'Creá un plan desde el detalle de cualquier libro' },
 }
 
 // ── Create/Rename Shelf Modal ──────────────────────────────
@@ -137,9 +139,10 @@ export default function LibraryPage() {
 
   const filtered = useMemo(() => {
     let list = books
-    if (statusTab === 'fav')       list = list.filter(b => b.isFavorite)
-    else if (statusTab !== 'all')  list = list.filter(b => b.status === statusTab)
-    if (shelfFilter !== null)      list = list.filter(b => b.shelfId === shelfFilter)
+    if (statusTab === 'fav')        list = list.filter(b => b.isFavorite)
+    else if (statusTab === 'plan')  list = list.filter(b => !!b.readingPlan)
+    else if (statusTab !== 'all')   list = list.filter(b => b.status === statusTab)
+    if (shelfFilter !== null)       list = list.filter(b => b.shelfId === shelfFilter)
     return list
   }, [books, statusTab, shelfFilter])
 

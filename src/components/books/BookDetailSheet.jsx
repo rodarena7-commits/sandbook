@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays } from 'lucide-react'
+import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2 } from 'lucide-react'
+import { useAuthorBooks } from '../../hooks/useAuthorBooks'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -123,6 +124,82 @@ function AuthorSection({ authorName }) {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Author Books Carousel ──────────────────────────────────
+function AuthorBooksCarousel({ authorName, currentBookId }) {
+  const { books, loading } = useAuthorBooks(authorName, currentBookId)
+  const [selected, setSelected] = useState(null)
+
+  if (loading) {
+    return (
+      <div className="mb-5">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Más de {authorName}</p>
+        <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin text-amber-400"/></div>
+      </div>
+    )
+  }
+  if (!books.length) return null
+
+  return (
+    <div className="mb-5">
+      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
+        Más de {authorName}
+      </p>
+
+      {/* Carousel */}
+      <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 -mx-5 px-5">
+        {books.map(b => (
+          <button
+            key={b.bookId}
+            onClick={() => setSelected(b)}
+            className="flex-shrink-0 w-[72px] text-left active:scale-95 transition-all"
+          >
+            {b.thumbnail ? (
+              <img src={b.thumbnail} alt={b.title}
+                className="w-[72px] h-[104px] object-cover rounded-xl shadow-sm border border-slate-100" />
+            ) : (
+              <div className="w-[72px] h-[104px] bg-slate-100 rounded-xl flex items-center justify-center">
+                <BookOpen size={16} className="text-slate-300" />
+              </div>
+            )}
+            <p className="text-[9px] text-slate-500 mt-1.5 line-clamp-2 text-center leading-tight">
+              {b.title}
+            </p>
+            {b.publishedDate && (
+              <p className="text-[8px] text-slate-300 text-center">{b.publishedDate.slice(0,4)}</p>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Selected book mini-detail */}
+      {selected && (
+        <div className="mt-3 bg-slate-50 rounded-2xl p-3 border border-slate-100">
+          <div className="flex gap-3 items-start">
+            {selected.thumbnail ? (
+              <img src={selected.thumbnail} alt="" className="w-12 h-16 object-cover rounded-xl shadow-sm flex-shrink-0"/>
+            ) : (
+              <div className="w-12 h-16 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <BookOpen size={14} className="text-slate-300"/>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-800 line-clamp-2">{selected.title}</p>
+              {selected.publishedDate && <p className="text-xs text-slate-400 mt-0.5">{selected.publishedDate.slice(0,4)}</p>}
+              {selected.pageCount > 0 && <p className="text-xs text-slate-400">{selected.pageCount} páginas</p>}
+              {selected.description && (
+                <p className="text-xs text-slate-500 mt-1.5 line-clamp-3 leading-relaxed">{selected.description}</p>
+              )}
+            </div>
+            <button onClick={() => setSelected(null)} className="text-slate-300 hover:text-slate-500 flex-shrink-0">
+              <X size={14}/>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -404,9 +481,14 @@ export default function BookDetailSheet({
               </div>
             )}
 
-            {/* Author */}
+            {/* Author bio */}
             {book.authors?.length > 0 && (
               <AuthorSection authorName={book.authors[0]} />
+            )}
+
+            {/* More books by same author carousel */}
+            {book.authors?.length > 0 && (
+              <AuthorBooksCarousel authorName={book.authors[0]} currentBookId={book.bookId} />
             )}
 
             <div className="border-t border-slate-100 pt-5 mb-1">
