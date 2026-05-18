@@ -400,8 +400,8 @@ export default function BookDetailSheet({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-end">
-        <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[94vh] flex flex-col">
+      <div className="fixed inset-0 z-[55] flex items-end">
+        <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[92vh] flex flex-col">
 
           {/* Top bar */}
           <div className="relative flex items-center justify-center px-5 pt-3 pb-2 flex-shrink-0">
@@ -411,7 +411,7 @@ export default function BookDetailSheet({
             </button>
           </div>
 
-          <div className="overflow-y-auto flex-1 px-5 pb-10 pt-1">
+          <div className="overflow-y-auto flex-1 px-5 pb-24 pt-1">
 
             {/* Cover + title */}
             <div className="flex gap-4 mb-5">
@@ -616,7 +616,7 @@ export default function BookDetailSheet({
       {showPlanForm && (
         <>
           <div className="fixed inset-0 bg-black/50 z-[68]" onClick={() => setShowPlanForm(false)} />
-          <div className="fixed inset-0 z-[69] flex items-end">
+          <div className="fixed inset-0 z-[69] flex items-center justify-center px-4">
             <CreatePlanSheet
               book={book}
               onSave={async (pages, days) => {

@@ -21,8 +21,8 @@ export default function CreatePlanSheet({ book, onSave, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end">
-      <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl p-5 pb-10">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-5 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
