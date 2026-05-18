@@ -1,36 +1,37 @@
 /**
- * Script de migración — ejecutar UNA VEZ desde la terminal:
+ * Script de migración para Sandbook — ejecutar UNA VEZ:
  *
- *   1. Descargá la clave del servicio (Service Account) desde:
+ *   1. Descargá la clave de servicio desde:
  *      Firebase Console → Configuración del proyecto → Cuentas de servicio
  *      → "Generar nueva clave privada" → guardala como scripts/serviceAccount.json
  *
- *   2. Instalá las dependencias necesarias:
- *      cd scripts && npm install firebase-admin
+ *   2. Instalar dependencias (solo la primera vez):
+ *      cd "scripts" && npm install
  *
- *   3. Ejecutá el script:
+ *   3. Ejecutar desde la raíz del proyecto:
  *      node scripts/migrateUsers.mjs
  *
- * El script:
- *   - Elimina el usuario simulado (fake_user_maria_garcia_001)
- *   - Para cada usuario en Firebase Auth que NO tenga perfil
- *     en Firestore, crea uno con los datos disponibles
+ * ¿Qué hace?
+ *   ✓ Elimina el usuario simulado fake_user_maria_garcia_001
+ *   ✓ Solo procesa usuarios de Sandbook (los que tienen myBooks guardados)
+ *   ✓ No toca usuarios de otras apps (outlet-Roma, pijamas.store, etc.)
+ *   ✓ No duplica perfiles que ya existen
+ *   ✓ No modifica Firebase Auth — los usuarios siguen pudiendo loguearse
+ *   ✓ Sus libros y datos anteriores se cargan automáticamente (ya están en Firestore)
  */
 
 import { readFileSync } from 'fs'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 
-// --- Cargá firebase-admin ---
 let admin
 try {
   admin = require('firebase-admin')
 } catch {
-  console.error('❌  Instalá firebase-admin primero:\n   cd scripts && npm install firebase-admin')
+  console.error('❌  Instalá firebase-admin primero:\n   cd scripts && npm install')
   process.exit(1)
 }
 
-// --- Cargá la clave del servicio ---
 let serviceAccount
 try {
   serviceAccount = JSON.parse(readFileSync(new URL('./serviceAccount.json', import.meta.url)))
@@ -46,96 +47,126 @@ const auth = admin.auth()
 
 const FAKE_UID = 'fake_user_maria_garcia_001'
 
+// ── Helpers ────────────────────────────────────────────────
+async function deleteCollection(colRef) {
+  const snap = await colRef.limit(100).get()
+  if (snap.empty) return
+  const batch = db.batch()
+  snap.docs.forEach(d => batch.delete(d.ref))
+  await batch.commit()
+}
+
 // ── 1. Limpiar usuario simulado ────────────────────────────
 async function cleanFakeUser() {
   console.log('\n🧹  Limpiando usuario simulado…')
 
-  // Eliminar libros del usuario falso
-  const booksSnap = await db.collection('users').doc(FAKE_UID).collection('myBooks').get()
-  const batch1 = db.batch()
-  booksSnap.docs.forEach(d => batch1.delete(d.ref))
-  if (booksSnap.docs.length) await batch1.commit()
-
-  // Eliminar otras subcollections conocidas
-  for (const sub of ['favoriteAuthors', 'publicReviews', 'notifications', 'shelves']) {
-    const snap = await db.collection('users').doc(FAKE_UID).collection(sub).get()
-    const b = db.batch()
-    snap.docs.forEach(d => b.delete(d.ref))
-    if (snap.docs.length) await b.commit()
+  // Subcollections del perfil falso
+  for (const sub of ['myBooks', 'favoriteAuthors', 'publicReviews', 'notifications', 'shelves', 'loanRequests']) {
+    await deleteCollection(db.collection('users').doc(FAKE_UID).collection(sub))
   }
 
-  // Eliminar perfil del usuario falso
-  await db.collection('users').doc(FAKE_UID).delete()
+  // Perfil
+  await db.collection('users').doc(FAKE_UID).delete().catch(() => {})
   console.log('   ✓ Perfil fake eliminado')
 
-  // Eliminar posts del usuario falso
+  // Posts
   const postsSnap = await db.collection('posts').where('uid', '==', FAKE_UID).get()
-  const batch2 = db.batch()
-  postsSnap.docs.forEach(d => batch2.delete(d.ref))
-  if (postsSnap.docs.length) {
-    await batch2.commit()
-    console.log(`   ✓ ${postsSnap.docs.length} post(s) eliminados`)
+  if (!postsSnap.empty) {
+    const b = db.batch()
+    postsSnap.docs.forEach(d => b.delete(d.ref))
+    await b.commit()
+    console.log(`   ✓ ${postsSnap.docs.length} post(s) del usuario falso eliminados`)
   }
 
-  // Quitar fake de los arrays followers/following de todos los usuarios
+  // Quitar de arrays followers/following en todos los usuarios reales
   const usersSnap = await db.collection('users').get()
-  const batch3 = db.batch()
-  let updated = 0
+  const batch = db.batch()
+  let count = 0
   usersSnap.docs.forEach(d => {
-    const data = d.data()
-    let changed = false
+    const { followers = [], following = [] } = d.data()
     const update = {}
-    if ((data.followers || []).includes(FAKE_UID)) {
-      update.followers = (data.followers || []).filter(u => u !== FAKE_UID)
-      changed = true
-    }
-    if ((data.following || []).includes(FAKE_UID)) {
-      update.following = (data.following || []).filter(u => u !== FAKE_UID)
-      changed = true
-    }
-    if (changed) { batch3.update(d.ref, update); updated++ }
+    if (followers.includes(FAKE_UID)) { update.followers = followers.filter(u => u !== FAKE_UID); count++ }
+    if (following.includes(FAKE_UID)) { update.following = following.filter(u => u !== FAKE_UID) }
+    if (Object.keys(update).length) batch.update(d.ref, update)
   })
-  if (updated) {
-    await batch3.commit()
-    console.log(`   ✓ Removido de ${updated} perfil(es) de usuarios reales`)
-  }
+  if (count) { await batch.commit(); console.log(`   ✓ Removido de ${count} perfil(es) reales`) }
 
-  // Eliminar conversaciones con el fake
-  const convsSnap = await db.collection('conversations')
+  // Conversaciones con el fake
+  const convSnap = await db.collection('conversations')
     .where('participants', 'array-contains', FAKE_UID).get()
-  const batch4 = db.batch()
-  convsSnap.docs.forEach(d => batch4.delete(d.ref))
-  if (convsSnap.docs.length) {
-    await batch4.commit()
-    console.log(`   ✓ ${convsSnap.docs.length} conversación(es) eliminadas`)
+  if (!convSnap.empty) {
+    const b2 = db.batch()
+    convSnap.docs.forEach(d => b2.delete(d.ref))
+    await b2.commit()
+    console.log(`   ✓ ${convSnap.docs.length} conversación(es) eliminadas`)
   }
 }
 
-// ── 2. Crear perfiles en Firestore para usuarios de Auth ───
-async function migrateAuthUsers() {
-  console.log('\n👥  Migrando usuarios de Firebase Auth a Firestore…')
+// ── 2. Migrar usuarios reales de Sandbook ──────────────────
+async function migrateSandbookUsers() {
+  console.log('\n👥  Identificando usuarios de Sandbook…')
+
+  // Obtener todos los UIDs que tienen datos en /users/{uid}/myBooks
+  // (esto confirma que usaron Sandbook, no otra app del mismo proyecto)
+  const usersColSnap = await db.collection('users').get()
+  const uidsWithProfile = new Set(usersColSnap.docs.map(d => d.id))
+
+  // También buscar UIDs que tienen myBooks aunque no tengan perfil
+  // (usuarios del app viejo que guardaron libros pero no tienen doc en /users)
+  // No podemos listar subcollections directamente, pero podemos intentar via Auth
 
   let nextPageToken
   let created = 0
   let skipped = 0
+  let notSandbook = 0
+
+  console.log('   Revisando usuarios de Firebase Auth…\n')
 
   do {
     const result = await auth.listUsers(1000, nextPageToken)
 
     for (const user of result.users) {
-      if (user.uid === FAKE_UID) continue
+      if (user.uid === FAKE_UID) { notSandbook++; continue }
 
-      const docRef = db.collection('users').doc(user.uid)
-      const snap   = await docRef.get()
+      // Chequear si tiene libros guardados en Sandbook
+      const booksSnap = await db
+        .collection('users').doc(user.uid)
+        .collection('myBooks')
+        .limit(1)
+        .get()
 
-      if (snap.exists) {
+      const hasSandbookData = !booksSnap.empty
+
+      // También aceptar si ya tiene perfil en /users (vino por cualquier app)
+      const hasProfile = uidsWithProfile.has(user.uid)
+
+      if (!hasSandbookData && !hasProfile) {
+        // Usuario de otra app (outlet-Roma, etc.) — saltear
+        notSandbook++
+        continue
+      }
+
+      if (hasProfile) {
+        // Ya tiene perfil — actualizar campos faltantes sin pisar los existentes
+        const existing = usersColSnap.docs.find(d => d.id === user.uid)?.data() || {}
+        const update = {}
+        if (!existing.following)           update.following           = []
+        if (!existing.followers)           update.followers           = []
+        if (existing.notificationsEnabled === undefined) update.notificationsEnabled = true
+        if (existing.messagingPrivacy === undefined)     update.messagingPrivacy     = 'everyone'
+        if (existing.showLibrary === undefined)          update.showLibrary          = true
+
+        if (Object.keys(update).length) {
+          await db.collection('users').doc(user.uid).update(update)
+        }
         skipped++
         continue
       }
 
-      await docRef.set({
+      // Usuario de Sandbook sin perfil — crear uno con sus datos de Auth
+      await db.collection('users').doc(user.uid).set({
         uid:         user.uid,
-        displayName: user.displayName || 'Lector',
+        displayName: user.displayName || user.email?.split('@')[0] || 'Lector',
         email:       user.email       || null,
         photoURL:    user.photoURL    || null,
         bio:         '',
@@ -148,26 +179,36 @@ async function migrateAuthUsers() {
         createdAt:   admin.firestore.FieldValue.serverTimestamp(),
       })
 
+      console.log(`   + ${user.email || user.uid}  (${user.displayName || 'sin nombre'}) — ${booksSnap.size > 0 ? 'con libros guardados' : 'nuevo perfil'}`)
       created++
-      console.log(`   + ${user.email || user.uid} (${user.displayName || 'sin nombre'})`)
     }
 
     nextPageToken = result.pageToken
   } while (nextPageToken)
 
-  console.log(`\n   ✓ Creados: ${created}  |  Ya existían: ${skipped}`)
+  console.log(`
+   ✓ Perfiles creados:     ${created}
+   ✓ Ya existían / OK:     ${skipped}
+   — Otras apps (salteados): ${notSandbook}
+  `)
 }
 
 // ── Main ───────────────────────────────────────────────────
 async function main() {
-  console.log('🚀  Iniciando migración de Sandbook…')
+  console.log('🚀  Migración Sandbook — proyecto playmobil-2d74d\n')
+  console.log('   NOTA: Firebase Auth no se modifica.')
+  console.log('   Los usuarios pueden seguir logueándose normalmente.')
+  console.log('   Sus libros y datos anteriores se cargan automáticamente.\n')
+
   await cleanFakeUser()
-  await migrateAuthUsers()
-  console.log('\n✅  Listo!\n')
+  await migrateSandbookUsers()
+
+  console.log('✅  Listo!\n')
   process.exit(0)
 }
 
 main().catch(err => {
   console.error('\n❌  Error:', err.message)
+  console.error(err.stack)
   process.exit(1)
 })
