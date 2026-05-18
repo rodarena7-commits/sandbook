@@ -25,7 +25,10 @@ export function useAuthor(authorName) {
         let bio = first.top_subjects?.slice(0, 3).join(', ') || ''
         if (first.key) {
           try {
-            const key       = first.key.startsWith('/') ? first.key : `/${first.key}`
+            // key puede ser "OL19306A" o "/authors/OL19306A" — normalizamos
+            let key = first.key
+            if (!key.startsWith('/')) key = `/authors/${key}`
+            else if (!key.startsWith('/authors/')) key = key // already full path
             const detailRes = await fetch(`https://openlibrary.org${key}.json`)
             const detail    = await detailRes.json()
             if (!cancelled) {

@@ -82,9 +82,9 @@ export default function AuthorCard({ author, isFav = false, onToggleFav }) {
       <div className="flex gap-3 p-4">
         {/* Photo */}
         <div className="relative flex-shrink-0 group">
-          {(author.photoUrl && !imgError) || globalPhoto ? (
+          {globalPhoto || (author.photoUrl && !imgError) ? (
             <img
-              src={(!imgError && author.photoUrl) ? author.photoUrl : globalPhoto}
+              src={globalPhoto || author.photoUrl}
               alt={author.name}
               className="w-16 h-16 rounded-2xl object-cover shadow-sm border border-slate-100"
               onError={() => setImgError(true)}

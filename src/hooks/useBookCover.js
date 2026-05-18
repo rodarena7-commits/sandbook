@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getGlobalCover } from './useGlobalMedia'
+import { cleanThumbnail } from '../utils/cleanThumbnail'
 
 /**
  * Devuelve la mejor portada disponible para un libro.
@@ -7,7 +8,7 @@ import { getGlobalCover } from './useGlobalMedia'
  * - Si no hay imagen → busca en bookCovers/{bookId} una vez.
  */
 export function useBookCover(bookId, existingSrc) {
-  const clean = existingSrc && !existingSrc.includes('placeholder') ? existingSrc : null
+  const clean = cleanThumbnail(existingSrc)
   const [globalSrc, setGlobalSrc] = useState(null)
 
   useEffect(() => {

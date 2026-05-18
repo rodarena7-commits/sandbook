@@ -98,7 +98,8 @@ function AuthorSection({ authorName }) {
 
   if (!authorName) return null
 
-  const photo = (!imgError && author?.photoUrl) ? author.photoUrl : globalPhoto
+  // globalPhoto (subida manualmente) tiene prioridad sobre Open Library
+  const photo = globalPhoto || ((!imgError && author?.photoUrl) ? author.photoUrl : null)
 
   return (
     <div className="mb-5">

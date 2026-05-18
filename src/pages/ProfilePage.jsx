@@ -8,6 +8,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import SettingsSheet from '../components/profile/SettingsSheet'
 import { respondToLoan } from '../hooks/useLoanRequests'
+import { cleanThumbnail } from '../utils/cleanThumbnail'
 import { useFavoriteAuthors } from '../hooks/useFavoriteAuthors'
 import UserProfileScreen from '../components/social/UserProfileScreen'
 import { useUsers } from '../hooks/useUsers'
@@ -198,8 +199,8 @@ function NotificationItem({ notif, uid, onRead }) {
 function BookRow({ book }) {
   return (
     <div className="flex gap-3 items-center bg-slate-50 rounded-2xl px-3 py-2.5">
-      {book.thumbnail || book.customThumbnail ? (
-        <img src={book.customThumbnail || book.thumbnail} alt="" className="w-9 h-12 object-cover rounded-lg shadow-sm flex-shrink-0" />
+      {cleanThumbnail(book.customThumbnail || book.thumbnail) ? (
+        <img src={cleanThumbnail(book.customThumbnail || book.thumbnail)} alt="" className="w-9 h-12 object-cover rounded-lg shadow-sm flex-shrink-0" />
       ) : (
         <div className="w-9 h-12 bg-slate-200 rounded-lg flex items-center justify-center flex-shrink-0">
           <BookOpen size={14} className="text-slate-400" />
