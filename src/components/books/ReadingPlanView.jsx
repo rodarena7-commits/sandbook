@@ -33,8 +33,13 @@ function DaySlider({ days, dayData, startDate, onToggle }) {
   return (
     <div
       ref={sliderRef}
-      className="flex gap-2.5 overflow-x-auto scrollbar-none px-4 py-3 bg-white border-b border-slate-100 flex-shrink-0"
-      style={{ scrollSnapType: 'x mandatory' }}
+      className="flex gap-2.5 overflow-x-scroll scrollbar-none px-4 py-3 bg-white border-b border-slate-100 flex-shrink-0"
+      style={{
+        scrollSnapType: 'x mandatory',
+        touchAction: 'pan-x',
+        overscrollBehaviorX: 'contain',
+        WebkitOverflowScrolling: 'touch',
+      }}
     >
       {days.map(d => {
         const data    = dayData[d.day] || {}

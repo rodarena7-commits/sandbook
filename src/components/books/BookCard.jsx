@@ -33,18 +33,14 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
     <div className="relative bg-white rounded-2xl shadow-sm border border-slate-100 overflow-visible flex flex-col">
       {/* Cover */}
       <div className="relative cursor-pointer" onClick={() => onSelect && onSelect(book)}>
-        {/* Cover — usa customThumbnail si existe */}
-        {book.customThumbnail || book.thumbnail ? (
-          <img
-            src={book.customThumbnail || book.thumbnail}
-            alt={book.title}
-            className="w-full aspect-[2/3] object-cover rounded-t-2xl"
-          />
-        ) : (
-          <div className="w-full aspect-[2/3] bg-slate-100 rounded-t-2xl flex items-center justify-center">
-            <BookOpen size={32} className="text-slate-300" />
-          </div>
-        )}
+        {/* Cover — ignora URLs de placeholder del app viejo */}
+        {(() => {
+          const raw = book.customThumbnail || book.thumbnail
+          const src = raw && !raw.includes('placeholder') ? raw : null
+          return src
+            ? <img src={src} alt={book.title} className="w-full aspect-[2/3] object-cover rounded-t-2xl"/>
+            : <div className="w-full aspect-[2/3] bg-slate-100 rounded-t-2xl flex items-center justify-center"><BookOpen size={32} className="text-slate-300"/></div>
+        })()}
 
         {/* Favorite star — único ícono en top-right */}
         <button
