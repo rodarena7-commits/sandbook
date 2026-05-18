@@ -9,12 +9,16 @@ import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import SettingsSheet from '../components/profile/SettingsSheet'
 import { respondToLoan } from '../hooks/useLoanRequests'
 import { useFavoriteAuthors } from '../hooks/useFavoriteAuthors'
+import UserProfileScreen from '../components/social/UserProfileScreen'
+import { useUsers } from '../hooks/useUsers'
 
 // ── User List Screen (full screen) ────────────────────────
-function UserListScreen({ title, uids, myFollowing = [], onClose }) {
-  const [users, setUsers]     = useState(null)
+function UserListScreen({ title, uids, myFollowing = [], myUid, myProfile, setMyProfile, onClose }) {
+  const [users, setUsers]       = useState(null)
   const [selected, setSelected] = useState(null)
   const mutualSet = new Set(myFollowing)
+
+  const { getUserBooks, followUser, unfollowUser } = useUsers(myUid, myProfile, setMyProfile)
 
   useMemo(async () => {
     const profiles = await Promise.all(
@@ -32,48 +36,18 @@ function UserListScreen({ title, uids, myFollowing = [], onClose }) {
     return <div className={`w-${size} h-${size} rounded-full bg-amber-100 border-2 border-amber-200 flex items-center justify-center font-bold text-amber-600 text-sm flex-shrink-0`}>{init}</div>
   }
 
+  // Abre el perfil completo con UserProfileScreen
   if (selected) {
     return (
-      <div className="fixed inset-0 z-[62] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto">
-        {/* Selected user header */}
-        <div className="bg-white shadow-sm px-4 pt-12 pb-4 flex-shrink-0">
-          <button onClick={() => setSelected(null)} className="flex items-center gap-2 text-slate-500 mb-4 hover:text-amber-500 transition-colors">
-            <ArrowLeft size={18} /> <span className="text-sm font-medium">Volver</span>
-          </button>
-          <div className="flex items-start gap-4">
-            <Av photoURL={selected.photoURL} displayName={selected.displayName} size={16} />
-            <div className="flex-1 min-w-0">
-              <p className="text-lg font-bold text-slate-800">{selected.displayName || 'Lector'}</p>
-              {selected.email && <p className="text-xs text-slate-400">{selected.email}</p>}
-              {selected.bio && <p className="text-sm text-slate-500 italic mt-1">"{selected.bio}"</p>}
-              <div className="flex gap-4 mt-2 text-xs text-slate-500">
-                <span><b className="text-slate-800">{(selected.following||[]).length}</b> siguiendo</span>
-                <span><b className="text-slate-800">{(selected.followers||[]).length}</b> seguidores</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        {selected.coverURL && (
-          <img src={selected.coverURL} alt="" className="w-full h-28 object-cover" />
-        )}
-        <div className="px-4 py-4">
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { val: selected.followers?.length || 0, label: 'Seguidores', color: 'text-amber-500' },
-              { val: selected.following?.length || 0, label: 'Siguiendo',  color: 'text-slate-700' },
-              { val: selected.booksRead || 0,         label: 'Leídos',     color: 'text-green-500' },
-            ].map(s => (
-              <div key={s.label} className="bg-white rounded-2xl p-3 text-center shadow-sm border border-slate-100">
-                <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-          {mutualSet.has(selected.uid) && (
-            <p className="text-xs text-amber-500 font-medium text-center mt-3">✓ Se siguen mutuamente</p>
-          )}
-        </div>
-      </div>
+      <UserProfileScreen
+        targetUser={selected}
+        isFollowing={(myProfile?.following || []).includes(selected.uid)}
+        onFollow={async uid => { await followUser(uid) }}
+        onUnfollow={async uid => { await unfollowUser(uid); setSelected(null) }}
+        onMessage={null}
+        onBack={() => setSelected(null)}
+        getUserBooks={getUserBooks}
+      />
     )
   }
 
@@ -486,6 +460,9 @@ export default function ProfilePage() {
               title={title}
               uids={uids}
               myFollowing={following}
+              myUid={user?.uid}
+              myProfile={profile}
+              setMyProfile={setProfile}
               onClose={() => setUserListMode(null)}
             />
           </>
