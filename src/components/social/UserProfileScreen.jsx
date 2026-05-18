@@ -51,7 +51,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
 
   const [books, setBooks]         = useState(null)
   const [tab, setTab]             = useState('library')
-  const [bookTab, setBookTab]     = useState('fav')
+  const [bookTab, setBookTab]     = useState('all')
   const [acting, setActing]       = useState(false)
   const [recMsg, setRecMsg]       = useState('')
   const [sending, setSending]     = useState(false)
@@ -96,11 +96,14 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
     setTimeout(()=>setSent(false), 2500)
   }
 
+  const allBooks = books || []
+
   const BOOK_TABS = [
-    { key:'fav',      label:'⭐', title:'Favoritos',   list: favorites },
-    { key:'liked',    label:'👍', title:'Le gustó',     list: liked },
-    { key:'disliked', label:'👎', title:'No le gustó',  list: disliked },
-    { key:'reading',  label:'📖', title:'Leyendo',      list: reading },
+    { key:'all',      label:'Todos',  list: allBooks },
+    { key:'fav',      label:'⭐',     list: favorites },
+    { key:'liked',    label:'👍',     list: liked },
+    { key:'disliked', label:'👎',     list: disliked },
+    { key:'reading',  label:'📖',    list: reading },
   ]
 
   const activeBookList = BOOK_TABS.find(t=>t.key===bookTab)?.list || []
@@ -108,23 +111,32 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
   return (
     <div className="fixed inset-0 z-[55] bg-slate-50 flex flex-col max-w-lg mx-auto overflow-y-auto">
 
-      {/* Cover */}
-      <div className="relative h-36 bg-gradient-to-br from-amber-400 to-orange-300 flex-shrink-0">
-        {fullUser.coverURL && (
-          <img src={fullUser.coverURL} alt="" className="w-full h-full object-cover" />
-        )}
-        {/* Back button */}
+      {/* Cover + avatar (avatar absolute sobre la portada) */}
+      <div className="relative flex-shrink-0">
+
+        {/* Banner */}
+        <div className="h-36 bg-gradient-to-br from-amber-400 to-orange-300">
+          {fullUser.coverURL && (
+            <img src={fullUser.coverURL} alt="" className="w-full h-full object-cover" />
+          )}
+        </div>
+
+        {/* Back button encima de la portada */}
         <button onClick={onBack}
-          className="absolute top-12 left-4 w-9 h-9 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
+          className="absolute top-12 left-4 w-9 h-9 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white z-20">
           <ArrowLeft size={18} />
         </button>
+
+        {/* Avatar — absolute, solapando la portada por abajo */}
+        <div className="absolute bottom-0 translate-y-1/2 left-4 z-20">
+          <Avatar photoURL={fullUser.photoURL} displayName={fullUser.displayName} size="lg" />
+        </div>
       </div>
 
-      {/* Avatar + actions */}
-      <div className="bg-white px-4 pt-0 pb-4 flex-shrink-0 shadow-sm">
-        <div className="flex items-end justify-between -mt-10 mb-3">
-          <Avatar photoURL={fullUser.photoURL} displayName={fullUser.displayName} size="lg" />
-          <div className="flex gap-2 mb-1">
+      {/* Info blanca debajo — pt-12 para dejar espacio al avatar */}
+      <div className="bg-white px-4 pt-12 pb-4 flex-shrink-0 shadow-sm">
+        <div className="flex items-center justify-end mb-2">
+          <div className="flex gap-2">
             <button onClick={handleFollow} disabled={acting}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${isFollowing?'bg-slate-100 text-slate-600':'bg-amber-500 text-white shadow-sm'} disabled:opacity-50`}>
               {isFollowing ? <><UserMinus size={12}/> Siguiendo</> : <><UserPlus size={12}/> Seguir</>}

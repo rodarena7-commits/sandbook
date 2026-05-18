@@ -4,4 +4,7 @@ dist/
 .env.local
 .env.*.local
 scripts/serviceAccount.json
+scripts/*adminsdk*.json
+scripts/*firebase*.json
 scripts/node_modules/
+scripts/package-lock.json

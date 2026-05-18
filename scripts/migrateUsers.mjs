@@ -20,7 +20,9 @@
  *   ✓ Sus libros y datos anteriores se cargan automáticamente (ya están en Firestore)
  */
 
-import { readFileSync } from 'fs'
+import { readFileSync, readdirSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 
@@ -32,11 +34,22 @@ try {
   process.exit(1)
 }
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// Buscar cualquier .json en la carpeta actual que no sea package.json
 let serviceAccount
 try {
-  serviceAccount = JSON.parse(readFileSync(new URL('./serviceAccount.json', import.meta.url)))
+  const jsonFiles = readdirSync(__dirname).filter(f =>
+    f.endsWith('.json') && f !== 'package.json' && f !== 'package-lock.json'
+  )
+  if (!jsonFiles.length) throw new Error('no json found')
+  const keyPath = join(__dirname, jsonFiles[0])
+  console.log(`   Usando clave: ${jsonFiles[0]}`)
+  serviceAccount = JSON.parse(readFileSync(keyPath, 'utf8'))
 } catch {
-  console.error('❌  No encontré scripts/serviceAccount.json\n   Descargala desde Firebase Console → Configuración → Cuentas de servicio')
+  console.error('❌  No encontré el archivo de clave en la carpeta scripts/')
+  console.error('   Descargalo desde Firebase Console → Configuración → Cuentas de servicio')
+  console.error('   y guardalo en la carpeta scripts/')
   process.exit(1)
 }
 
