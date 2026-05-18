@@ -4,6 +4,7 @@ import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useAuth } from '../../contexts/AuthContext'
 import { saveGlobalCover } from '../../hooks/useGlobalMedia'
+import { useBookCover } from '../../hooks/useBookCover'
 import ImagePickerSheet from '../ui/ImagePickerSheet'
 
 /**
@@ -21,9 +22,10 @@ export default function BookCoverUpload({
   const [imgError, setImgError]     = useState(false)
   const [showPicker, setShowPicker] = useState(false)
 
-  const cleanSrc = src && !src.includes('placeholder') ? src : null
-  const displaySrc = localSrc || cleanSrc
-  const hasImage   = !!(displaySrc && !imgError)
+  // Carga portada global (bookCovers/{bookId}) si no hay imagen local/propia
+  const resolvedSrc = useBookCover(bookId, localSrc || src)
+  const displaySrc  = resolvedSrc
+  const hasImage    = !!(displaySrc && !imgError)
 
   async function handleSave(url) {
     setLocalSrc(url)
