@@ -7,7 +7,6 @@ import { useBooks } from '../hooks/useBooks'
 import { useNotifications } from '../hooks/useNotifications'
 import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import SettingsSheet from '../components/profile/SettingsSheet'
-import { seedFakeFollower, removeFakeFollower } from '../utils/seedFakeUser'
 import { respondToLoan } from '../hooks/useLoanRequests'
 import { useFavoriteAuthors } from '../hooks/useFavoriteAuthors'
 
@@ -258,22 +257,6 @@ export default function ProfilePage() {
   const [pickerTarget, setPickerTarget] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [userListMode, setUserListMode] = useState(null) // 'following' | 'followers' | 'mutual'
-  const [seedStatus, setSeedStatus]     = useState(null) // null | 'loading' | 'done' | 'removed'
-
-  const isAdmin = profile?.email === 'rodrigo.n.arena@hotmail.com'
-
-  async function handleSeed() {
-    setSeedStatus('loading')
-    await seedFakeFollower(user.uid, profile)
-    setSeedStatus('done')
-  }
-
-  async function handleRemoveSeed() {
-    setSeedStatus('loading')
-    await removeFakeFollower(user.uid)
-    setSeedStatus('removed')
-    setTimeout(() => setSeedStatus(null), 2000)
-  }
 
   const stats = useMemo(() => ({
     total:     books.length,
@@ -508,34 +491,6 @@ export default function ProfilePage() {
           </>
         )
       })()}
-
-      {/* Admin: seed fake user */}
-      {isAdmin && (
-        <div className="mx-4 mt-6 bg-slate-800 rounded-2xl p-4">
-          <p className="text-xs font-semibold text-slate-400 mb-3">🧪 Demo — Solo visible para vos</p>
-          {seedStatus === null && (
-            <button onClick={handleSeed}
-              className="w-full py-2.5 bg-amber-500 text-white rounded-xl text-sm font-semibold active:scale-95 transition-all">
-              Simular seguidor (María García)
-            </button>
-          )}
-          {seedStatus === 'loading' && (
-            <p className="text-xs text-slate-400 text-center py-2">Creando usuario simulado…</p>
-          )}
-          {seedStatus === 'done' && (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs text-green-400 text-center">✓ Usuario creado. Revisá Seguidores, Social y Mensajes.</p>
-              <button onClick={handleRemoveSeed}
-                className="w-full py-2 bg-slate-600 text-slate-300 rounded-xl text-xs font-medium">
-                Eliminar usuario simulado
-              </button>
-            </div>
-          )}
-          {seedStatus === 'removed' && (
-            <p className="text-xs text-slate-400 text-center py-2">✓ Usuario eliminado</p>
-          )}
-        </div>
-      )}
 
       {/* Settings sheet */}
       {showSettings && (

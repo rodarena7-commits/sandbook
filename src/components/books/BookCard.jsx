@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, Star, Trash2, ChevronDown, ThumbsUp, ThumbsDown, CalendarDays } from 'lucide-react'
+import { BookOpen, Star, Trash2, ChevronDown, ThumbsUp, ThumbsDown } from 'lucide-react'
 
 const STATUS_LABELS = {
   reading: 'Leyendo',
@@ -33,31 +33,26 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
     <div className="relative bg-white rounded-2xl shadow-sm border border-slate-100 overflow-visible flex flex-col">
       {/* Cover */}
       <div className="relative cursor-pointer" onClick={() => onSelect && onSelect(book)}>
-        {book.thumbnail ? (
-          <img src={book.thumbnail} alt={book.title} className="w-full aspect-[2/3] object-cover rounded-t-2xl" />
+        {/* Cover — usa customThumbnail si existe */}
+        {book.customThumbnail || book.thumbnail ? (
+          <img
+            src={book.customThumbnail || book.thumbnail}
+            alt={book.title}
+            className="w-full aspect-[2/3] object-cover rounded-t-2xl"
+          />
         ) : (
           <div className="w-full aspect-[2/3] bg-slate-100 rounded-t-2xl flex items-center justify-center">
             <BookOpen size={32} className="text-slate-300" />
           </div>
         )}
 
-        {/* Icons top-right */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1">
-          <button
-            onClick={e => { e.stopPropagation(); onToggleFavorite(book.bookId, book.isFavorite) }}
-            className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm"
-          >
-            <Star size={13} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
-          </button>
-          {book.readingPlan && onOpenPlan && (
-            <button
-              onClick={e => { e.stopPropagation(); onOpenPlan(book) }}
-              className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center shadow-sm"
-            >
-              <CalendarDays size={12} className="text-white" />
-            </button>
-          )}
-        </div>
+        {/* Favorite star — único ícono en top-right */}
+        <button
+          onClick={e => { e.stopPropagation(); onToggleFavorite(book.bookId, book.isFavorite) }}
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm"
+        >
+          <Star size={13} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
+        </button>
       </div>
 
       {/* Info */}
