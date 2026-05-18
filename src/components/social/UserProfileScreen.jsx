@@ -7,6 +7,9 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useAuth } from '../../contexts/AuthContext'
 import BookCoverUpload from '../books/BookCoverUpload'
+import BookDetailSheet from '../books/BookDetailSheet'
+import { useBooks } from '../../hooks/useBooks'
+import { createReadingPlan } from '../../hooks/useReadingPlan'
 import { usePublicReviews } from '../../hooks/usePublicReviews'
 import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
 import { sendLoanRequest } from '../../hooks/useLoanRequests'
@@ -60,7 +63,12 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
   const [sent, setSent]           = useState(false)
   const [loanBook, setLoanBook]   = useState(null)
   const [viewBible, setViewBible] = useState(null)
-  const [fullUser, setFullUser] = useState(targetUser)
+  const [fullUser, setFullUser]   = useState(targetUser)
+  const [viewBook, setViewBook]   = useState(null)
+
+  // My own library to check if a book is already saved
+  const { books: myBooks, addBook: addToMyLibrary } = useBooks(me?.uid)
+  const myBooksMap = Object.fromEntries((myBooks || []).map(b => [b.bookId, b]))
 
   // Load full user profile if needed
   useEffect(() => {
@@ -219,7 +227,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
                 ) : (
                   <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
                     {activeBookList.map(b => (
-                      <div key={b.id} className="flex flex-col">
+                      <div key={b.id} className="flex flex-col cursor-pointer" onClick={() => setViewBook(b)}>
                         <div className="w-full aspect-[2/3] rounded-2xl overflow-hidden shadow-sm">
                           <BookCoverUpload
                             bookId={b.bookId}
@@ -229,11 +237,8 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
                           />
                         </div>
                         <p className="text-[10px] font-semibold text-slate-700 line-clamp-2 mt-1.5 leading-tight">{b.title}</p>
+                        {b.authors?.[0] && <p className="text-[9px] text-slate-400 line-clamp-1">{b.authors[0]}</p>}
                         {b.rating>0 && <p className="text-[9px] text-amber-500">{'★'.repeat(b.rating)}</p>}
-                        <button onClick={()=>setLoanBook(b)}
-                          className="mt-1 px-2 py-1 bg-slate-100 rounded-full text-[9px] text-slate-500 font-medium active:bg-amber-100 active:text-amber-700 transition-all">
-                          Pedir prestado
-                        </button>
                       </div>
                     ))}
                   </div>
@@ -402,6 +407,38 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
           )
         })()}
       </div>
+
+      {/* Book detail — abre al tocar un libro del perfil */}
+      {viewBook && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[64]" onClick={() => setViewBook(null)} />
+          <BookDetailSheet
+            book={{ ...viewBook, ...(myBooksMap[viewBook.bookId] || {}) }}
+            onClose={() => setViewBook(null)}
+            onAdd={!myBooksMap[viewBook.bookId]
+              ? (book, status) => addToMyLibrary(me.uid, book.bookId, {
+                  title: book.title, authors: book.authors,
+                  thumbnail: book.thumbnail, description: book.description,
+                  pageCount: book.pageCount, publishedDate: book.publishedDate,
+                  categories: book.categories, status, isFavorite: false, inLibrary: true,
+                })
+              : undefined
+            }
+            onCreatePlan={!myBooksMap[viewBook.bookId]
+              ? async (pages, days) => {
+                  await addToMyLibrary(me.uid, viewBook.bookId, {
+                    title: viewBook.title, authors: viewBook.authors,
+                    thumbnail: viewBook.thumbnail, description: viewBook.description,
+                    pageCount: viewBook.pageCount || pages, publishedDate: viewBook.publishedDate,
+                    categories: viewBook.categories, status: 'library', isFavorite: false, inLibrary: true,
+                  })
+                  await createReadingPlan(me.uid, viewBook.bookId, pages, days)
+                }
+              : undefined
+            }
+          />
+        </>
+      )}
 
       {/* Bible plan view (readonly) */}
       {viewBible && (
