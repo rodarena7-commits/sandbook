@@ -282,6 +282,7 @@ export default function LibraryPage() {
                     onRemove={(bookId) => removeBook(user.uid, bookId)}
                     onReaction={(bookId, reaction) => updateReaction(user.uid, bookId, reaction)}
                     onSelect={setSelectedBook}
+                    onOpenPlan={b => setViewPlanBook(b)}
                   />
                   {/* Plan icon */}
                   {hasPlan && (

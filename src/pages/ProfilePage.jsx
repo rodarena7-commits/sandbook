@@ -9,6 +9,7 @@ import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import SettingsSheet from '../components/profile/SettingsSheet'
 import { seedFakeFollower, removeFakeFollower } from '../utils/seedFakeUser'
 import { respondToLoan } from '../hooks/useLoanRequests'
+import { useFavoriteAuthors } from '../hooks/useFavoriteAuthors'
 
 // ── User List Screen (full screen) ────────────────────────
 function UserListScreen({ title, uids, myFollowing = [], onClose }) {
@@ -250,6 +251,7 @@ function BookRow({ book }) {
 export default function ProfilePage() {
   const { user, profile, setProfile, logout } = useAuth()
   const { books } = useBooks(user?.uid)
+  const { authors: favAuthors } = useFavoriteAuthors(user?.uid)
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(user?.uid)
 
   const [showNotifs, setShowNotifs]     = useState(false)
@@ -450,6 +452,29 @@ export default function ProfilePage() {
         <div className="mx-4 mt-4">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Últimos leídos</p>
           <div className="flex flex-col gap-2">{recents.map(b => <BookRow key={b.id} book={b} />)}</div>
+        </div>
+      )}
+
+      {/* Favorite authors */}
+      {favAuthors.length > 0 && (
+        <div className="mx-4 mt-4">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Escritores favoritos</p>
+          <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1">
+            {favAuthors.map(a => (
+              <div key={a.id} className="flex-shrink-0 flex flex-col items-center w-16">
+                {a.photoUrl ? (
+                  <img src={a.photoUrl} alt={a.name}
+                    className="w-14 h-14 rounded-full object-cover border-2 border-amber-200 shadow-sm"
+                    onError={e => e.target.style.display='none'} />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-amber-200 flex items-center justify-center">
+                    <BookOpen size={14} className="text-slate-300"/>
+                  </div>
+                )}
+                <p className="text-[9px] text-slate-600 text-center leading-tight mt-1.5 line-clamp-2">{a.name}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

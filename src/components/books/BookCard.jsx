@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, Star, Trash2, ChevronDown, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { BookOpen, Star, Trash2, ChevronDown, ThumbsUp, ThumbsDown, CalendarDays } from 'lucide-react'
 
 const STATUS_LABELS = {
   reading: 'Leyendo',
@@ -15,7 +15,7 @@ const STATUS_COLORS = {
   library: 'bg-blue-100 text-blue-600',
 }
 
-export default function BookCard({ book, onStatusChange, onToggleFavorite, onRemove, onReaction, onSelect }) {
+export default function BookCard({ book, onStatusChange, onToggleFavorite, onRemove, onReaction, onSelect, onOpenPlan }) {
   const [showMenu, setShowMenu] = useState(false)
 
   function handleStatusChange(status) {
@@ -41,13 +41,23 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
           </div>
         )}
 
-        {/* Favorite star */}
-        <button
-          onClick={e => { e.stopPropagation(); onToggleFavorite(book.bookId, book.isFavorite) }}
-          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm"
-        >
-          <Star size={13} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
-        </button>
+        {/* Icons top-right */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1">
+          <button
+            onClick={e => { e.stopPropagation(); onToggleFavorite(book.bookId, book.isFavorite) }}
+            className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm"
+          >
+            <Star size={13} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
+          </button>
+          {book.readingPlan && onOpenPlan && (
+            <button
+              onClick={e => { e.stopPropagation(); onOpenPlan(book) }}
+              className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center shadow-sm"
+            >
+              <CalendarDays size={12} className="text-white" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Info */}

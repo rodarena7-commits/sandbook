@@ -54,27 +54,33 @@ export default function CreatePlanSheet({ book, onSave, onClose }) {
         <div className="flex flex-col gap-4 mb-5">
           <div>
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
-              Cantidad de páginas
+              Páginas totales del libro
             </label>
-            <input
-              type="number" min="1" inputMode="numeric"
-              value={totalPages}
-              onChange={e => setTotalPages(e.target.value)}
-              placeholder="ej: 320"
-              className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
-            />
+            <div className="relative">
+              <input
+                type="number" min="1" inputMode="numeric"
+                value={totalPages}
+                onChange={e => setTotalPages(e.target.value)}
+                placeholder="ej: 320"
+                className="w-full px-4 py-3 pr-20 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">páginas</span>
+            </div>
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
-              Días para terminarlo
+              Meta — días para terminarlo
             </label>
-            <input
-              type="number" min="1" inputMode="numeric"
-              value={totalDays}
-              onChange={e => setTotalDays(e.target.value)}
-              placeholder="ej: 30"
-              className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
-            />
+            <div className="relative">
+              <input
+                type="number" min="1" inputMode="numeric"
+                value={totalDays}
+                onChange={e => setTotalDays(e.target.value)}
+                placeholder="ej: 30"
+                className="w-full px-4 py-3 pr-12 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">días</span>
+            </div>
           </div>
         </div>
 
