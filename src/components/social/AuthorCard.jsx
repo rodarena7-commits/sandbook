@@ -1,5 +1,8 @@
-import { useState } from 'react'
-import { User, BookOpen, ChevronDown, ChevronUp, Heart, X, Star } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { User, BookOpen, ChevronDown, ChevronUp, Heart, X, Upload } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
+import { getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
+import ImagePickerSheet from '../ui/ImagePickerSheet'
 
 // ── Book Detail Sheet (from author) ───────────────────────
 function AuthorBookSheet({ book, author, allBooks, onClose }) {
@@ -58,9 +61,18 @@ function AuthorBookSheet({ book, author, allBooks, onClose }) {
 
 // ── Author Card ────────────────────────────────────────────
 export default function AuthorCard({ author, isFav = false, onToggleFav }) {
-  const [expanded, setExpanded]       = useState(false)
-  const [imgError, setImgError]       = useState(false)
+  const { user } = useAuth()
+  const [expanded, setExpanded]         = useState(false)
+  const [imgError, setImgError]         = useState(false)
+  const [globalPhoto, setGlobalPhoto]   = useState(null)
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false)
   const [selectedBook, setSelectedBook] = useState(null)
+
+  useEffect(() => {
+    if ((!author.photoUrl || imgError) && author.name) {
+      getGlobalAuthorPhoto(author.name).then(url => { if (url) setGlobalPhoto(url) })
+    }
+  }, [author.name, imgError])
 
   return (
     <>
@@ -68,15 +80,26 @@ export default function AuthorCard({ author, isFav = false, onToggleFav }) {
       {/* Author header */}
       <div className="flex gap-3 p-4">
         {/* Photo */}
-        <div className="flex-shrink-0">
-          {author.photoUrl && !imgError ? (
-            <img src={author.photoUrl} alt={author.name}
+        <div className="relative flex-shrink-0 group">
+          {(author.photoUrl && !imgError) || globalPhoto ? (
+            <img
+              src={(!imgError && author.photoUrl) ? author.photoUrl : globalPhoto}
+              alt={author.name}
               className="w-16 h-16 rounded-2xl object-cover shadow-sm border border-slate-100"
-              onError={() => setImgError(true)} />
+              onError={() => setImgError(true)}
+            />
           ) : (
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
-              <User size={24} className="text-slate-300" />
-            </div>
+            <button onClick={() => setShowPhotoPicker(true)}
+              className="w-16 h-16 rounded-2xl bg-slate-100 flex flex-col items-center justify-center gap-1 hover:bg-amber-50 transition-all">
+              <User size={20} className="text-slate-300"/>
+              <span className="text-[8px] text-slate-400">+ foto</span>
+            </button>
+          )}
+          {user && (author.photoUrl || globalPhoto) && (
+            <button onClick={() => setShowPhotoPicker(true)}
+              className="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shadow-sm border-2 border-white opacity-0 group-hover:opacity-100 transition-all">
+              <Upload size={10} className="text-white"/>
+            </button>
           )}
         </div>
 
@@ -139,6 +162,25 @@ export default function AuthorCard({ author, isFav = false, onToggleFav }) {
         <p className="text-xs text-slate-300 text-center px-4 pb-3">Sin libros disponibles</p>
       )}
     </div>
+
+    {/* Author photo picker */}
+    {showPhotoPicker && (
+      <>
+        <div className="fixed inset-0 bg-black/40 z-[75]" onClick={() => setShowPhotoPicker(false)}/>
+        <div className="fixed inset-0 z-[76] flex items-end">
+          <ImagePickerSheet
+            title={`Foto de ${author.name}`}
+            storagePath={`authorPhotos/${author.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`}
+            onSave={async url => {
+              setGlobalPhoto(url)
+              setImgError(false)
+              if (user) await saveGlobalAuthorPhoto(author.name, url, user.uid)
+            }}
+            onClose={() => setShowPhotoPicker(false)}
+          />
+        </div>
+      </>
+    )}
 
     {/* Book detail sheet */}
     {selectedBook && (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2 } from 'lucide-react'
+import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload } from 'lucide-react'
 import { useAuthorBooks } from '../../hooks/useAuthorBooks'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
@@ -8,6 +8,7 @@ import { useBookReviews } from '../../hooks/useBookReviews'
 import { useAuthor } from '../../hooks/useAuthor'
 import { useBookStats } from '../../hooks/useBookStats'
 import ImagePickerSheet from '../ui/ImagePickerSheet'
+import { getGlobalCover, saveGlobalCover, getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 
 const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca' }
 const STATUS_COLORS = {
@@ -80,33 +81,51 @@ function StatusMenu({ current, onChange }) {
 }
 
 function AuthorSection({ authorName }) {
+  const { user } = useAuth()
   const author = useAuthor(authorName)
   const [expanded, setExpanded] = useState(false)
+  const [imgError, setImgError]       = useState(false)
+  const [globalPhoto, setGlobalPhoto] = useState(null)
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false)
+
+  useEffect(() => {
+    if (!author?.photoUrl && authorName) {
+      getGlobalAuthorPhoto(authorName).then(url => { if (url) setGlobalPhoto(url) })
+    }
+  }, [authorName, author?.photoUrl])
 
   if (!authorName) return null
+
+  const photo = (!imgError && author?.photoUrl) ? author.photoUrl : globalPhoto
 
   return (
     <div className="mb-5">
       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Autor</p>
       <div className="flex gap-3 items-start">
-        {author?.photoUrl ? (
-          <img
-            src={author.photoUrl}
-            alt={authorName}
-            className="w-14 h-14 rounded-full object-cover border-2 border-slate-100 flex-shrink-0"
-            onError={e => { e.target.style.display = 'none' }}
-          />
-        ) : (
-          <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-            <User size={22} className="text-slate-300" />
-          </div>
-        )}
+        {/* Avatar or upload placeholder */}
+        <div className="relative flex-shrink-0 group">
+          {photo ? (
+            <img src={photo} alt={authorName}
+              className="w-14 h-14 rounded-full object-cover border-2 border-slate-100"
+              onError={() => setImgError(true)} />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center">
+              <User size={22} className="text-slate-300" />
+            </div>
+          )}
+          {/* Upload button overlay */}
+          {user && (
+            <button onClick={() => setShowPhotoPicker(true)}
+              className="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shadow-sm border-2 border-white opacity-0 group-hover:opacity-100 transition-all">
+              <Upload size={10} className="text-white"/>
+            </button>
+          )}
+        </div>
+
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-slate-800 text-sm">{author?.name || authorName}</p>
           {author?.birthDate && <p className="text-xs text-slate-400 mt-0.5">{author.birthDate}</p>}
-          {author?.workCount > 0 && (
-            <p className="text-xs text-slate-400">{author.workCount} obras</p>
-          )}
+          {author?.workCount > 0 && <p className="text-xs text-slate-400">{author.workCount} obras</p>}
           {author?.bio && (
             <>
               <p className={`text-xs text-slate-500 leading-relaxed mt-1.5 ${expanded ? '' : 'line-clamp-3'}`}>
@@ -119,11 +138,34 @@ function AuthorSection({ authorName }) {
               )}
             </>
           )}
-          {!author && (
-            <p className="text-xs text-slate-300 mt-1">Cargando…</p>
+          {!author && <p className="text-xs text-slate-300 mt-1">Cargando…</p>}
+          {!photo && author !== null && (
+            <button onClick={() => setShowPhotoPicker(true)}
+              className="mt-2 flex items-center gap-1 text-[10px] text-amber-500 font-medium">
+              <Upload size={10}/> Agregar foto del autor
+            </button>
           )}
         </div>
       </div>
+
+      {/* Photo picker for author */}
+      {showPhotoPicker && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[75]" onClick={() => setShowPhotoPicker(false)}/>
+          <div className="fixed inset-0 z-[76] flex items-end">
+            <ImagePickerSheet
+              title={`Foto de ${authorName}`}
+              storagePath={`authorPhotos/${authorName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`}
+              onSave={async url => {
+                setGlobalPhoto(url)
+                setImgError(false)
+                if (user) await saveGlobalAuthorPhoto(authorName, url, user.uid)
+              }}
+              onClose={() => setShowPhotoPicker(false)}
+            />
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -318,8 +360,17 @@ export default function BookDetailSheet({
   const [descExpanded, setDescExpanded] = useState(false)
 
   const [customThumb, setCustomThumb] = useState(book.customThumbnail || null)
+  const [globalCover, setGlobalCover]   = useState(null)
   const [showImgPicker, setShowImgPicker] = useState(false)
-  const cover = customThumb || largeCover(book.thumbnail)
+
+  // Load global cover if no personal/book cover
+  useEffect(() => {
+    if (!book.customThumbnail && !book.thumbnail && book.bookId) {
+      getGlobalCover(book.bookId).then(url => { if (url) setGlobalCover(url) })
+    }
+  }, [book.bookId])
+
+  const cover = customThumb || largeCover(book.thumbnail) || globalCover
   const isLibrary = !!onStatusChange
   const stats = useBookStats(book.bookId)
 
@@ -496,7 +547,7 @@ export default function BookDetailSheet({
               <ReviewsSection bookId={book.bookId} bookMeta={book} myUid={user?.uid} myProfile={profile} />
             </div>
 
-            {/* Plan de lectura (library only) */}
+            {/* Plan + Eliminar (library only) */}
             {isLibrary && (
               <div className="mt-4 flex flex-col gap-2">
                 <button
@@ -508,9 +559,9 @@ export default function BookDetailSheet({
                 </button>
                 <button
                   onClick={handleRemove}
-                  className="flex items-center gap-2 text-xs text-red-400 hover:text-red-500 mt-1"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 text-red-500 rounded-2xl text-sm font-medium w-full active:scale-95 transition-all"
                 >
-                  <Trash2 size={13} /> Eliminar de mi biblioteca
+                  <Trash2 size={15} /> Eliminar de mi biblioteca
                 </button>
               </div>
             )}
@@ -564,7 +615,11 @@ export default function BookDetailSheet({
             storagePath={`users/${user?.uid}/books/${book.bookId}`}
             onSave={async url => {
               setCustomThumb(url)
-              await updateDoc(doc(db, 'users', user.uid, 'myBooks', book.bookId), { customThumbnail: url })
+              setGlobalCover(url)
+              await Promise.all([
+                updateDoc(doc(db, 'users', user.uid, 'myBooks', book.bookId), { customThumbnail: url }),
+                saveGlobalCover(book.bookId, url, user.uid),
+              ])
             }}
             onClose={() => setShowImgPicker(false)}
           />
