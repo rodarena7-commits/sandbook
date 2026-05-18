@@ -119,7 +119,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
   const activeBookList = BOOK_TABS.find(t=>t.key===bookTab)?.list || []
 
   return (
-    <div className="fixed inset-0 z-[55] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto overflow-y-auto">
+    <div className="fixed inset-0 z-[52] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto overflow-y-auto">
 
       {/* Cover + avatar (avatar absolute sobre la portada) */}
       <div className="relative flex-shrink-0">
@@ -411,7 +411,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
       {/* Book detail — abre al tocar un libro del perfil */}
       {viewBook && (
         <>
-          <div className="fixed inset-0 bg-black/40 z-[64]" onClick={() => setViewBook(null)} />
+          <div className="fixed inset-0 bg-black/40 z-[53]" onClick={() => setViewBook(null)} />
           <BookDetailSheet
             book={{ ...viewBook, ...(myBooksMap[viewBook.bookId] || {}) }}
             onClose={() => setViewBook(null)}

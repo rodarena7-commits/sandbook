@@ -69,10 +69,11 @@ export default function AuthorCard({ author, isFav = false, onToggleFav }) {
   const [selectedBook, setSelectedBook] = useState(null)
 
   useEffect(() => {
-    if ((!author.photoUrl || imgError) && author.name) {
+    // Siempre carga foto global primero (tiene prioridad sobre Open Library)
+    if (author.name) {
       getGlobalAuthorPhoto(author.name).then(url => { if (url) setGlobalPhoto(url) })
     }
-  }, [author.name, imgError])
+  }, [author.name])
 
   return (
     <>

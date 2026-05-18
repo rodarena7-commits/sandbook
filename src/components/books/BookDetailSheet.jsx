@@ -90,10 +90,11 @@ function AuthorSection({ authorName }) {
   const [showPhotoPicker, setShowPhotoPicker] = useState(false)
 
   useEffect(() => {
-    if (!author?.photoUrl && authorName) {
+    // Siempre carga la foto global — tiene prioridad (usuario la subió manualmente)
+    if (authorName) {
       getGlobalAuthorPhoto(authorName).then(url => { if (url) setGlobalPhoto(url) })
     }
-  }, [authorName, author?.photoUrl])
+  }, [authorName])
 
   if (!authorName) return null
 
