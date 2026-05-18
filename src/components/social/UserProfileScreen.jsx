@@ -6,6 +6,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useAuth } from '../../contexts/AuthContext'
+import BookCoverUpload from '../books/BookCoverUpload'
 import { usePublicReviews } from '../../hooks/usePublicReviews'
 import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
 import { sendLoanRequest } from '../../hooks/useLoanRequests'
@@ -216,13 +217,17 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
                 {activeBookList.length===0 ? (
                   <p className="text-xs text-slate-400 text-center py-10">Sin libros en esta sección</p>
                 ) : (
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
                     {activeBookList.map(b => (
                       <div key={b.id} className="flex flex-col">
-                        {b.customThumbnail||b.thumbnail
-                          ? <img src={b.customThumbnail||b.thumbnail} alt="" className="w-full aspect-[2/3] object-cover rounded-2xl shadow-sm"/>
-                          : <div className="w-full aspect-[2/3] bg-slate-100 rounded-2xl flex items-center justify-center"><BookOpen size={20} className="text-slate-300"/></div>
-                        }
+                        <div className="w-full aspect-[2/3] rounded-2xl overflow-hidden shadow-sm">
+                          <BookCoverUpload
+                            bookId={b.bookId}
+                            src={b.customThumbnail || b.thumbnail}
+                            title={b.title}
+                            className="rounded-2xl"
+                          />
+                        </div>
                         <p className="text-[10px] font-semibold text-slate-700 line-clamp-2 mt-1.5 leading-tight">{b.title}</p>
                         {b.rating>0 && <p className="text-[9px] text-amber-500">{'★'.repeat(b.rating)}</p>}
                         <button onClick={()=>setLoanBook(b)}
@@ -257,14 +262,14 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
                 <div key={b.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                   {/* Book info */}
                   <div className="flex gap-3 p-3">
-                    {b.customThumbnail || b.thumbnail ? (
-                      <img src={b.customThumbnail || b.thumbnail} alt=""
-                        className="w-12 h-16 object-cover rounded-xl flex-shrink-0 shadow-sm"/>
-                    ) : (
-                      <div className="w-12 h-16 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <BookOpen size={16} className="text-slate-300"/>
-                      </div>
-                    )}
+                    <div className="w-12 h-16 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
+                      <BookCoverUpload
+                        bookId={b.bookId}
+                        src={b.customThumbnail || b.thumbnail}
+                        title={b.title}
+                        className="rounded-xl"
+                      />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-800 line-clamp-2">{b.title}</p>
                       {b.authors?.[0] && <p className="text-xs text-slate-400 mt-0.5">{b.authors[0]}</p>}

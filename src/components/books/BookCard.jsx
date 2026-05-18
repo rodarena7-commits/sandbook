@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BookOpen, Star, Trash2, ChevronDown, ThumbsUp, ThumbsDown } from 'lucide-react'
+import BookCoverUpload from './BookCoverUpload'
 
 const STATUS_LABELS = {
   reading: 'Leyendo',
@@ -32,20 +33,26 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
   return (
     <div className="relative bg-white rounded-2xl shadow-sm border border-slate-100 overflow-visible flex flex-col">
       {/* Cover */}
-      <div className="relative cursor-pointer" onClick={() => onSelect && onSelect(book)}>
-        {/* Cover — ignora URLs de placeholder del app viejo */}
-        {(() => {
-          const raw = book.customThumbnail || book.thumbnail
-          const src = raw && !raw.includes('placeholder') ? raw : null
-          return src
-            ? <img src={src} alt={book.title} className="w-full aspect-[2/3] object-cover rounded-t-2xl"/>
-            : <div className="w-full aspect-[2/3] bg-slate-100 rounded-t-2xl flex items-center justify-center"><BookOpen size={32} className="text-slate-300"/></div>
-        })()}
+      <div className="relative">
+        {/* Cover con upload integrado */}
+        <div
+          className="w-full aspect-[2/3] rounded-t-2xl overflow-hidden cursor-pointer"
+          onClick={() => onSelect && onSelect(book)}
+        >
+          <BookCoverUpload
+            bookId={book.bookId}
+            src={book.customThumbnail || book.thumbnail}
+            title={book.title}
+            className="rounded-t-2xl"
+            isOwnBook
+            onUpdated={() => {}}
+          />
+        </div>
 
-        {/* Favorite star — único ícono en top-right */}
+        {/* Favorite star */}
         <button
           onClick={e => { e.stopPropagation(); onToggleFavorite(book.bookId, book.isFavorite) }}
-          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm"
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm z-10"
         >
           <Star size={13} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
         </button>

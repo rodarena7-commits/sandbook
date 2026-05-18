@@ -393,7 +393,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
         )}
 
         {statusTab !== 'plan' && filtered.length > 0 && (
-          <div className="grid grid-cols-3 lg:grid-cols-7 gap-3">
+          <div className="grid grid-cols-3 lg:grid-cols-8 gap-3">
             {filtered.map(book => {
               const hasPlan = !!book.readingPlan
               return (
