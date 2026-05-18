@@ -500,7 +500,7 @@ export default function BookDetailSheet({
             {isLibrary && (
               <div className="mt-4 flex flex-col gap-2">
                 <button
-                  onClick={() => { onClose(); onOpenPlan && onOpenPlan(book) }}
+                  onClick={() => { onOpenPlan ? onOpenPlan(book) : onClose() }}
                   className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-sm font-medium w-full active:scale-95 transition-all"
                 >
                   <CalendarDays size={15} className="text-amber-500" />
