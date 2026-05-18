@@ -136,10 +136,11 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   const [shelfMenu, setShelfMenu]       = useState(null)
   const [renameModal, setRenameModal]   = useState(null)
   const [assignModal, setAssignModal]   = useState(null)
-  const [planBook, setPlanBook]         = useState(null)
-  const [viewPlanBook, setViewPlanBook] = useState(null)
+  const [planBook, setPlanBook]           = useState(null)
+  const [viewPlanBook, setViewPlanBook]   = useState(null)
   const [viewBibleBook, setViewBibleBook] = useState(null)
-  const [planSearch, setPlanSearch]     = useState('')
+  const [planSearch, setPlanSearch]       = useState('')
+  const [pendingPlan, setPendingPlan]     = useState(null) // book awaiting plan creation
 
   // Navigate from Search page to plan tab
   useEffect(() => {
@@ -148,6 +149,16 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
       onPlanConsumed?.()
     }
   }, [startOnPlan])
+
+  // Open CreatePlanSheet AFTER BookDetailSheet fully closes
+  useEffect(() => {
+    if (pendingPlan && !selectedBook) {
+      setStatusTab('plan')
+      if (pendingPlan.readingPlan || pendingPlan.biblePlan) setViewPlanBook(pendingPlan)
+      else setPlanBook(pendingPlan)
+      setPendingPlan(null)
+    }
+  }, [pendingPlan, selectedBook])
 
   const filtered = useMemo(() => {
     let list = books
@@ -430,10 +441,10 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
             onSaveRating={(bookId, rating) => saveReview(user.uid, bookId, rating, '')}
             onRemove={(bookId) => removeBook(user.uid, bookId)}
             onOpenPlan={b => {
-              setSelectedBook(null)   // cierra el sheet
-              setStatusTab('plan')    // navega a la categoría En plan
-              if (b.readingPlan || b.biblePlan) setViewPlanBook(b)
-              else setPlanBook(b)     // abre el formulario de creación
+              // 1. Cierra el BookDetailSheet
+              setSelectedBook(null)
+              // 2. El useEffect abre el plan cuando selectedBook sea null
+              setPendingPlan(b)
             }}
           />
         </>
