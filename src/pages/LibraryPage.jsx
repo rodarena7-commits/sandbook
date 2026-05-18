@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from 'react'
-import { Plus, BookOpen, BookMarked, Pencil, Trash2, X, Check, CalendarDays } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { Plus, BookOpen, BookMarked, Pencil, Trash2, X, Check, CalendarDays, Search } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
 import { useShelves } from '../hooks/useShelves'
@@ -7,8 +7,10 @@ import BookCard from '../components/books/BookCard'
 import BookDetailSheet from '../components/books/BookDetailSheet'
 import CreatePlanSheet from '../components/books/CreatePlanSheet'
 import ReadingPlanView from '../components/books/ReadingPlanView'
+import BiblePlanView from '../components/books/BiblePlanView'
 import Loader from '../components/ui/Loader'
 import { createReadingPlan } from '../hooks/useReadingPlan'
+import { isBibleBook, initBiblePlan, countCompleted, TOTAL_CHAPTERS } from '../hooks/useBibleProgress'
 
 const STATUS_TABS = [
   { key: 'all',     label: 'Todos' },
@@ -122,7 +124,7 @@ function AssignShelfModal({ book, shelves, currentShelfId, onAssign, onClose }) 
 }
 
 // ── Main Page ──────────────────────────────────────────────
-export default function LibraryPage() {
+export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   const { user } = useAuth()
   const { books, loading, updateStatus, toggleFavorite, removeBook, saveReview, updateReaction, assignShelf } = useBooks(user?.uid)
   const { shelves, createShelf, renameShelf, deleteShelf } = useShelves(user?.uid)
@@ -134,8 +136,18 @@ export default function LibraryPage() {
   const [shelfMenu, setShelfMenu]       = useState(null)
   const [renameModal, setRenameModal]   = useState(null)
   const [assignModal, setAssignModal]   = useState(null)
-  const [planBook, setPlanBook]         = useState(null) // create plan
-  const [viewPlanBook, setViewPlanBook] = useState(null) // view plan
+  const [planBook, setPlanBook]         = useState(null)
+  const [viewPlanBook, setViewPlanBook] = useState(null)
+  const [viewBibleBook, setViewBibleBook] = useState(null)
+  const [planSearch, setPlanSearch]     = useState('')
+
+  // Navigate from Search page to plan tab
+  useEffect(() => {
+    if (startOnPlan) {
+      setStatusTab('plan')
+      onPlanConsumed?.()
+    }
+  }, [startOnPlan])
 
   const filtered = useMemo(() => {
     let list = books
@@ -260,11 +272,106 @@ export default function LibraryPage() {
 
       {/* Content */}
       <div className="px-4 py-4">
-        {filtered.length === 0 ? (
+        {/* ── EN PLAN tab: buscador + lista de libros ── */}
+        {statusTab === 'plan' && (
+          <div className="mb-4">
+            <div className="relative mb-3">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                value={planSearch}
+                onChange={e => setPlanSearch(e.target.value)}
+                placeholder="Buscar libro por título o autor…"
+                className="w-full pl-9 pr-8 py-2.5 bg-white rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400 shadow-sm"
+              />
+              {planSearch && (
+                <button onClick={() => setPlanSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {/* Books matching search OR all library books */}
+            {(() => {
+              const q = planSearch.trim().toLowerCase()
+              const list = q
+                ? books.filter(b =>
+                    b.title?.toLowerCase().includes(q) ||
+                    b.authors?.some(a => a.toLowerCase().includes(q))
+                  )
+                : books
+
+              if (!list.length) {
+                return (
+                  <p className="text-xs text-slate-400 text-center py-6">
+                    {q ? 'Sin resultados en tu biblioteca' : 'Tu biblioteca está vacía'}
+                  </p>
+                )
+              }
+
+              return (
+                <div className="flex flex-col gap-2">
+                  {list.map(b => {
+                    const hasPlan = !!b.readingPlan
+                    const pct = hasPlan
+                      ? Math.round((Object.values(b.planDays||{}).filter(d=>d?.checked).length / b.readingPlan.totalDays) * 100)
+                      : 0
+
+                    return (
+                      <div key={b.id} className="flex gap-3 items-center bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
+                        {b.customThumbnail || b.thumbnail ? (
+                          <img src={b.customThumbnail || b.thumbnail} alt=""
+                            className="w-10 h-14 object-cover rounded-xl flex-shrink-0 shadow-sm" />
+                        ) : (
+                          <div className="w-10 h-14 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <BookOpen size={14} className="text-slate-300" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-800 line-clamp-1">{b.title}</p>
+                          {b.authors?.[0] && <p className="text-xs text-slate-400">{b.authors[0]}</p>}
+                          {hasPlan && (
+                            <div className="mt-1.5">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-[10px] text-amber-500 font-medium flex-shrink-0">{pct}%</span>
+                              </div>
+                              <p className="text-[10px] text-slate-400">
+                                {b.readingPlan.dailyPages} págs/día · {b.readingPlan.totalDays} días
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        {isBibleBook(b) ? (
+                          <button
+                            onClick={() => b.biblePlan ? setViewBibleBook(b) : initBiblePlan(user.uid, b.bookId).then(() => setViewBibleBook({ ...b, biblePlan: true, bibleProgress: {}, currentVerse: '', planNote: '' }))}
+                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${b.biblePlan ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'}`}
+                          >
+                            <CalendarDays size={13}/>
+                            {b.biblePlan ? 'Plan Bíblico' : 'Activar Biblia'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => hasPlan ? setViewPlanBook(b) : setPlanBook(b)}
+                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${hasPlan ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'}`}
+                          >
+                            <CalendarDays size={13}/>
+                            {hasPlan ? 'Ver plan' : 'Crear plan'}
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
+          </div>
+        )}
+
+        {statusTab !== 'plan' && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <p className="text-5xl mb-4">
-              {shelfFilter ? '📂' : empty.icon}
-            </p>
+            <p className="text-5xl mb-4">{shelfFilter ? '📂' : empty.icon}</p>
             <p className="font-semibold text-slate-600 mb-1">
               {shelfFilter ? 'Este estante está vacío' : empty.text}
             </p>
@@ -272,7 +379,9 @@ export default function LibraryPage() {
               {shelfFilter ? 'Mantené presionado un libro para moverlo aquí' : empty.sub}
             </p>
           </div>
-        ) : (
+        )}
+
+        {statusTab !== 'plan' && filtered.length > 0 && (
           <div className="grid grid-cols-3 gap-3">
             {filtered.map(book => {
               const hasPlan = !!book.readingPlan
@@ -287,22 +396,18 @@ export default function LibraryPage() {
                     onSelect={setSelectedBook}
                     onOpenPlan={b => setViewPlanBook(b)}
                   />
-                  {/* Plan icon */}
-                  {hasPlan && (
-                    <button
-                      onClick={e => { e.stopPropagation(); setViewPlanBook(book) }}
-                      className="absolute top-2 left-2 w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center shadow-md"
-                      title="Ver plan de lectura"
-                    >
+                  {(hasPlan || book.biblePlan) && (
+                    <button onClick={e => {
+                      e.stopPropagation()
+                      book.biblePlan ? setViewBibleBook(book) : setViewPlanBook(book)
+                    }}
+                      className="absolute top-2 left-2 w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center shadow-md">
                       <CalendarDays size={13} className="text-white" />
                     </button>
                   )}
-                  {/* Shelf icon */}
                   {shelves.length > 0 && (
-                    <button
-                      onClick={() => setAssignModal(book)}
-                      className={`absolute ${hasPlan ? 'top-10' : 'top-2'} left-2 w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all`}
-                    >
+                    <button onClick={() => setAssignModal(book)}
+                      className={`absolute ${hasPlan ? 'top-10' : 'top-2'} left-2 w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all`}>
                       <BookMarked size={10} className="text-slate-500" />
                     </button>
                   )}
@@ -327,6 +432,16 @@ export default function LibraryPage() {
             onOpenPlan={b => { setSelectedBook(null); b.readingPlan ? setViewPlanBook(b) : setPlanBook(b) }}
           />
         </>
+      )}
+
+      {/* Bible plan view */}
+      {viewBibleBook && (
+        <BiblePlanView
+          book={books.find(b => b.bookId === viewBibleBook.bookId) || viewBibleBook}
+          uid={user.uid}
+          onClose={() => setViewBibleBook(null)}
+          onDelete={() => setViewBibleBook(null)}
+        />
       )}
 
       {/* Reading plan — create */}

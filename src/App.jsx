@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useNotifications } from './hooks/useNotifications'
 import { useConversations } from './hooks/useConversations'
@@ -13,16 +13,22 @@ import ProfilePage from './pages/ProfilePage'
 
 function AppContent() {
   const { user, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState('library')
+  const [activeTab, setActiveTab]   = useState('library')
+  const [goToPlan, setGoToPlan]     = useState(false)
   const { unreadCount: unreadNotifs } = useNotifications(user?.uid)
   const { totalUnread: unreadMsgs }   = useConversations(user?.uid)
 
   if (loading) return <Loader />
   if (!user)   return <LoginScreen />
 
+  function navigateToPlan() {
+    setGoToPlan(true)
+    setActiveTab('library')
+  }
+
   const pages = {
-    library:  <LibraryPage />,
-    search:   <SearchPage />,
+    library:  <LibraryPage  startOnPlan={goToPlan} onPlanConsumed={() => setGoToPlan(false)} />,
+    search:   <SearchPage   onGoToPlan={navigateToPlan} />,
     social:   <SocialPage />,
     messages: <MessagesPage />,
     profile:  <ProfilePage />,

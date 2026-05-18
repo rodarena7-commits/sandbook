@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Search, X, BookOpen, Plus, Check, Loader2, Camera, Star, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { Search, X, BookOpen, Plus, Check, Loader2, Camera, Star, ThumbsUp, ThumbsDown, CalendarDays } from 'lucide-react'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
@@ -122,7 +122,7 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
 }
 
 // ── Main Page ──────────────────────────────────────────────
-export default function SearchPage() {
+export default function SearchPage({ onGoToPlan }) {
   const { user } = useAuth()
   const { books, addBook } = useBooks(user?.uid)
   const { results, loading, error, query, setQuery, search, clear } = useGoogleBooks()
@@ -177,7 +177,18 @@ export default function SearchPage() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <div className="bg-white px-4 pt-12 pb-3 sticky top-0 z-10 shadow-sm">
-        <h1 className="text-xl font-bold text-slate-800 mb-3">Buscar libros</h1>
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl font-bold text-slate-800">Buscar libros</h1>
+          {onGoToPlan && (
+            <button
+              onClick={onGoToPlan}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-semibold active:scale-95 transition-all"
+            >
+              <CalendarDays size={13} className="text-amber-500" />
+              Planes
+            </button>
+          )}
+        </div>
 
         {/* Type selector */}
         <div className="flex gap-1.5 mb-3">

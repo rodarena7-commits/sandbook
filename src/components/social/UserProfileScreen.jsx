@@ -9,6 +9,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { usePublicReviews } from '../../hooks/usePublicReviews'
 import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
 import { sendLoanRequest } from '../../hooks/useLoanRequests'
+import { isBibleBook, countCompleted, TOTAL_CHAPTERS } from '../../hooks/useBibleProgress'
+import BiblePlanView from '../books/BiblePlanView'
 
 const STATUS_LABELS = { reading:'Leyendo', read:'Leído', pending:'Pendiente', library:'Biblioteca' }
 
@@ -47,14 +49,15 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
   const { reviews, loading: reviewsLoading } = usePublicReviews(targetUser.uid)
   const { authors: favAuthors, loading: authorsLoading } = useFavoriteAuthors(targetUser.uid)
 
-  const [books, setBooks]       = useState(null)
-  const [tab, setTab]           = useState('library')
-  const [bookTab, setBookTab]   = useState('fav')
-  const [acting, setActing]     = useState(false)
-  const [recMsg, setRecMsg]     = useState('')
-  const [sending, setSending]   = useState(false)
-  const [sent, setSent]         = useState(false)
-  const [loanBook, setLoanBook] = useState(null)
+  const [books, setBooks]         = useState(null)
+  const [tab, setTab]             = useState('library')
+  const [bookTab, setBookTab]     = useState('fav')
+  const [acting, setActing]       = useState(false)
+  const [recMsg, setRecMsg]       = useState('')
+  const [sending, setSending]     = useState(false)
+  const [sent, setSent]           = useState(false)
+  const [loanBook, setLoanBook]   = useState(null)
+  const [viewBible, setViewBible] = useState(null)
   const [fullUser, setFullUser] = useState(targetUser)
 
   // Load full user profile if needed
@@ -163,6 +166,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
           { key:'library', label:'Biblioteca' },
           { key:'reviews', label:`Reseñas${reviews.length>0?` (${reviews.length})`:''}` },
           { key:'authors', label:`Escritores${favAuthors.length>0?` (${favAuthors.length})`:''}` },
+          { key:'bible',   label:'📖 Biblia' },
         ].map(t => (
           <button key={t.key} onClick={()=>setTab(t.key)}
             className={`flex-1 py-2.5 text-xs font-semibold transition-all ${tab===t.key?'text-amber-500 border-b-2 border-amber-500':'text-slate-400'}`}>
@@ -284,7 +288,53 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
             </div>
           </>
         )}
+
+        {/* ── BIBLIA ── */}
+        {tab==='bible' && (() => {
+          const bibleBook = books?.find(b => isBibleBook(b) && b.biblePlan)
+          if (!books) return <div className="flex justify-center py-10"><Loader2 size={22} className="animate-spin text-amber-400"/></div>
+          if (!bibleBook) return (
+            <p className="text-xs text-slate-400 text-center py-12">Este lector no tiene plan bíblico activo</p>
+          )
+          const pct = Math.round((countCompleted(bibleBook.bibleProgress||{}) / TOTAL_CHAPTERS) * 100)
+          return (
+            <div className="flex flex-col gap-3">
+              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-amber-800">Santa Biblia</p>
+                  <p className="text-sm font-bold text-amber-500">{pct}%</p>
+                </div>
+                <div className="w-full h-2 bg-amber-200 rounded-full overflow-hidden mb-2">
+                  <div className="h-full bg-amber-500 rounded-full" style={{width:`${pct}%`}}/>
+                </div>
+                <p className="text-xs text-amber-600">
+                  {countCompleted(bibleBook.bibleProgress||{})} de {TOTAL_CHAPTERS} capítulos leídos
+                </p>
+                {bibleBook.currentVerse && (
+                  <p className="text-xs text-slate-500 mt-1.5">📖 Leyendo: {bibleBook.currentVerse}</p>
+                )}
+                {bibleBook.planNote && (
+                  <p className="text-xs text-slate-500 italic mt-1">"{bibleBook.planNote}"</p>
+                )}
+                <button onClick={() => setViewBible(bibleBook)}
+                  className="mt-3 w-full py-2 bg-amber-500 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all">
+                  Ver plan completo
+                </button>
+              </div>
+            </div>
+          )
+        })()}
       </div>
+
+      {/* Bible plan view (readonly) */}
+      {viewBible && (
+        <BiblePlanView
+          book={viewBible}
+          uid={null}
+          onClose={() => setViewBible(null)}
+          readonly={true}
+        />
+      )}
 
       {/* Loan modal */}
       {loanBook && (
