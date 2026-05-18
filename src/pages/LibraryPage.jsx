@@ -78,7 +78,7 @@ function ShelfModal({ initial = '', onSave, onClose }) {
 function ShelfMenu({ shelf, onRename, onDelete, onClose }) {
   return (
     <div className="fixed inset-0 z-[55] flex items-end" onClick={onClose}>
-      <div className="w-full max-w-lg mx-auto bg-white rounded-t-3xl shadow-2xl p-5 pb-8" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl p-5 pb-8" onClick={e => e.stopPropagation()}>
         <p className="font-semibold text-slate-700 mb-4 text-center">"{shelf.name}"</p>
         <div className="flex flex-col gap-2">
           <button onClick={onRename}

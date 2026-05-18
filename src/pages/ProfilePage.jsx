@@ -34,7 +34,7 @@ function UserListScreen({ title, uids, myFollowing = [], onClose }) {
 
   if (selected) {
     return (
-      <div className="fixed inset-0 z-[62] bg-slate-50 flex flex-col max-w-lg mx-auto">
+      <div className="fixed inset-0 z-[62] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto">
         {/* Selected user header */}
         <div className="bg-white shadow-sm px-4 pt-12 pb-4 flex-shrink-0">
           <button onClick={() => setSelected(null)} className="flex items-center gap-2 text-slate-500 mb-4 hover:text-amber-500 transition-colors">
@@ -78,7 +78,7 @@ function UserListScreen({ title, uids, myFollowing = [], onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[61] bg-slate-50 flex flex-col max-w-lg mx-auto">
+    <div className="fixed inset-0 z-[61] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto">
       {/* Header */}
       <div className="bg-white shadow-sm flex items-center gap-3 px-4 pt-12 pb-4 flex-shrink-0">
         <button onClick={onClose} className="flex items-center gap-2 text-slate-500 hover:text-amber-500 transition-colors">

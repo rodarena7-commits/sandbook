@@ -155,7 +155,7 @@ export default function BiblePlanView({ book, uid, onClose, onDelete, readonly =
   const NT = bibleBooks.slice(OT_COUNT)
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-50 flex flex-col max-w-lg mx-auto">
+    <div className="fixed inset-0 z-[60] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto">
       {/* Header */}
       <div className="bg-amber-500 flex items-center gap-3 px-4 pt-12 pb-3 flex-shrink-0 shadow-sm">
         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white flex-shrink-0">

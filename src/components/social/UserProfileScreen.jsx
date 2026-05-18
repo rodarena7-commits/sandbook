@@ -110,7 +110,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
   const activeBookList = BOOK_TABS.find(t=>t.key===bookTab)?.list || []
 
   return (
-    <div className="fixed inset-0 z-[55] bg-slate-50 flex flex-col max-w-lg mx-auto overflow-y-auto">
+    <div className="fixed inset-0 z-[55] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto overflow-y-auto">
 
       {/* Cover + avatar (avatar absolute sobre la portada) */}
       <div className="relative flex-shrink-0">

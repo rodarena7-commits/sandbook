@@ -401,7 +401,7 @@ export default function BookDetailSheet({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-end">
-        <div className="w-full max-w-lg mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[94vh] flex flex-col">
+        <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[94vh] flex flex-col">
 
           {/* Top bar */}
           <div className="relative flex items-center justify-center px-5 pt-3 pb-2 flex-shrink-0">

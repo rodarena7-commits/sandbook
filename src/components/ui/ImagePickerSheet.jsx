@@ -47,7 +47,7 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end">
-      <div className="w-full max-w-lg mx-auto bg-white rounded-t-3xl shadow-2xl p-5 pb-10">
+      <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl p-5 pb-10">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-slate-800">{title}</h3>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">

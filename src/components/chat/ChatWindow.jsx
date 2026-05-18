@@ -41,7 +41,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
   }
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-50 flex flex-col max-w-lg mx-auto">
+    <div className="fixed inset-0 z-[60] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto">
       {/* Header */}
       <div className="bg-white shadow-sm flex items-center gap-3 px-4 pt-12 pb-3 flex-shrink-0">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">

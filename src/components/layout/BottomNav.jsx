@@ -11,7 +11,7 @@ const TABS = [
 export default function BottomNav({ active, onChange, badges = {} }) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-50">
-      <div className="flex items-center justify-around max-w-lg mx-auto">
+      <div className="flex items-center justify-around w-full max-w-4xl mx-auto">
         {TABS.map(({ id, label, icon: Icon }) => {
           const isActive = active === id
           const badge = badges[id] || 0

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   ArrowLeft, Check, Trash2, StickyNote, Bookmark,
   ChevronDown, ChevronUp, BookOpen,
@@ -16,6 +16,62 @@ function dayLabel(startDate, dayNum) {
     short: d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }),
     week:  d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }),
   }
+}
+
+// ── Horizontal Day Slider ──────────────────────────────────
+function DaySlider({ days, dayData, startDate, onToggle }) {
+  const sliderRef = useRef(null)
+
+  // Scroll to first uncompleted day on mount
+  useEffect(() => {
+    const firstUndone = days.findIndex(d => !dayData[d.day]?.checked)
+    const idx = firstUndone >= 0 ? firstUndone : 0
+    const el = sliderRef.current?.children[idx]
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }, [])
+
+  return (
+    <div
+      ref={sliderRef}
+      className="flex gap-2.5 overflow-x-auto scrollbar-none px-4 py-3 bg-white border-b border-slate-100 flex-shrink-0"
+      style={{ scrollSnapType: 'x mandatory' }}
+    >
+      {days.map(d => {
+        const data    = dayData[d.day] || {}
+        const checked = !!data.checked
+        const label   = dayLabel(startDate, d.day)
+
+        return (
+          <button
+            key={d.day}
+            onClick={() => onToggle(d.day, data)}
+            style={{ scrollSnapAlign: 'start', minWidth: '72px' }}
+            className={`flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-2xl transition-all active:scale-95 flex-shrink-0 ${
+              checked
+                ? 'bg-green-500 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
+            }`}
+          >
+            {/* Checkbox circle */}
+            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+              checked ? 'border-white bg-white/20' : 'border-slate-400'
+            }`}>
+              {checked && <Check size={12} className="text-white" />}
+            </div>
+            <p className={`text-[11px] font-bold leading-none ${checked ? 'text-white' : 'text-slate-700'}`}>
+              Día {d.day}
+            </p>
+            <p className={`text-[9px] leading-none text-center ${checked ? 'text-white/80' : 'text-slate-400'}`}>
+              {label.week}
+            </p>
+            <p className={`text-[9px] leading-none ${checked ? 'text-white/70' : 'text-slate-400'}`}>
+              {d.pages} págs
+            </p>
+          </button>
+        )
+      })}
+    </div>
+  )
 }
 
 // ── Single Day Row ─────────────────────────────────────────
@@ -169,7 +225,7 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete }) {
   const cover = book.customThumbnail || book.thumbnail
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-50 flex flex-col max-w-lg mx-auto">
+    <div className="fixed inset-0 z-[60] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto">
 
       {/* Header */}
       <div className="bg-white shadow-sm flex items-center gap-3 px-4 pt-12 pb-3 flex-shrink-0">
@@ -198,6 +254,14 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete }) {
           <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
         </div>
       </div>
+
+      {/* Horizontal day slider */}
+      <DaySlider
+        days={allDays}
+        dayData={dayData}
+        startDate={startDate}
+        onToggle={toggleDay}
+      />
 
       {/* Sticky controls */}
       <div className="bg-white px-4 py-3 flex gap-3 flex-shrink-0 border-b border-slate-100">

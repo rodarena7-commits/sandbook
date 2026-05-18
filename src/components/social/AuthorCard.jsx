@@ -10,7 +10,7 @@ function AuthorBookSheet({ book, author, allBooks, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end">
-      <div className="w-full max-w-lg mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
+      <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
           <p className="font-bold text-slate-800 text-sm line-clamp-1">{book.title}</p>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">

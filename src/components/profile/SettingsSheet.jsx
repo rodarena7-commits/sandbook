@@ -64,7 +64,7 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end">
-      <div className="w-full max-w-lg mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col">
+      <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col">
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">

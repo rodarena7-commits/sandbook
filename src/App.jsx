@@ -36,7 +36,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
-      <main className="max-w-lg mx-auto">
+      <main className="w-full">
         {pages[activeTab]}
       </main>
       <BottomNav
