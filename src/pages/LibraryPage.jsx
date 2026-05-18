@@ -429,7 +429,12 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
             onToggleFavorite={(bookId, current) => toggleFavorite(user.uid, bookId, current)}
             onSaveRating={(bookId, rating) => saveReview(user.uid, bookId, rating, '')}
             onRemove={(bookId) => removeBook(user.uid, bookId)}
-            onOpenPlan={b => { setSelectedBook(null); b.readingPlan ? setViewPlanBook(b) : setPlanBook(b) }}
+            onOpenPlan={b => {
+              setSelectedBook(null)   // cierra el sheet
+              setStatusTab('plan')    // navega a la categoría En plan
+              if (b.readingPlan || b.biblePlan) setViewPlanBook(b)
+              else setPlanBook(b)     // abre el formulario de creación
+            }}
           />
         </>
       )}
