@@ -29,8 +29,8 @@ const STATUS_LABELS = {
 }
 
 // ── IDs de afiliado ───────────────────────────────────────────────────
-const AMAZON_TAG    = '7772603777-21'   // Amazon España (afiliados.amazon.es)
-const ML_PARTNER_ID = 'TU_PARTNER_ID'  // MercadoLibre — pendiente
+const AMAZON_TAG = '7772603777-21'     // Amazon España (afiliados.amazon.es)
+const ML_STORE   = 'importadus'        // Tienda MercadoLibre Argentina
 
 function getAmazonLink(book) {
   const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
@@ -38,11 +38,14 @@ function getAmazonLink(book) {
 }
 
 function getMercadoLibreLink(book) {
-  const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
-  const base = `https://www.mercadolibre.com.ar/s?as_word=${encodeURIComponent(q)}`
-  return ML_PARTNER_ID !== 'TU_PARTNER_ID'
-    ? `${base}&partner_id=${ML_PARTNER_ID}`
-    : base
+  // Busca el libro directo en la tienda del afiliado (importadus)
+  const q = (book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim())
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')  // quita tildes
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+  return `https://listado.mercadolibre.com.ar/${q}_Tienda_${ML_STORE}`
 }
 
 // ── Search Result Item ─────────────────────────────────────

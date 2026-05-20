@@ -525,14 +525,15 @@ export default function BookDetailSheet({
 
             {/* Dónde comprar */}
             {(() => {
-              const AMAZON_TAG    = '7772603777-21'
-              const ML_PARTNER_ID = 'TU_PARTNER_ID'
-              const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+              const AMAZON_TAG = '7772603777-21'
+              const ML_STORE   = 'importadus'
+              const q    = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+              const mlQ  = q.toLowerCase()
+                .normalize('NFD').replace(/[̀-ͯ]/g, '')
+                .replace(/[^a-z0-9\s]/g, '').trim()
+                .replace(/\s+/g, '-')
               const amazonUrl = `https://www.amazon.es/s?k=${encodeURIComponent(q)}&i=stripbooks&tag=${AMAZON_TAG}`
-              const mlBase    = `https://www.mercadolibre.com.ar/s?as_word=${encodeURIComponent(q)}`
-              const mlUrl     = ML_PARTNER_ID !== 'TU_PARTNER_ID'
-                ? `${mlBase}&partner_id=${ML_PARTNER_ID}`
-                : mlBase
+              const mlUrl     = `https://listado.mercadolibre.com.ar/${mlQ}_Tienda_${ML_STORE}`
               return (
                 <div className="mb-5">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dónde comprar</p>
