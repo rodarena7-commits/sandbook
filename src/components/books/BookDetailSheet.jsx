@@ -175,9 +175,8 @@ function AuthorSection({ authorName }) {
 }
 
 // ── Author Books Carousel ──────────────────────────────────
-function AuthorBooksCarousel({ authorName, currentBookId }) {
+function AuthorBooksCarousel({ authorName, currentBookId, onOpenRelated }) {
   const { books, loading } = useAuthorBooks(authorName, currentBookId)
-  const [selected, setSelected] = useState(null)
 
   if (loading) {
     return (
@@ -194,13 +193,11 @@ function AuthorBooksCarousel({ authorName, currentBookId }) {
       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
         Más de {authorName}
       </p>
-
-      {/* Carousel */}
       <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 -mx-5 px-5">
         {books.map(b => (
           <button
             key={b.bookId}
-            onClick={() => setSelected(b)}
+            onClick={() => onOpenRelated?.(b)}
             className="flex-shrink-0 w-[72px] text-left active:scale-95 transition-all"
           >
             {b.thumbnail ? (
@@ -211,41 +208,13 @@ function AuthorBooksCarousel({ authorName, currentBookId }) {
                 <BookOpen size={16} className="text-slate-300" />
               </div>
             )}
-            <p className="text-[9px] text-slate-500 mt-1.5 line-clamp-2 text-center leading-tight">
-              {b.title}
-            </p>
+            <p className="text-[9px] text-slate-500 mt-1.5 line-clamp-2 text-center leading-tight">{b.title}</p>
             {b.publishedDate && (
               <p className="text-[8px] text-slate-300 text-center">{b.publishedDate.slice(0,4)}</p>
             )}
           </button>
         ))}
       </div>
-
-      {/* Selected book mini-detail */}
-      {selected && (
-        <div className="mt-3 bg-slate-50 rounded-2xl p-3 border border-slate-100">
-          <div className="flex gap-3 items-start">
-            {selected.thumbnail ? (
-              <img src={selected.thumbnail} alt="" className="w-12 h-16 object-cover rounded-xl shadow-sm flex-shrink-0"/>
-            ) : (
-              <div className="w-12 h-16 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <BookOpen size={14} className="text-slate-300"/>
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-800 line-clamp-2">{selected.title}</p>
-              {selected.publishedDate && <p className="text-xs text-slate-400 mt-0.5">{selected.publishedDate.slice(0,4)}</p>}
-              {selected.pageCount > 0 && <p className="text-xs text-slate-400">{selected.pageCount} páginas</p>}
-              {selected.description && (
-                <p className="text-xs text-slate-500 mt-1.5 line-clamp-3 leading-relaxed">{selected.description}</p>
-              )}
-            </div>
-            <button onClick={() => setSelected(null)} className="text-slate-300 hover:text-slate-500 flex-shrink-0">
-              <X size={14}/>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -369,6 +338,7 @@ export default function BookDetailSheet({
   const [globalCover, setGlobalCover]   = useState(null)
   const [showImgPicker, setShowImgPicker] = useState(false)
   const [showPlanForm, setShowPlanForm]   = useState(false)
+  const [relatedBook, setRelatedBook]     = useState(null)
 
   const { mlUrl } = useMercadoLibrePrice(book)
 
@@ -589,7 +559,11 @@ export default function BookDetailSheet({
 
             {/* More books by same author carousel */}
             {book.authors?.length > 0 && (
-              <AuthorBooksCarousel authorName={book.authors[0]} currentBookId={book.bookId} />
+              <AuthorBooksCarousel
+                authorName={book.authors[0]}
+                currentBookId={book.bookId}
+                onOpenRelated={setRelatedBook}
+              />
             )}
 
             <div className="border-t border-slate-100 pt-5 mb-1">
@@ -704,6 +678,24 @@ export default function BookDetailSheet({
           </button>
           <img src={cover} alt={book.title} className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain" onClick={e => e.stopPropagation()} />
         </div>
+      )}
+
+      {/* Libro relacionado — sheet apilado encima */}
+      {relatedBook && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[65]" onClick={() => setRelatedBook(null)} />
+          <BookDetailSheet
+            book={relatedBook}
+            onClose={() => setRelatedBook(null)}
+            onStatusChange={onStatusChange}
+            onToggleFavorite={onToggleFavorite}
+            onSaveRating={onSaveRating}
+            onRemove={onRemove}
+            onOpenPlan={onOpenPlan}
+            onAdd={onAdd}
+            onCreatePlan={onCreatePlan}
+          />
+        </>
       )}
     </>
   )
