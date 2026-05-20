@@ -692,23 +692,22 @@ export default function BookDetailSheet({
         </div>
       )}
 
-      {/* Libro relacionado — sheet apilado encima con z-index mayor */}
+      {/* Libro relacionado — siempre en modo descubrimiento (no biblioteca) */}
       {relatedBook && (
         <>
           <div
             className="fixed inset-0 bg-black/40"
-            style={{ zIndex: sheetZ + 14 }}   // encima del sheet actual, debajo del siguiente
+            style={{ zIndex: sheetZ + 14 }}
             onClick={() => setRelatedBook(null)}
           />
           <BookDetailSheet
-            book={relatedBook}
+            book={{
+              ...relatedBook,
+              // Fuerza HTTPS en la portada (los libros del carrusel vienen con http://)
+              thumbnail: relatedBook.thumbnail?.replace('http://', 'https://') || null,
+            }}
             onClose={() => setRelatedBook(null)}
             zLevel={zLevel + 1}
-            onStatusChange={onStatusChange}
-            onToggleFavorite={onToggleFavorite}
-            onSaveRating={onSaveRating}
-            onRemove={onRemove}
-            onOpenPlan={onOpenPlan}
             onAdd={onAdd}
             onCreatePlan={onCreatePlan}
           />
