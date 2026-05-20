@@ -25,6 +25,9 @@ export function useGoogleBooks() {
 
       const mapGoogleBook = item => {
         const info = item.volumeInfo || {}
+        const sale = item.saleInfo || {}
+        const isbn13 = info.industryIdentifiers?.find(i => i.type === 'ISBN_13')?.identifier || null
+        const isbn10 = info.industryIdentifiers?.find(i => i.type === 'ISBN_10')?.identifier || null
         return {
           bookId: item.id,
           title: info.title || 'Sin título',
@@ -35,6 +38,11 @@ export function useGoogleBooks() {
           publishedDate: info.publishedDate || '',
           categories: info.categories || [],
           language: info.language || '',
+          isbn13,
+          isbn10,
+          price:    sale.retailPrice?.amount    ?? sale.listPrice?.amount    ?? null,
+          currency: sale.retailPrice?.currencyCode ?? sale.listPrice?.currencyCode ?? 'USD',
+          buyLink:  sale.buyLink || null,
         }
       }
 

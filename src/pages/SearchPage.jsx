@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Search, X, BookOpen, Plus, Check, Loader2, Camera, Star, ThumbsUp, ThumbsDown, CalendarDays } from 'lucide-react'
+import { Search, X, BookOpen, Plus, Check, Loader2, Camera, Star, ThumbsUp, ThumbsDown, CalendarDays, ExternalLink, ShoppingCart } from 'lucide-react'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { createReadingPlan } from '../hooks/useReadingPlan'
@@ -26,6 +26,11 @@ const STATUS_LABELS = {
   read:    'Leído',
   pending: 'Pendiente',
   library: 'Biblioteca',
+}
+
+function getAmazonLink(book) {
+  const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+  return `https://www.amazon.com/s?k=${encodeURIComponent(q)}&i=stripbooks`
 }
 
 // ── Search Result Item ─────────────────────────────────────
@@ -80,6 +85,30 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
           {book.description && (
             <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">{book.description}</p>
           )}
+
+          {/* Price + buy buttons */}
+          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+            {book.price != null && book.buyLink && (
+              <a
+                href={book.buyLink}
+                target="_blank" rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-semibold border border-blue-100 active:scale-95 transition-all"
+              >
+                <ExternalLink size={9} />
+                USD {book.price.toFixed(2)} · Google Play
+              </a>
+            )}
+            <a
+              href={getAmazonLink(book)}
+              target="_blank" rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-semibold border border-amber-100 active:scale-95 transition-all"
+            >
+              <ShoppingCart size={9} />
+              Amazon
+            </a>
+          </div>
         </div>
 
         {/* Reactions + actions */}

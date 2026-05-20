@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload } from 'lucide-react'
+import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload, ShoppingCart, ExternalLink } from 'lucide-react'
 import { useAuthorBooks } from '../../hooks/useAuthorBooks'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
@@ -522,6 +522,37 @@ export default function BookDetailSheet({
                 ))}
               </div>
             )}
+
+            {/* Dónde comprar */}
+            {(() => {
+              const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+              const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(q)}&i=stripbooks`
+              return (
+                <div className="mb-5">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dónde comprar</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {book.price != null && book.buyLink && (
+                      <a
+                        href={book.buyLink}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
+                      >
+                        <ExternalLink size={14} />
+                        Google Play · USD {book.price.toFixed(2)}
+                      </a>
+                    )}
+                    <a
+                      href={amazonUrl}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
+                    >
+                      <ShoppingCart size={14} />
+                      Ver en Amazon
+                    </a>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Description */}
             {book.description && (
