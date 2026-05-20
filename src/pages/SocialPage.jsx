@@ -18,11 +18,13 @@ import CreatePostSheet from '../components/social/CreatePostSheet'
 import AuthorCard from '../components/social/AuthorCard'
 import UserProfileScreen from '../components/social/UserProfileScreen'
 import ChatWindow from '../components/chat/ChatWindow'
+import MarketplacePage from './MarketplacePage'
 
 const TABS = [
-  { key: 'feed',      label: 'Feed' },
-  { key: 'discover',  label: 'Descubrir' },
-  { key: 'following', label: 'Siguiendo' },
+  { key: 'feed',        label: 'Feed' },
+  { key: 'discover',    label: 'Descubrir' },
+  { key: 'following',   label: 'Siguiendo' },
+  { key: 'marketplace', label: '🛒 Marketplace' },
 ]
 
 // ── Avatar ─────────────────────────────────────────────────
@@ -347,6 +349,17 @@ export default function SocialPage() {
           {!followingLoading && followingUsers.map(u => (
             <FollowingCard key={u.uid} user={u} onSelect={setSelectedUser}/>
           ))}
+        </div>
+      )}
+
+      {/* ── Marketplace ── */}
+      {activeTab === 'marketplace' && (
+        <div className="h-[calc(100vh-8rem)] flex flex-col">
+          <MarketplacePage
+            onStartChat={target => {
+              setChatTarget(target)
+            }}
+          />
         </div>
       )}
 

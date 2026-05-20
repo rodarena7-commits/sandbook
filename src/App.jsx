@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useNotifications } from './hooks/useNotifications'
 import { useConversations } from './hooks/useConversations'
@@ -10,6 +10,8 @@ import SearchPage from './pages/SearchPage'
 import SocialPage from './pages/SocialPage'
 import MessagesPage from './pages/MessagesPage'
 import ProfilePage from './pages/ProfilePage'
+import InstallPrompt from './components/ui/InstallPrompt'
+import TutorialOverlay from './components/ui/TutorialOverlay'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -44,6 +46,10 @@ function AppContent() {
         onChange={setActiveTab}
         badges={{ profile: unreadNotifs, messages: unreadMsgs }}
       />
+      {/* Tutorial única vez para todos los usuarios */}
+      <TutorialOverlay />
+      {/* Prompt de instalación PWA (opcional) */}
+      <InstallPrompt />
     </div>
   )
 }
