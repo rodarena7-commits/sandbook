@@ -390,11 +390,19 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
 
                         {isBibleBook(b) ? (
                           <button
-                            onClick={() => b.biblePlan ? setViewBibleBook(b) : initBiblePlan(user.uid, b.bookId).then(() => setViewBibleBook({ ...b, biblePlan: true, bibleProgress: {}, currentVerse: '', planNote: '' }))}
-                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${b.biblePlan ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'}`}
+                            onClick={() => {
+                              if (b.biblePlan)      setViewBibleBook(b)
+                              else if (b.relaxPlan) setViewRelaxBook(b)
+                              else setPlanBook(b)
+                            }}
+                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                              b.biblePlan ? 'bg-amber-500 text-white shadow-sm'
+                              : b.relaxPlan ? 'bg-blue-500 text-white shadow-sm'
+                              : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
+                            }`}
                           >
                             <CalendarDays size={13}/>
-                            {b.biblePlan ? 'Plan Bíblico' : 'Activar Biblia'}
+                            {b.biblePlan ? 'Plan Bíblico' : b.relaxPlan ? 'Plan Relax' : 'Crear plan'}
                           </button>
                         ) : (
                           <button
@@ -506,11 +514,12 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
           <div className="fixed inset-0 bg-black/40 z-[55]" onClick={() => setPlanBook(null)} />
           <CreatePlanSheet
             book={planBook}
-            onSave={({ type, pages, days }) =>
-              type === 'relax'
-                ? createRelaxPlan(user.uid, planBook.bookId, pages)
-                : createReadingPlan(user.uid, planBook.bookId, pages, days)
-            }
+            isBible={isBibleBook(planBook)}
+            onSave={({ type, pages, days }) => {
+              if (type === 'relax')  return createRelaxPlan(user.uid, planBook.bookId, pages)
+              if (type === 'bible')  return initBiblePlan(user.uid, planBook.bookId)
+              return createReadingPlan(user.uid, planBook.bookId, pages, days)
+            }}
             onClose={() => setPlanBook(null)}
           />
         </>
@@ -531,6 +540,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
         <RelaxPlanView
           book={books.find(b => b.bookId === viewRelaxBook.bookId) || viewRelaxBook}
           uid={user.uid}
+          isBible={isBibleBook(viewRelaxBook)}
           onClose={() => setViewRelaxBook(null)}
           onDelete={() => setViewRelaxBook(null)}
         />

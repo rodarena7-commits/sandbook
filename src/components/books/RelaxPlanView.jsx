@@ -16,9 +16,13 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
-export default function RelaxPlanView({ book, uid, onClose, onDelete }) {
+export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = false }) {
   const plan       = book.relaxPlan || {}
   const totalPages = plan.totalPages || 0
+  // Etiquetas adaptadas según si es Biblia o libro normal
+  const labelMarcador  = isBible ? '¿En qué versículo quedaste? (ej: Juan 3:16)' : '¿En qué página quedaste?'
+  const labelPagina    = isBible ? 'Versículo' : 'Página'
+  const labelHistorial = isBible ? 'capítulos / versículos leídos' : 'págs leídas'
 
   const [currentPage,   setCurrentPage]   = useState(book.currentPage || 0)
   const [relaxNote,     setRelaxNote]     = useState(book.relaxNote || '')
@@ -105,10 +109,12 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete }) {
         <div className="flex items-center gap-2 bg-blue-50 rounded-2xl px-3 py-2.5 border border-blue-100">
           <Bookmark size={14} className="text-blue-500 flex-shrink-0" />
           <input
-            type="number" min="0" max={totalPages || 99999} inputMode="numeric"
+            type={isBible ? 'text' : 'number'}
+            min="0" max={totalPages || 99999}
+            inputMode={isBible ? 'text' : 'numeric'}
             value={currentPage}
             onChange={e => handlePageChange(e.target.value)}
-            placeholder="¿En qué página quedaste?"
+            placeholder={labelMarcador}
             className="bg-transparent text-sm font-semibold text-slate-700 outline-none w-full"
           />
           {totalPages > 0 && (
@@ -124,7 +130,7 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete }) {
         {totalRead > 0 && (
           <div className="bg-blue-500 rounded-2xl p-4 text-white text-center shadow-sm">
             <p className="text-3xl font-bold">{totalRead}</p>
-            <p className="text-xs text-blue-100 mt-0.5">páginas leídas en total</p>
+            <p className="text-xs text-blue-100 mt-0.5">{labelHistorial} en total</p>
           </div>
         )}
 
@@ -144,13 +150,15 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete }) {
                   <div>
                     <p className="text-xs font-semibold text-slate-700 capitalize">{formatDate(date)}</p>
                     {data.endPage > 0 && (
-                      <p className="text-[11px] text-slate-400 mt-0.5">Marcador en pág. {data.endPage}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {isBible ? `Versículo: ${data.endPage}` : `Marcador en pág. ${data.endPage}`}
+                      </p>
                     )}
                   </div>
                   {(data.pagesRead || 0) > 0 && (
                     <div className="text-right">
                       <p className="text-lg font-bold text-blue-500">{data.pagesRead}</p>
-                      <p className="text-[10px] text-slate-400">págs leídas</p>
+                      <p className="text-[10px] text-slate-400">{labelHistorial}</p>
                     </div>
                   )}
                 </div>
@@ -177,13 +185,14 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete }) {
               <div className="flex items-center gap-2 mb-2">
                 <Bookmark size={12} className="text-amber-500 flex-shrink-0" />
                 <input
-                  type="number" min="0" inputMode="numeric"
+                  type={isBible ? 'text' : 'number'}
+                  min="0" inputMode={isBible ? 'text' : 'numeric'}
                   value={newNotePage}
                   onChange={e => setNewNotePage(e.target.value)}
-                  placeholder="Pág."
-                  className="w-20 px-2 py-1 bg-white border border-amber-200 rounded-xl text-xs text-slate-700 outline-none focus:ring-2 focus:ring-amber-300"
+                  placeholder={isBible ? 'Versículo' : 'Pág.'}
+                  className={`${isBible ? 'w-32' : 'w-20'} px-2 py-1 bg-white border border-amber-200 rounded-xl text-xs text-slate-700 outline-none focus:ring-2 focus:ring-amber-300`}
                 />
-                <span className="text-xs text-slate-400">página</span>
+                <span className="text-xs text-slate-400">{isBible ? 'versículo' : 'página'}</span>
               </div>
               <textarea
                 value={newNoteText}
@@ -212,21 +221,25 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete }) {
             </div>
           )}
 
-          {/* Notes list */}
+          {/* Notes list — scroll garantizado cuando hay muchas notas */}
           {sortedNotes.length === 0 && !showAddNote ? (
             <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
               <PenLine size={20} className="text-slate-200 mx-auto mb-2" />
               <p className="text-xs text-slate-400">
-                Anotá reflexiones, frases importantes o momentos del libro con su número de página
+                {isBible
+                  ? 'Anotá reflexiones o versículos destacados con su referencia bíblica'
+                  : 'Anotá reflexiones, frases importantes o momentos del libro con su número de página'}
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 max-h-96 overflow-y-auto pr-0.5">
               {sortedNotes.map(([id, note]) => (
                 <div key={id} className="bg-white rounded-2xl border border-slate-100 p-3">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Bookmark size={10} className="text-amber-500 flex-shrink-0" />
-                    <span className="text-[10px] font-semibold text-amber-600">Pág. {note.page}</span>
+                    <span className="text-[10px] font-semibold text-amber-600">
+                      {isBible ? note.page : `Pág. ${note.page}`}
+                    </span>
                     <span className="text-[10px] text-slate-300">·</span>
                     <span className="text-[10px] text-slate-400">
                       {new Date(note.createdAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}

@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { X, BookOpen, CalendarDays, Coffee, Target } from 'lucide-react'
+import { X, BookOpen, CalendarDays, Coffee, Target, BookMarked } from 'lucide-react'
 
-export default function CreatePlanSheet({ book, onSave, onClose }) {
-  const [planType, setPlanType] = useState(null) // 'relax' | 'meta'
+// isBible: true cuando el libro es una Biblia — cambia "Plan con Meta" por "Plan Bíblico"
+export default function CreatePlanSheet({ book, onSave, onClose, isBible = false }) {
+  const [planType, setPlanType] = useState(null) // 'relax' | 'meta' | 'bible'
   const [totalPages, setTotalPages] = useState(book.pageCount > 0 ? String(book.pageCount) : '')
   const [totalDays,  setTotalDays]  = useState('')
   const [saving,     setSaving]     = useState(false)
@@ -14,7 +15,9 @@ export default function CreatePlanSheet({ book, onSave, onClose }) {
 
   async function handleCreate() {
     setSaving(true)
-    if (planType === 'meta') {
+    if (planType === 'bible') {
+      await onSave({ type: 'bible' })
+    } else if (planType === 'meta') {
       if (!validMeta) { setSaving(false); return }
       await onSave({ type: 'meta', pages, days })
     } else {
@@ -72,26 +75,68 @@ export default function CreatePlanSheet({ book, onSave, onClose }) {
               <div>
                 <p className="font-bold text-slate-800 text-sm">Plan Relax</p>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Leé a tu ritmo. Solo marcá dónde quedaste y llevá un historial de tus días de lectura.
+                  {isBible
+                    ? 'Marcá el versículo donde quedaste, llevá historial diario y agregá anotaciones con marcador.'
+                    : 'Leé a tu ritmo. Solo marcá dónde quedaste y llevá un historial de tus días de lectura.'}
                 </p>
               </div>
             </button>
 
-            <button
-              onClick={() => setPlanType('meta')}
-              className="flex items-center gap-4 p-4 rounded-2xl border-2 border-amber-100 bg-amber-50 text-left active:scale-95 transition-all"
-            >
-              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <Target size={20} className="text-amber-500" />
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 text-sm">Plan con Meta</p>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Definí en cuántos días querés terminar el libro y seguí tu progreso día a día.
-                </p>
-              </div>
-            </button>
+            {isBible ? (
+              <button
+                onClick={() => setPlanType('bible')}
+                className="flex items-center gap-4 p-4 rounded-2xl border-2 border-amber-100 bg-amber-50 text-left active:scale-95 transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <BookMarked size={20} className="text-amber-500" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-800 text-sm">Plan Bíblico</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Seguí tu avance capítulo por capítulo en los 66 libros de la Biblia (1.189 capítulos).
+                  </p>
+                </div>
+              </button>
+            ) : (
+              <button
+                onClick={() => setPlanType('meta')}
+                className="flex items-center gap-4 p-4 rounded-2xl border-2 border-amber-100 bg-amber-50 text-left active:scale-95 transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <Target size={20} className="text-amber-500" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-800 text-sm">Plan con Meta</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Definí en cuántos días querés terminar el libro y seguí tu progreso día a día.
+                  </p>
+                </div>
+              </button>
+            )}
           </div>
+        )}
+
+        {/* ── Plan Bíblico confirmación ── */}
+        {planType === 'bible' && (
+          <>
+            <div className="flex items-center gap-2 mb-4">
+              <button onClick={() => setPlanType(null)} className="text-xs text-slate-400 underline">← Cambiar tipo</button>
+              <BookMarked size={12} className="text-amber-500" />
+              <span className="text-xs font-bold text-amber-500">Plan Bíblico</span>
+            </div>
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-5">
+              <p className="text-xs text-amber-700 text-center leading-relaxed">
+                Vas a poder marcar cada capítulo leído en los 66 libros de la Biblia, agregar notas por libro y ver tu progreso general.
+              </p>
+            </div>
+            <button
+              onClick={handleCreate}
+              disabled={saving}
+              className="w-full py-3.5 bg-amber-500 text-white rounded-2xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all shadow-sm"
+            >
+              {saving ? 'Activando…' : 'Activar Plan Bíblico'}
+            </button>
+          </>
         )}
 
         {/* ── Plan Relax ── */}
@@ -105,25 +150,29 @@ export default function CreatePlanSheet({ book, onSave, onClose }) {
               <span className="text-xs font-bold text-blue-500">Plan Relax</span>
             </div>
 
-            <div className="mb-5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
-                Páginas totales (opcional)
-              </label>
-              <div className="relative">
-                <input
-                  type="number" min="1" inputMode="numeric"
-                  value={totalPages}
-                  onChange={e => setTotalPages(e.target.value)}
-                  placeholder="ej: 320"
-                  className="w-full px-4 py-3 pr-20 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">páginas</span>
+            {!isBible && (
+              <div className="mb-5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
+                  Páginas totales (opcional)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number" min="1" inputMode="numeric"
+                    value={totalPages}
+                    onChange={e => setTotalPages(e.target.value)}
+                    placeholder="ej: 320"
+                    className="w-full px-4 py-3 pr-20 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">páginas</span>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-5">
               <p className="text-xs text-blue-600 text-center leading-relaxed">
-                Cada vez que leas, actualizá el marcador con tu página actual. El historial diario de páginas leídas se guarda automáticamente.
+                {isBible
+                  ? 'Marcá el versículo donde quedaste cada vez que leas. El historial diario se guarda automáticamente y podés agregar notas con marcador de versículo.'
+                  : 'Cada vez que leas, actualizá el marcador con tu página actual. El historial diario de páginas leídas se guarda automáticamente.'}
               </p>
             </div>
 
