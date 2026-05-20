@@ -325,6 +325,8 @@ export default function BookDetailSheet({
   onAdd,
   // Create plan from search (saves book + creates plan)
   onCreatePlan,
+  // Nivel de z-index para apilar sheets (0 = base, 1 = relacionado, 2 = relacionado del relacionado...)
+  zLevel = 0,
 }) {
   const { user, profile } = useAuth()
   const [lightbox, setLightbox] = useState(false)
@@ -373,10 +375,16 @@ export default function BookDetailSheet({
     await onRemove(book.bookId)
   }
 
+  const sheetZ  = 55 + zLevel * 15   // 55, 70, 85, …
+  const overlayZ = sheetZ - 1         // justo debajo del sheet
+
   return (
     <>
-      <div className="fixed inset-0 z-[55] flex items-end">
-        <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[92vh] flex flex-col">
+      <div className="fixed inset-0 flex items-end" style={{ zIndex: sheetZ }}>
+        <div
+          className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[92vh] flex flex-col"
+          onTouchMove={e => e.stopPropagation()}  // evita scroll del fondo
+        >
 
           {/* Top bar */}
           <div className="relative flex items-center justify-center px-5 pt-3 pb-2 flex-shrink-0">
@@ -684,13 +692,18 @@ export default function BookDetailSheet({
         </div>
       )}
 
-      {/* Libro relacionado — sheet apilado encima */}
+      {/* Libro relacionado — sheet apilado encima con z-index mayor */}
       {relatedBook && (
         <>
-          <div className="fixed inset-0 bg-black/40 z-[65]" onClick={() => setRelatedBook(null)} />
+          <div
+            className="fixed inset-0 bg-black/40"
+            style={{ zIndex: sheetZ + 14 }}   // encima del sheet actual, debajo del siguiente
+            onClick={() => setRelatedBook(null)}
+          />
           <BookDetailSheet
             book={relatedBook}
             onClose={() => setRelatedBook(null)}
+            zLevel={zLevel + 1}
             onStatusChange={onStatusChange}
             onToggleFavorite={onToggleFavorite}
             onSaveRating={onSaveRating}
