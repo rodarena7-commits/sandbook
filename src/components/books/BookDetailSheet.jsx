@@ -10,6 +10,7 @@ import { useBookStats } from '../../hooks/useBookStats'
 import ImagePickerSheet from '../ui/ImagePickerSheet'
 import CreatePlanSheet from './CreatePlanSheet'
 import { getGlobalCover, saveGlobalCover, getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
+import { useMercadoLibrePrice } from '../../hooks/useMercadoLibrePrice'
 
 const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca' }
 const STATUS_COLORS = {
@@ -370,36 +371,13 @@ export default function BookDetailSheet({
   const [showPlanForm, setShowPlanForm]   = useState(false)
 
   // Precio más barato en MercadoLibre Argentina
-  const [mlPrice,   setMlPrice]   = useState(null)   // { price, url }
-  const [mlLoading, setMlLoading] = useState(true)
+  const { mlPrice, mlLoading } = useMercadoLibrePrice(book)
 
   // Load global cover if no personal/book cover
   useEffect(() => {
     if (!book.customThumbnail && !book.thumbnail && book.bookId) {
       getGlobalCover(book.bookId).then(url => { if (url) setGlobalCover(url) })
     }
-  }, [book.bookId])
-
-  // Buscar precio más barato en MercadoLibre
-  useEffect(() => {
-    let cancelled = false
-    async function fetchMLPrice() {
-      try {
-        const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
-        const res  = await fetch(
-          `https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(q)}&category=MLA1169&limit=6`
-        )
-        const data = await res.json()
-        const items = (data.results || []).filter(i => i.price > 0)
-        if (!cancelled && items.length) {
-          const cheapest = items.reduce((min, i) => i.price < min.price ? i : min, items[0])
-          setMlPrice({ price: cheapest.price, url: cheapest.permalink })
-        }
-      } catch {}
-      if (!cancelled) setMlLoading(false)
-    }
-    fetchMLPrice()
-    return () => { cancelled = true }
   }, [book.bookId])
 
   const cover = customThumb || largeCover(book.thumbnail) || globalCover

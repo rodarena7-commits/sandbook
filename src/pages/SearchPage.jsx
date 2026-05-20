@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { Search, X, BookOpen, Plus, Check, Loader2, Camera, Star, ThumbsUp, ThumbsDown, CalendarDays, ExternalLink, ShoppingCart } from 'lucide-react'
+import { useMercadoLibrePrice } from '../hooks/useMercadoLibrePrice'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { createReadingPlan } from '../hooks/useReadingPlan'
@@ -29,8 +30,8 @@ const STATUS_LABELS = {
 }
 
 // ── IDs de afiliado ───────────────────────────────────────────────────
-const AMAZON_TAG = '7772603777-21'     // Amazon España (afiliados.amazon.es)
-const ML_STORE   = 'importadus'        // Tienda MercadoLibre Argentina
+const AMAZON_TAG    = '7772603777-21'  // Amazon España (afiliados.amazon.es)
+const ML_PARTNER_ID = ''              // MercadoLibre — pegar el número de seguimiento de la etiqueta "sandbook"
 
 function getAmazonLink(book) {
   const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
@@ -38,21 +39,16 @@ function getAmazonLink(book) {
 }
 
 function getMercadoLibreLink(book) {
-  // Busca el libro directo en la tienda del afiliado (importadus)
-  const q = (book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim())
-    .toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')  // quita tildes
-    .replace(/[^a-z0-9\s]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-  return `https://listado.mercadolibre.com.ar/${q}_Tienda_${ML_STORE}`
+  const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+  const base = `https://www.mercadolibre.com.ar/s?as_word=${encodeURIComponent(q)}`
+  return ML_PARTNER_ID ? `${base}&partner_id=${ML_PARTNER_ID}` : base
 }
 
 // ── Search Result Item ─────────────────────────────────────
 function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
-  // Local reaction state (persisted to bookReactions or myBooks)
   const [isFav, setIsFav] = useState(savedBook?.isFavorite || false)
   const [reaction, setReaction] = useState(savedBook?.myReaction || null)
+  const { mlPrice, mlLoading } = useMercadoLibrePrice(book)
 
   async function handleFav(e) {
     e.stopPropagation()
@@ -124,14 +120,19 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
               Amazon
             </a>
             <a
-              href={getMercadoLibreLink(book)}
+              href={mlPrice?.url || getMercadoLibreLink(book)}
               target="_blank" rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
               className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border active:scale-95 transition-all"
-              style={{ background: '#fff7e6', color: '#3483FA', borderColor: '#b8d4f5' }}
+              style={{ background: '#e8f1ff', color: '#3483FA', borderColor: '#b8d4f5' }}
             >
               <ShoppingCart size={9} />
-              MercadoLibre
+              {mlLoading
+                ? '…'
+                : mlPrice
+                  ? `$ ${mlPrice.price.toLocaleString('es-AR')}`
+                  : 'MercadoLibre'
+              }
             </a>
           </div>
         </div>
