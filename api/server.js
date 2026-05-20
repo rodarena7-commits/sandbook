@@ -45,8 +45,10 @@ app.get('/ml-price', async (req, res) => {
   if (!q) return res.status(400).json({ error: 'q requerido' })
   try {
     const token = await getMlToken()
+    // Busca sin filtro de categoría para maximizar resultados.
+    // Filtra por condición "new" y excluye precios 0.
     const r = await fetch(
-      `https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(q)}&category=MLA1169&limit=6`,
+      `https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(q)}&limit=10`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
     const data  = await r.json()
