@@ -64,5 +64,29 @@ app.get('/ml-price', async (req, res) => {
 
 app.get('/health', (_req, res) => res.json({ ok: true }))
 
+// Debug temporal — ver respuesta cruda de ML
+app.get('/debug-ml', async (req, res) => {
+  const q = req.query.q?.trim() || 'Harry Potter'
+  try {
+    const token = await getMlToken()
+    const r = await fetch(
+      `https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(q)}&limit=3`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    const data = await r.json()
+    res.json({
+      token_ok: !!token,
+      total: data.paging?.total,
+      first_3: (data.results || []).slice(0, 3).map(i => ({
+        title: i.title, price: i.price, condition: i.condition
+      })),
+      error: data.error || null,
+      message: data.message || null,
+    })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
 const PORT = process.env.PORT || 4000
 app.listen(PORT, () => console.log(`Sandbook API corriendo en :${PORT}`))
