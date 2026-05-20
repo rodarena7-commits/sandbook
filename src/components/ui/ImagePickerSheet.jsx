@@ -3,12 +3,42 @@ import { X, Upload, Link, Loader2, Image } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '../../firebase'
 
+// Comprime y redimensiona la imagen antes de subir.
+// Fotos de celular (4-8 MB) quedan en ~150-300 KB → subida 10-20x más rápida.
+function compressImage(file, maxPx = 1200, quality = 0.82) {
+  return new Promise(resolve => {
+    const img = new window.Image()
+    const blobUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(blobUrl)
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height))
+      const w = Math.round(img.width  * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width  = w
+      canvas.height = h
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+      canvas.toBlob(blob => resolve(blob ?? file), 'image/jpeg', quality)
+    }
+    img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(file) }
+    img.src = blobUrl
+  })
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export default function ImagePickerSheet({ title, storagePath, onSave, onClose }) {
   const [mode, setMode] = useState(null)          // 'upload' | 'url'
   const [url, setUrl] = useState('')
   const [preview, setPreview] = useState(null)
   const [file, setFile] = useState(null)
+  const [fileSize, setFileSize] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState('')
   const [error, setError] = useState(null)
   const fileRef = useRef(null)
 
@@ -17,6 +47,7 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
     if (!f) return
     if (!f.type.startsWith('image/')) { setError('Solo imágenes'); return }
     setFile(f)
+    setFileSize(f.size)
     setPreview(URL.createObjectURL(f))
     setError(null)
   }
@@ -27,8 +58,12 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
     try {
       let finalUrl = ''
       if (mode === 'upload' && file) {
+        setUploadStatus('Comprimiendo imagen…')
+        const compressed = await compressImage(file)
+        setUploadStatus('Subiendo…')
         const storageRef = ref(storage, storagePath)
-        await uploadBytes(storageRef, file)
+        await uploadBytes(storageRef, compressed)
+        setUploadStatus('Guardando…')
         finalUrl = await getDownloadURL(storageRef)
       } else if (mode === 'url') {
         if (!url.trim()) return
@@ -36,10 +71,16 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
       }
       await onSave(finalUrl)
       onClose()
-    } catch {
-      setError('No se pudo guardar la imagen')
+    } catch (e) {
+      console.error('ImagePickerSheet upload error:', e)
+      setError(
+        e?.code === 'storage/unauthorized'
+          ? 'Sin permiso para subir imágenes. Revisá las reglas de Storage en Firebase.'
+          : `No se pudo guardar la imagen (${e?.message ?? 'error desconocido'})`
+      )
     } finally {
       setUploading(false)
+      setUploadStatus('')
     }
   }
 
@@ -88,10 +129,15 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
             {preview ? (
               <div className="relative">
                 <img src={preview} alt="" className="w-full h-48 object-cover rounded-2xl" />
-                <button onClick={() => { setFile(null); setPreview(null) }}
+                <button onClick={() => { setFile(null); setPreview(null); setFileSize(null) }}
                   className="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white">
                   <X size={14} />
                 </button>
+                {fileSize && (
+                  <span className="absolute bottom-2 left-2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full">
+                    {formatSize(fileSize)} → se comprimirá antes de subir
+                  </span>
+                )}
               </div>
             ) : (
               <button onClick={() => fileRef.current?.click()}
@@ -104,7 +150,7 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
               <button onClick={() => setMode(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Volver</button>
               <button onClick={handleSave} disabled={!canSave || uploading}
                 className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2">
-                {uploading ? <><Loader2 size={14} className="animate-spin" /> Subiendo…</> : 'Guardar'}
+                {uploading ? <><Loader2 size={14} className="animate-spin" /> {uploadStatus || 'Procesando…'}</> : 'Guardar'}
               </button>
             </div>
           </div>
