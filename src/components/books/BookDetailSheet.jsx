@@ -525,8 +525,13 @@ export default function BookDetailSheet({
 
             {/* Dónde comprar */}
             {(() => {
+              const ML_PARTNER_ID = 'TU_PARTNER_ID'
               const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
               const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(q)}&i=stripbooks`
+              const mlBase    = `https://www.mercadolibre.com.ar/s?as_word=${encodeURIComponent(q)}`
+              const mlUrl     = ML_PARTNER_ID !== 'TU_PARTNER_ID'
+                ? `${mlBase}&partner_id=${ML_PARTNER_ID}`
+                : mlBase
               return (
                 <div className="mb-5">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dónde comprar</p>
@@ -547,7 +552,16 @@ export default function BookDetailSheet({
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
                     >
                       <ShoppingCart size={14} />
-                      Ver en Amazon
+                      Amazon
+                    </a>
+                    <a
+                      href={mlUrl}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
+                      style={{ background: '#3483FA', color: 'white' }}
+                    >
+                      <ShoppingCart size={14} />
+                      MercadoLibre
                     </a>
                   </div>
                 </div>

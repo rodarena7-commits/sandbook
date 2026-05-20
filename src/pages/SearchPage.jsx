@@ -28,9 +28,20 @@ const STATUS_LABELS = {
   library: 'Biblioteca',
 }
 
+// ── ID de afiliado MercadoLibre — reemplazar con el partner_id real ──
+const ML_PARTNER_ID = 'TU_PARTNER_ID'
+
 function getAmazonLink(book) {
   const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
   return `https://www.amazon.com/s?k=${encodeURIComponent(q)}&i=stripbooks`
+}
+
+function getMercadoLibreLink(book) {
+  const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+  const base = `https://www.mercadolibre.com.ar/s?as_word=${encodeURIComponent(q)}`
+  return ML_PARTNER_ID !== 'TU_PARTNER_ID'
+    ? `${base}&partner_id=${ML_PARTNER_ID}`
+    : base
 }
 
 // ── Search Result Item ─────────────────────────────────────
@@ -107,6 +118,16 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
             >
               <ShoppingCart size={9} />
               Amazon
+            </a>
+            <a
+              href={getMercadoLibreLink(book)}
+              target="_blank" rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border active:scale-95 transition-all"
+              style={{ background: '#fff7e6', color: '#3483FA', borderColor: '#b8d4f5' }}
+            >
+              <ShoppingCart size={9} />
+              MercadoLibre
             </a>
           </div>
         </div>
