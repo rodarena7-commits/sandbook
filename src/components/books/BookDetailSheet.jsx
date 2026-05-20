@@ -370,8 +370,7 @@ export default function BookDetailSheet({
   const [showImgPicker, setShowImgPicker] = useState(false)
   const [showPlanForm, setShowPlanForm]   = useState(false)
 
-  // Precio más barato en MercadoLibre Argentina
-  const { mlPrice, mlLoading } = useMercadoLibrePrice(book)
+  const { mlUrl } = useMercadoLibrePrice(book)
 
   // Load global cover if no personal/book cover
   useEffect(() => {
@@ -529,12 +528,9 @@ export default function BookDetailSheet({
 
             {/* Dónde comprar */}
             {(() => {
-              const AMAZON_TAG    = '7772603777-21'
-              const ML_PARTNER_ID = ''  // número de seguimiento etiqueta "sandbook" — pendiente
-              const q        = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
-              const mlBase   = `https://www.mercadolibre.com.ar/s?as_word=${encodeURIComponent(q)}`
+              const AMAZON_TAG = '7772603777-21'
+              const q         = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
               const amazonUrl = `https://www.amazon.es/s?k=${encodeURIComponent(q)}&i=stripbooks&tag=${AMAZON_TAG}`
-              const mlUrl     = ML_PARTNER_ID ? `${mlBase}&partner_id=${ML_PARTNER_ID}` : mlBase
               return (
                 <div className="mb-5">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dónde comprar</p>
@@ -558,18 +554,13 @@ export default function BookDetailSheet({
                       Amazon
                     </a>
                     <a
-                      href={mlPrice?.url || mlUrl}
+                      href={mlUrl}
                       target="_blank" rel="noopener noreferrer"
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
                       style={{ background: '#3483FA', color: 'white' }}
                     >
-                      {mlLoading ? (
-                        <><Loader2 size={13} className="animate-spin" /> Buscando precio…</>
-                      ) : mlPrice ? (
-                        <><ShoppingCart size={14} /> $ {mlPrice.price.toLocaleString('es-AR')}</>
-                      ) : (
-                        <><ShoppingCart size={14} /> MercadoLibre</>
-                      )}
+                      <ShoppingCart size={14} />
+                      MercadoLibre
                     </a>
                   </div>
                 </div>

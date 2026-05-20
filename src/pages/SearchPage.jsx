@@ -38,17 +38,12 @@ function getAmazonLink(book) {
   return `https://www.amazon.es/s?k=${encodeURIComponent(q)}&i=stripbooks&tag=${AMAZON_TAG}`
 }
 
-function getMercadoLibreLink(book) {
-  const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
-  const base = `https://www.mercadolibre.com.ar/s?as_word=${encodeURIComponent(q)}`
-  return ML_PARTNER_ID ? `${base}&partner_id=${ML_PARTNER_ID}` : base
-}
 
 // ── Search Result Item ─────────────────────────────────────
 function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
   const [isFav, setIsFav] = useState(savedBook?.isFavorite || false)
   const [reaction, setReaction] = useState(savedBook?.myReaction || null)
-  const { mlPrice, mlLoading } = useMercadoLibrePrice(book)
+  const { mlUrl } = useMercadoLibrePrice(book)
 
   async function handleFav(e) {
     e.stopPropagation()
@@ -120,19 +115,14 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
               Amazon
             </a>
             <a
-              href={mlPrice?.url || getMercadoLibreLink(book)}
+              href={mlUrl}
               target="_blank" rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
               className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border active:scale-95 transition-all"
               style={{ background: '#e8f1ff', color: '#3483FA', borderColor: '#b8d4f5' }}
             >
               <ShoppingCart size={9} />
-              {mlLoading
-                ? '…'
-                : mlPrice
-                  ? `$ ${mlPrice.price.toLocaleString('es-AR')}`
-                  : 'MercadoLibre'
-              }
+              MercadoLibre
             </a>
           </div>
         </div>
