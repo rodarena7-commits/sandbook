@@ -45,11 +45,10 @@ app.get('/ml-price', async (req, res) => {
   if (!q) return res.status(400).json({ error: 'q requerido' })
   try {
     const token = await getMlToken()
-    // Busca sin filtro de categoría para maximizar resultados.
-    // Filtra por condición "new" y excluye precios 0.
+    // La búsqueda de ML es pública — no necesita auth.
+    // El servidor actúa como proxy para evitar el bloqueo CORS del browser.
     const r = await fetch(
-      `https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(q)}&limit=10`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      `https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(q)}&limit=10`
     )
     const data  = await r.json()
     const items = (data.results || []).filter(i => i.price > 0)
@@ -64,29 +63,6 @@ app.get('/ml-price', async (req, res) => {
 
 app.get('/health', (_req, res) => res.json({ ok: true }))
 
-// Debug temporal — ver respuesta cruda de ML
-app.get('/debug-ml', async (req, res) => {
-  const q = req.query.q?.trim() || 'Harry Potter'
-  try {
-    const token = await getMlToken()
-    const r = await fetch(
-      `https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(q)}&limit=3`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    const data = await r.json()
-    res.json({
-      token_ok: !!token,
-      total: data.paging?.total,
-      first_3: (data.results || []).slice(0, 3).map(i => ({
-        title: i.title, price: i.price, condition: i.condition
-      })),
-      error: data.error || null,
-      message: data.message || null,
-    })
-  } catch (e) {
-    res.status(500).json({ error: e.message })
-  }
-})
 
 const PORT = process.env.PORT || 4000
 app.listen(PORT, () => console.log(`Sandbook API corriendo en :${PORT}`))
