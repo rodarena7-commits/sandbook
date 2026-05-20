@@ -1,11 +1,9 @@
 import { useState, useRef } from 'react'
 import { X, Upload, Link, Loader2, Image } from 'lucide-react'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { storage } from '../../firebase'
 
-// Comprime y redimensiona la imagen antes de subir.
-// Fotos de celular (4-8 MB) quedan en ~150-300 KB → subida 10-20x más rápida.
-function compressImage(file, maxPx = 1200, quality = 0.82) {
+// Comprime y devuelve base64 para guardar directo en Firestore (sin Firebase Storage).
+// max 800px, JPEG 75% → ~80-180KB como base64 → bien bajo el límite de 1MB de Firestore.
+function compressToBase64(file, maxPx = 800, quality = 0.75) {
   return new Promise(resolve => {
     const img = new window.Image()
     const blobUrl = URL.createObjectURL(file)
@@ -18,28 +16,28 @@ function compressImage(file, maxPx = 1200, quality = 0.82) {
       canvas.width  = w
       canvas.height = h
       canvas.getContext('2d').drawImage(img, 0, 0, w, h)
-      canvas.toBlob(blob => resolve(blob ?? file), 'image/jpeg', quality)
+      resolve(canvas.toDataURL('image/jpeg', quality))
     }
-    img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(file) }
+    img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(null) }
     img.src = blobUrl
   })
 }
 
 function formatSize(bytes) {
-  if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export default function ImagePickerSheet({ title, storagePath, onSave, onClose }) {
-  const [mode, setMode] = useState(null)          // 'upload' | 'url'
-  const [url, setUrl] = useState('')
-  const [preview, setPreview] = useState(null)
-  const [file, setFile] = useState(null)
-  const [fileSize, setFileSize] = useState(null)
-  const [uploading, setUploading] = useState(false)
+// storagePath se mantiene como prop para compatibilidad pero ya no se usa.
+export default function ImagePickerSheet({ title, storagePath: _storagePath, onSave, onClose }) {
+  const [mode,         setMode]         = useState(null)   // 'upload' | 'url'
+  const [url,          setUrl]          = useState('')
+  const [preview,      setPreview]      = useState(null)
+  const [file,         setFile]         = useState(null)
+  const [fileSize,     setFileSize]     = useState(null)
+  const [uploading,    setUploading]    = useState(false)
   const [uploadStatus, setUploadStatus] = useState('')
-  const [error, setError] = useState(null)
+  const [error,        setError]        = useState(null)
   const fileRef = useRef(null)
 
   function handleFileChange(e) {
@@ -59,12 +57,10 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
       let finalUrl = ''
       if (mode === 'upload' && file) {
         setUploadStatus('Comprimiendo imagen…')
-        const compressed = await compressImage(file)
-        setUploadStatus('Subiendo…')
-        const storageRef = ref(storage, storagePath)
-        await uploadBytes(storageRef, compressed)
+        const base64 = await compressToBase64(file)
+        if (!base64) throw new Error('No se pudo procesar la imagen')
         setUploadStatus('Guardando…')
-        finalUrl = await getDownloadURL(storageRef)
+        finalUrl = base64
       } else if (mode === 'url') {
         if (!url.trim()) return
         finalUrl = url.trim()
@@ -72,12 +68,8 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
       await onSave(finalUrl)
       onClose()
     } catch (e) {
-      console.error('ImagePickerSheet upload error:', e)
-      setError(
-        e?.code === 'storage/unauthorized'
-          ? 'Sin permiso para subir imágenes. Revisá las reglas de Storage en Firebase.'
-          : `No se pudo guardar la imagen (${e?.message ?? 'error desconocido'})`
-      )
+      console.error('ImagePickerSheet error:', e)
+      setError(`No se pudo guardar la imagen (${e?.message ?? 'error desconocido'})`)
     } finally {
       setUploading(false)
       setUploadStatus('')
@@ -135,7 +127,7 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
                 </button>
                 {fileSize && (
                   <span className="absolute bottom-2 left-2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full">
-                    {formatSize(fileSize)} → se comprimirá antes de subir
+                    {formatSize(fileSize)} → se comprimirá automáticamente
                   </span>
                 )}
               </div>
@@ -146,11 +138,14 @@ export default function ImagePickerSheet({ title, storagePath, onSave, onClose }
                 <span className="text-xs">Tocá para elegir imagen</span>
               </button>
             )}
+            {error && <p className="text-xs text-red-400 text-center">{error}</p>}
             <div className="flex gap-2">
               <button onClick={() => setMode(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Volver</button>
               <button onClick={handleSave} disabled={!canSave || uploading}
                 className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2">
-                {uploading ? <><Loader2 size={14} className="animate-spin" /> {uploadStatus || 'Procesando…'}</> : 'Guardar'}
+                {uploading
+                  ? <><Loader2 size={14} className="animate-spin" /> {uploadStatus || 'Procesando…'}</>
+                  : 'Guardar'}
               </button>
             </div>
           </div>
