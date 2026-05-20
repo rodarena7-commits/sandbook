@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 
 // URL del servicio API separado en Render.
 // Reemplazar con el URL real una vez creado el Web Service en Render.
-const ML_API_BASE = 'https://TU-SERVICIO-API.onrender.com'
+const ML_API_BASE = 'https://sandbook-api.onrender.com'
 
 function buildMlSearchUrl(book) {
   const q = (book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim())
