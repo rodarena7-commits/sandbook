@@ -15,15 +15,21 @@ export function useConversations(uid) {
 
   useEffect(() => {
     if (!uid) return
+    // Sin orderBy para no requerir índice compuesto en Firestore —
+    // ordenamos por lastAt en el cliente
     const q = query(
       collection(db, 'conversations'),
       where('participants', 'array-contains', uid),
-      orderBy('lastAt', 'desc')
     )
     return onSnapshot(q, snap => {
-      setConvs(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      list.sort((a, b) => (b.lastAt?.seconds || 0) - (a.lastAt?.seconds || 0))
+      setConvs(list)
       setLoading(false)
-    }, () => setLoading(false))
+    }, err => {
+      console.error('useConversations error:', err)
+      setLoading(false)
+    })
   }, [uid])
 
   const totalUnread = convs.reduce((s, c) => s + (c.unread?.[uid] || 0), 0)

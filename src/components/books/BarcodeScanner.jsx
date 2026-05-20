@@ -11,25 +11,29 @@ export default function BarcodeScanner({ onScan, onClose }) {
   useEffect(() => {
     const scanner = new Html5Qrcode(id)
     scannerRef.current = scanner
+    const didScan = { current: false }
 
     scanner.start(
       { facingMode: 'environment' },
       { fps: 10, qrbox: { width: 250, height: 120 } },
-      (decoded) => {
-        // Only pass numeric ISBN codes
+      async (decoded) => {
+        if (didScan.current) return
         const clean = decoded.replace(/[^0-9X]/gi, '')
         if (clean.length === 10 || clean.length === 13) {
-          scanner.stop().catch(() => {})
+          didScan.current = true
+          // Esperar a que el scanner se detenga antes de llamar onScan
+          // para evitar que el componente se desmonte mientras el scanner sigue activo
+          await scanner.stop().catch(() => {})
           onScan(clean)
         }
       },
       () => {}
     )
       .then(() => setStarted(true))
-      .catch(e => setError('No se pudo acceder a la cámara. Revisá los permisos.'))
+      .catch(() => setError('No se pudo acceder a la cámara. Revisá los permisos.'))
 
     return () => {
-      scanner.stop().catch(() => {})
+      if (!didScan.current) scanner.stop().catch(() => {})
     }
   }, [])
 
