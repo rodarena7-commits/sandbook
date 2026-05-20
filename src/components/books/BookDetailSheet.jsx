@@ -525,9 +525,10 @@ export default function BookDetailSheet({
 
             {/* Dónde comprar */}
             {(() => {
+              const AMAZON_TAG    = '7772603777-21'
               const ML_PARTNER_ID = 'TU_PARTNER_ID'
               const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
-              const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(q)}&i=stripbooks`
+              const amazonUrl = `https://www.amazon.es/s?k=${encodeURIComponent(q)}&i=stripbooks&tag=${AMAZON_TAG}`
               const mlBase    = `https://www.mercadolibre.com.ar/s?as_word=${encodeURIComponent(q)}`
               const mlUrl     = ML_PARTNER_ID !== 'TU_PARTNER_ID'
                 ? `${mlBase}&partner_id=${ML_PARTNER_ID}`

@@ -28,12 +28,13 @@ const STATUS_LABELS = {
   library: 'Biblioteca',
 }
 
-// ── ID de afiliado MercadoLibre — reemplazar con el partner_id real ──
-const ML_PARTNER_ID = 'TU_PARTNER_ID'
+// ── IDs de afiliado ───────────────────────────────────────────────────
+const AMAZON_TAG    = '7772603777-21'   // Amazon España (afiliados.amazon.es)
+const ML_PARTNER_ID = 'TU_PARTNER_ID'  // MercadoLibre — pendiente
 
 function getAmazonLink(book) {
   const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
-  return `https://www.amazon.com/s?k=${encodeURIComponent(q)}&i=stripbooks`
+  return `https://www.amazon.es/s?k=${encodeURIComponent(q)}&i=stripbooks&tag=${AMAZON_TAG}`
 }
 
 function getMercadoLibreLink(book) {
