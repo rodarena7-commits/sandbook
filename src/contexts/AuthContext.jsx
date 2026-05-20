@@ -3,10 +3,13 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   signInAnonymously,
-  signOut
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
-import { auth, db, googleProvider, facebookProvider } from '../firebase'
+import { auth, db, googleProvider } from '../firebase'
 
 const AuthContext = createContext(null)
 
@@ -54,12 +57,33 @@ export function AuthProvider({ children }) {
     await signInWithPopup(auth, googleProvider)
   }
 
-  async function loginWithFacebook() {
-    await signInWithPopup(auth, facebookProvider)
-  }
-
   async function loginAnonymously() {
     await signInAnonymously(auth)
+  }
+
+  async function registerWithEmail(name, email, password) {
+    const cred = await createUserWithEmailAndPassword(auth, email, password)
+    await updateProfile(cred.user, { displayName: name })
+    // Forzar que onAuthStateChanged recrea el perfil con el displayName correcto
+    const ref = doc(db, 'users', cred.user.uid)
+    const newProfile = {
+      uid:         cred.user.uid,
+      displayName: name,
+      photoURL:    null,
+      email,
+      bio:         '',
+      booksRead:   0,
+      totalPages:  0,
+      followers:   [],
+      following:   [],
+      createdAt:   serverTimestamp(),
+    }
+    await setDoc(ref, newProfile)
+    setProfile(newProfile)
+  }
+
+  async function loginWithEmail(email, password) {
+    await signInWithEmailAndPassword(auth, email, password)
   }
 
   async function logout() {
@@ -67,7 +91,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, setProfile, loading, loginWithGoogle, loginWithFacebook, loginAnonymously, logout }}>
+    <AuthContext.Provider value={{ user, profile, setProfile, loading, loginWithGoogle, loginAnonymously, registerWithEmail, loginWithEmail, logout }}>
       {children}
     </AuthContext.Provider>
   )
