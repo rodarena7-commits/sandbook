@@ -52,7 +52,7 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
         {/* Favorite star */}
         <button
           onClick={e => { e.stopPropagation(); onToggleFavorite(book.bookId, book.isFavorite) }}
-          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm z-10"
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm"
         >
           <Star size={13} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
         </button>
