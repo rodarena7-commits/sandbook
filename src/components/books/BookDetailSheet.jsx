@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload, ShoppingCart, ExternalLink } from 'lucide-react'
 import { useAuthorBooks } from '../../hooks/useAuthorBooks'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useBookReviews } from '../../hooks/useBookReviews'
@@ -357,6 +357,7 @@ export default function BookDetailSheet({
 
   async function handleRating(n) {
     setRating(n)
+    if (!onSaveRating) return
     setRateSaving(true)
     await onSaveRating(book.bookId, n)
     setRateSaving(false)
@@ -364,13 +365,39 @@ export default function BookDetailSheet({
 
   async function handleAdd(status) {
     setAdding(true)
-    await onAdd(book, status)
+    if (onAdd) {
+      await onAdd(book, status)
+    } else if (user) {
+      // Fallback para libros relacionados: guardar directo en Firestore
+      await setDoc(doc(db, 'users', user.uid, 'myBooks', book.bookId), {
+        bookId:        book.bookId,
+        title:         book.title         || '',
+        authors:       book.authors       || [],
+        thumbnail:     book.thumbnail?.replace('http://', 'https://') || null,
+        description:   book.description   || '',
+        pageCount:     book.pageCount     || 0,
+        publishedDate: book.publishedDate || '',
+        categories:    book.categories    || [],
+        isbn13:        book.isbn13        || null,
+        isbn10:        book.isbn10        || null,
+        status,
+        isFavorite:    false,
+        inLibrary:     true,
+        addedAt:       new Date().toISOString(),
+        checkpoints:   [],
+        rating:        0,
+        review:        '',
+        myReaction:    null,
+        shelfId:       null,
+      }, { merge: true })
+    }
     setAdding(false)
     setAddOpen(false)
     onClose()
   }
 
   async function handleRemove() {
+    if (!onRemove) return
     onClose()
     await onRemove(book.bookId)
   }
@@ -459,7 +486,7 @@ export default function BookDetailSheet({
 
                 {isLibrary ? (
                   <button
-                    onClick={() => onToggleFavorite(book.bookId, book.isFavorite)}
+                    onClick={() => onToggleFavorite?.(book.bookId, book.isFavorite)}
                     className="flex items-center gap-1.5 mt-3 text-xs font-medium w-fit"
                   >
                     <Star size={15} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
@@ -483,7 +510,7 @@ export default function BookDetailSheet({
               <>
                 <div className="flex items-center gap-3 mb-5">
                   <span className="text-xs text-slate-400 font-medium">Estado:</span>
-                  <StatusMenu current={book.status} onChange={s => onStatusChange(book.bookId, s)} />
+                  <StatusMenu current={book.status} onChange={s => onStatusChange?.(book.bookId, s)} />
                 </div>
                 <div className="mb-5">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
