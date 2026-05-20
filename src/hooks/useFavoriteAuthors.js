@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  collection, doc, setDoc, deleteDoc,
+  collection, doc, setDoc, deleteDoc, updateDoc,
   onSnapshot, query, orderBy, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase'
@@ -34,9 +34,13 @@ export function useFavoriteAuthors(uid) {
     await deleteDoc(doc(db, 'users', uid, 'favoriteAuthors', id))
   }
 
+  async function updateAuthorPhoto(id, photoUrl) {
+    await updateDoc(doc(db, 'users', uid, 'favoriteAuthors', id), { photoUrl })
+  }
+
   function isFavorite(olid, name) {
     return authors.some(a => (olid && a.olid === olid) || a.name === name)
   }
 
-  return { authors, loading, addFavoriteAuthor, removeFavoriteAuthor, isFavorite }
+  return { authors, loading, addFavoriteAuthor, removeFavoriteAuthor, updateAuthorPhoto, isFavorite }
 }

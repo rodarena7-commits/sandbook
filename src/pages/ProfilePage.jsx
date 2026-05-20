@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
-import { BookOpen, Star, LogOut, Pencil, Check, X, Bell, BellOff, Camera, Settings, Loader2, ChevronRight, ArrowLeft } from 'lucide-react'
+import { BookOpen, Star, LogOut, Pencil, Check, X, Bell, BellOff, Camera, Settings, Loader2, ChevronRight, ArrowLeft, Upload } from 'lucide-react'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
@@ -10,8 +10,70 @@ import SettingsSheet from '../components/profile/SettingsSheet'
 import { respondToLoan } from '../hooks/useLoanRequests'
 import { cleanThumbnail } from '../utils/cleanThumbnail'
 import { useFavoriteAuthors } from '../hooks/useFavoriteAuthors'
+import { getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../hooks/useGlobalMedia'
 import UserProfileScreen from '../components/social/UserProfileScreen'
 import { useUsers } from '../hooks/useUsers'
+
+// ── Avatar de autor favorito con foto global + opción de subir ────────
+function FavAuthorAvatar({ author, uid, onPhotoSaved }) {
+  const [photo,      setPhoto]      = useState(author.photoUrl || null)
+  const [showPicker, setShowPicker] = useState(false)
+
+  useEffect(() => {
+    // Carga la foto global (cualquier usuario pudo haberla subido)
+    getGlobalAuthorPhoto(author.name).then(url => { if (url) setPhoto(url) })
+  }, [author.name])
+
+  async function handleSave(url) {
+    setPhoto(url)
+    // Guarda globalmente en authorPhotos/{key} para todos los usuarios
+    if (uid) await saveGlobalAuthorPhoto(author.name, url, uid)
+    // Actualiza también el registro local del usuario
+    onPhotoSaved?.(author.id, url)
+    setShowPicker(false)
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setShowPicker(true)}
+        className="relative group flex flex-col items-center w-16"
+      >
+        {photo ? (
+          <img
+            src={photo}
+            alt={author.name}
+            className="w-14 h-14 rounded-full object-cover border-2 border-amber-200 shadow-sm"
+            onError={() => setPhoto(null)}
+          />
+        ) : (
+          <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-amber-200 flex flex-col items-center justify-center gap-0.5">
+            <BookOpen size={14} className="text-slate-300"/>
+            <span className="text-[7px] text-slate-400">+ foto</span>
+          </div>
+        )}
+        {/* Botón de editar visible al tocar */}
+        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-amber-500 rounded-full items-center justify-center shadow-sm border border-white hidden group-hover:flex">
+          <Upload size={9} className="text-white"/>
+        </div>
+        <p className="text-[9px] text-slate-600 text-center leading-tight mt-1.5 line-clamp-2">{author.name}</p>
+      </button>
+
+      {showPicker && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[75]" onClick={() => setShowPicker(false)} />
+          <div className="fixed inset-0 z-[76] flex items-end">
+            <ImagePickerSheet
+              title={`Foto de ${author.name}`}
+              onSave={handleSave}
+              onClose={() => setShowPicker(false)}
+            />
+          </div>
+        </>
+      )}
+    </>
+  )
+}
 
 // ── User List Screen (full screen) ────────────────────────
 function UserListScreen({ title, uids, myFollowing = [], myUid, myProfile, setMyProfile, onClose }) {
@@ -225,7 +287,7 @@ function BookRow({ book }) {
 export default function ProfilePage() {
   const { user, profile, setProfile, logout } = useAuth()
   const { books } = useBooks(user?.uid)
-  const { authors: favAuthors } = useFavoriteAuthors(user?.uid)
+  const { authors: favAuthors, updateAuthorPhoto } = useFavoriteAuthors(user?.uid)
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(user?.uid)
 
   const [showNotifs, setShowNotifs]     = useState(false)
@@ -419,17 +481,12 @@ export default function ProfilePage() {
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Escritores favoritos</p>
           <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1">
             {favAuthors.map(a => (
-              <div key={a.id} className="flex-shrink-0 flex flex-col items-center w-16">
-                {a.photoUrl ? (
-                  <img src={a.photoUrl} alt={a.name}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-amber-200 shadow-sm"
-                    onError={e => e.target.style.display='none'} />
-                ) : (
-                  <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-amber-200 flex items-center justify-center">
-                    <BookOpen size={14} className="text-slate-300"/>
-                  </div>
-                )}
-                <p className="text-[9px] text-slate-600 text-center leading-tight mt-1.5 line-clamp-2">{a.name}</p>
+              <div key={a.id} className="flex-shrink-0">
+                <FavAuthorAvatar
+                  author={a}
+                  uid={user?.uid}
+                  onPhotoSaved={(id, url) => updateAuthorPhoto(id, url)}
+                />
               </div>
             ))}
           </div>
