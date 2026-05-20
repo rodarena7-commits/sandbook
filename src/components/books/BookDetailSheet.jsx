@@ -340,7 +340,7 @@ export default function BookDetailSheet({
   const [showPlanForm, setShowPlanForm]   = useState(false)
   const [relatedBook, setRelatedBook]     = useState(null)
 
-  const { mlUrl } = useMercadoLibrePrice(book)
+  const { mlPrice, mlLoading, mlUrl } = useMercadoLibrePrice(book)
 
   // Load global cover if no personal/book cover
   useEffect(() => {
@@ -524,13 +524,17 @@ export default function BookDetailSheet({
                       Amazon
                     </a>
                     <a
-                      href={mlUrl}
+                      href={mlPrice?.url || mlUrl}
                       target="_blank" rel="noopener noreferrer"
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
                       style={{ background: '#3483FA', color: 'white' }}
                     >
-                      <ShoppingCart size={14} />
-                      MercadoLibre
+                      {mlLoading
+                        ? <><Loader2 size={13} className="animate-spin" /> Buscando…</>
+                        : mlPrice
+                          ? <><ShoppingCart size={14} /> $ {mlPrice.price.toLocaleString('es-AR')}</>
+                          : <><ShoppingCart size={14} /> MercadoLibre</>
+                      }
                     </a>
                   </div>
                 </div>

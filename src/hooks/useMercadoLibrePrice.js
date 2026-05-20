@@ -1,17 +1,37 @@
-// MercadoLibre API requiere OAuth token — no accesible desde el browser sin auth.
-// El hook devuelve solo la URL de búsqueda correcta para ML Argentina.
+import { useState, useEffect } from 'react'
+
+function buildMlSearchUrl(book) {
+  const q = (book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim())
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+  return `https://listado.mercadolibre.com.ar/${q}`
+}
+
 export function useMercadoLibrePrice(book) {
-  const q = book.isbn13 || book.isbn10
-    || `${book.title} ${book.authors?.[0] || ''}`.trim()
+  const [mlPrice,   setMlPrice]   = useState(null)   // { price, url }
+  const [mlLoading, setMlLoading] = useState(true)
 
-  // Formato correcto: listado.mercadolibre.com.ar/TERMINO-CON-GUIONES
-  const mlUrl = `https://listado.mercadolibre.com.ar/${
-    q.toLowerCase()
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9\s]/g, '')
-      .trim()
-      .replace(/\s+/g, '-')
-  }`
+  const mlUrl = buildMlSearchUrl(book)
 
-  return { mlPrice: null, mlLoading: false, mlUrl }
+  useEffect(() => {
+    let cancelled = false
+    async function fetchPrice() {
+      try {
+        const q   = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+        const res  = await fetch(`/api/ml-price?q=${encodeURIComponent(q)}`)
+        const data = await res.json()
+        if (!cancelled && data.price) {
+          setMlPrice({ price: data.price, url: data.url })
+        }
+      } catch { /* proxy no disponible en dev local */ }
+      if (!cancelled) setMlLoading(false)
+    }
+    fetchPrice()
+    return () => { cancelled = true }
+  }, [book.bookId])
+
+  return { mlPrice, mlLoading, mlUrl }
 }

@@ -43,7 +43,7 @@ function getAmazonLink(book) {
 function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
   const [isFav, setIsFav] = useState(savedBook?.isFavorite || false)
   const [reaction, setReaction] = useState(savedBook?.myReaction || null)
-  const { mlUrl } = useMercadoLibrePrice(book)
+  const { mlPrice, mlLoading, mlUrl } = useMercadoLibrePrice(book)
 
   async function handleFav(e) {
     e.stopPropagation()
@@ -115,14 +115,14 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
               Amazon
             </a>
             <a
-              href={mlUrl}
+              href={mlPrice?.url || mlUrl}
               target="_blank" rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
               className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border active:scale-95 transition-all"
               style={{ background: '#e8f1ff', color: '#3483FA', borderColor: '#b8d4f5' }}
             >
               <ShoppingCart size={9} />
-              MercadoLibre
+              {mlLoading ? '…' : mlPrice ? `$ ${mlPrice.price.toLocaleString('es-AR')}` : 'MercadoLibre'}
             </a>
           </div>
         </div>
