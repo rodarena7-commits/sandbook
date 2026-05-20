@@ -369,11 +369,37 @@ export default function BookDetailSheet({
   const [showImgPicker, setShowImgPicker] = useState(false)
   const [showPlanForm, setShowPlanForm]   = useState(false)
 
+  // Precio más barato en MercadoLibre Argentina
+  const [mlPrice,   setMlPrice]   = useState(null)   // { price, url }
+  const [mlLoading, setMlLoading] = useState(true)
+
   // Load global cover if no personal/book cover
   useEffect(() => {
     if (!book.customThumbnail && !book.thumbnail && book.bookId) {
       getGlobalCover(book.bookId).then(url => { if (url) setGlobalCover(url) })
     }
+  }, [book.bookId])
+
+  // Buscar precio más barato en MercadoLibre
+  useEffect(() => {
+    let cancelled = false
+    async function fetchMLPrice() {
+      try {
+        const q = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+        const res  = await fetch(
+          `https://api.mercadolibre.com/sites/MLA/search?q=${encodeURIComponent(q)}&category=MLA1169&limit=6`
+        )
+        const data = await res.json()
+        const items = (data.results || []).filter(i => i.price > 0)
+        if (!cancelled && items.length) {
+          const cheapest = items.reduce((min, i) => i.price < min.price ? i : min, items[0])
+          setMlPrice({ price: cheapest.price, url: cheapest.permalink })
+        }
+      } catch {}
+      if (!cancelled) setMlLoading(false)
+    }
+    fetchMLPrice()
+    return () => { cancelled = true }
   }, [book.bookId])
 
   const cover = customThumb || largeCover(book.thumbnail) || globalCover
@@ -525,15 +551,12 @@ export default function BookDetailSheet({
 
             {/* Dónde comprar */}
             {(() => {
-              const AMAZON_TAG = '7772603777-21'
-              const ML_STORE   = 'importadus'
-              const q    = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
-              const mlQ  = q.toLowerCase()
-                .normalize('NFD').replace(/[̀-ͯ]/g, '')
-                .replace(/[^a-z0-9\s]/g, '').trim()
-                .replace(/\s+/g, '-')
+              const AMAZON_TAG    = '7772603777-21'
+              const ML_PARTNER_ID = ''  // número de seguimiento etiqueta "sandbook" — pendiente
+              const q        = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+              const mlBase   = `https://www.mercadolibre.com.ar/s?as_word=${encodeURIComponent(q)}`
               const amazonUrl = `https://www.amazon.es/s?k=${encodeURIComponent(q)}&i=stripbooks&tag=${AMAZON_TAG}`
-              const mlUrl     = `https://listado.mercadolibre.com.ar/${mlQ}_Tienda_${ML_STORE}`
+              const mlUrl     = ML_PARTNER_ID ? `${mlBase}&partner_id=${ML_PARTNER_ID}` : mlBase
               return (
                 <div className="mb-5">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dónde comprar</p>
@@ -557,13 +580,18 @@ export default function BookDetailSheet({
                       Amazon
                     </a>
                     <a
-                      href={mlUrl}
+                      href={mlPrice?.url || mlUrl}
                       target="_blank" rel="noopener noreferrer"
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
                       style={{ background: '#3483FA', color: 'white' }}
                     >
-                      <ShoppingCart size={14} />
-                      MercadoLibre
+                      {mlLoading ? (
+                        <><Loader2 size={13} className="animate-spin" /> Buscando precio…</>
+                      ) : mlPrice ? (
+                        <><ShoppingCart size={14} /> $ {mlPrice.price.toLocaleString('es-AR')}</>
+                      ) : (
+                        <><ShoppingCart size={14} /> MercadoLibre</>
+                      )}
                     </a>
                   </div>
                 </div>
