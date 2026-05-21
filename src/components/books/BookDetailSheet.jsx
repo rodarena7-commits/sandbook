@@ -12,18 +12,20 @@ import CreatePlanSheet from './CreatePlanSheet'
 import { getGlobalCover, saveGlobalCover, getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 import { useMercadoLibrePrice } from '../../hooks/useMercadoLibrePrice'
 
-const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca' }
+const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca', ebook: 'Ebook' }
 const STATUS_COLORS = {
   reading: 'bg-amber-500 text-white',
   read:    'bg-green-500 text-white',
   pending: 'bg-slate-200 text-slate-600',
   library: 'bg-blue-500 text-white',
+  ebook:   'bg-purple-500 text-white',
 }
 const ADD_OPTIONS = [
   { key: 'reading', label: 'Leyendo ahora',  color: 'bg-amber-500 text-white' },
   { key: 'pending', label: 'Quiero leer',     color: 'bg-slate-100 text-slate-700 border border-slate-200' },
   { key: 'read',    label: 'Ya lo leí',       color: 'bg-green-100 text-green-700' },
   { key: 'library', label: 'Solo guardar',    color: 'bg-blue-100 text-blue-600' },
+  { key: 'ebook',   label: 'Tengo el Ebook',  color: 'bg-purple-100 text-purple-600', noLend: true },
 ]
 const RATING_LABELS = ['', 'No me gustó', 'Estuvo bien', 'Bueno', 'Muy bueno', 'Excelente']
 
@@ -654,14 +656,18 @@ export default function BookDetailSheet({
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Agregar como…</p>
             <div className="flex flex-col gap-2">
               {ADD_OPTIONS.map(opt => (
-                <button
-                  key={opt.key}
-                  disabled={adding}
-                  onClick={() => handleAdd(opt.key)}
-                  className={`w-full py-3 rounded-2xl text-sm font-medium transition-all active:scale-95 ${opt.color} ${adding ? 'opacity-50' : ''}`}
-                >
-                  {opt.label}
-                </button>
+                <div key={opt.key}>
+                  <button
+                    disabled={adding}
+                    onClick={() => handleAdd(opt.key)}
+                    className={`w-full py-3 rounded-2xl text-sm font-medium transition-all active:scale-95 ${opt.color} ${adding ? 'opacity-50' : ''}`}
+                  >
+                    {opt.label}
+                  </button>
+                  {opt.noLend && (
+                    <p className="text-[10px] text-slate-400 text-center mt-0.5">📵 No disponible para préstamo</p>
+                  )}
+                </div>
               ))}
             </div>
             <button onClick={() => setAddOpen(false)} className="w-full mt-3 py-2.5 text-sm text-slate-400">

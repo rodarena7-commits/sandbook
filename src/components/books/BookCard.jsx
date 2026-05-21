@@ -7,6 +7,7 @@ const STATUS_LABELS = {
   read:    'Leído',
   pending: 'Pendiente',
   library: 'Biblioteca',
+  ebook:   'Ebook',
 }
 
 const STATUS_COLORS = {
@@ -14,6 +15,7 @@ const STATUS_COLORS = {
   read:    'bg-green-100 text-green-700',
   pending: 'bg-slate-100 text-slate-500',
   library: 'bg-blue-100 text-blue-600',
+  ebook:   'bg-purple-100 text-purple-600',
 }
 
 export default function BookCard({ book, onStatusChange, onToggleFavorite, onRemove, onReaction, onSelect, onOpenPlan }) {

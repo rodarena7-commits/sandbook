@@ -12,6 +12,7 @@ import MessagesPage from './pages/MessagesPage'
 import ProfilePage from './pages/ProfilePage'
 import InstallPrompt from './components/ui/InstallPrompt'
 import TutorialOverlay from './components/ui/TutorialOverlay'
+import OnboardingFlow from './components/ui/OnboardingFlow'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -48,6 +49,8 @@ function AppContent() {
       />
       {/* Tutorial única vez para todos los usuarios */}
       <TutorialOverlay />
+      {/* Onboarding interactivo: escritor + libro favorito */}
+      <OnboardingFlow />
       {/* Prompt de instalación PWA (opcional) */}
       <InstallPrompt />
     </div>
