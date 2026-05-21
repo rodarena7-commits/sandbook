@@ -14,30 +14,171 @@ import { getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../hooks/useGlobalM
 import UserProfileScreen from '../components/social/UserProfileScreen'
 import { useUsers } from '../hooks/useUsers'
 
-// ── Avatar de autor favorito con foto global + opción de subir ────────
-function FavAuthorAvatar({ author, uid, onPhotoSaved }) {
-  const [photo,      setPhoto]      = useState(author.photoUrl || null)
-  const [showPicker, setShowPicker] = useState(false)
+const GBOOKS_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY || ''
+
+// ── Sheet de detalle de autor: bio + carrusel de libros ───────────────
+function AuthorDetailSheet({ author, uid, onPhotoSaved, onClose }) {
+  const [photo,       setPhoto]       = useState(author.photoUrl || null)
+  const [bio,         setBio]         = useState(null)
+  const [books,       setBooks]       = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [showPicker,  setShowPicker]  = useState(false)
 
   useEffect(() => {
-    // Carga la foto global (cualquier usuario pudo haberla subido)
     getGlobalAuthorPhoto(author.name).then(url => { if (url) setPhoto(url) })
-  }, [author.name])
 
-  async function handleSave(url) {
+    async function load() {
+      // Bio desde OpenLibrary
+      if (author.olid) {
+        try {
+          const res  = await fetch(`https://openlibrary.org/authors/${author.olid}.json`)
+          const data = await res.json()
+          const raw  = typeof data.bio === 'string' ? data.bio
+                     : typeof data.bio?.value === 'string' ? data.bio.value : ''
+          setBio(raw.replace(/\n+/g, ' ').slice(0, 500) || null)
+          // Foto de OpenLibrary si no hay una guardada
+          if (!photo) {
+            const coverUrl = `https://covers.openlibrary.org/a/olid/${author.olid}-M.jpg`
+            const img = new Image()
+            img.onload = () => setPhoto(coverUrl)
+            img.src = coverUrl
+          }
+        } catch {}
+      }
+      // Libros desde Google Books
+      try {
+        const url  = `https://www.googleapis.com/books/v1/volumes?q=inauthor:${encodeURIComponent('"' + author.name + '"')}&maxResults=12${GBOOKS_KEY ? `&key=${GBOOKS_KEY}` : ''}`
+        const res  = await fetch(url)
+        const data = await res.json()
+        setBooks((data.items || []).map(item => ({
+          bookId:       item.id,
+          title:        item.volumeInfo.title,
+          thumbnail:    item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
+          publishedDate: item.volumeInfo.publishedDate || '',
+        })))
+      } catch {}
+      setLoading(false)
+    }
+    load()
+  }, [author.olid, author.name])
+
+  async function handlePhotoSave(url) {
     setPhoto(url)
-    // Guarda globalmente en authorPhotos/{key} para todos los usuarios
     if (uid) await saveGlobalAuthorPhoto(author.name, url, uid)
-    // Actualiza también el registro local del usuario
     onPhotoSaved?.(author.id, url)
     setShowPicker(false)
   }
 
   return (
     <>
+      <div className="fixed inset-0 z-[80] flex items-end">
+        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+        <div className="relative w-full bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
+
+          {/* Header */}
+          <div className="flex items-center gap-4 p-5 border-b border-slate-100 flex-shrink-0">
+            <div className="relative group flex-shrink-0">
+              {photo ? (
+                <img src={photo} alt={author.name}
+                  className="w-16 h-16 rounded-2xl object-cover shadow-sm border border-slate-100"
+                  onError={() => setPhoto(null)} />
+              ) : (
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
+                  <BookOpen size={22} className="text-slate-300" />
+                </div>
+              )}
+              <button onClick={() => setShowPicker(true)}
+                className="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shadow-sm border-2 border-white">
+                <Upload size={9} className="text-white" />
+              </button>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-slate-800 text-base leading-tight">{author.name}</h3>
+              {author.topWork && <p className="text-xs text-slate-400 italic mt-0.5 truncate">"{author.topWork}"</p>}
+              {author.workCount > 0 && <p className="text-[10px] text-slate-400 mt-0.5">{author.workCount} obras</p>}
+            </div>
+            <button onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 flex-shrink-0">
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Contenido */}
+          <div className="flex-1 overflow-y-auto p-5">
+            {loading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 size={22} className="animate-spin text-slate-200" />
+              </div>
+            ) : (
+              <>
+                {bio && (
+                  <div className="mb-5">
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Biografía</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">{bio}</p>
+                  </div>
+                )}
+                {books.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-3">Libros</p>
+                    <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2">
+                      {books.map(b => (
+                        <div key={b.bookId} className="flex-shrink-0 w-20">
+                          {b.thumbnail ? (
+                            <img src={b.thumbnail} alt={b.title}
+                              className="w-20 h-[112px] object-cover rounded-xl shadow-sm" />
+                          ) : (
+                            <div className="w-20 h-[112px] bg-slate-100 rounded-xl flex items-center justify-center">
+                              <BookOpen size={16} className="text-slate-300" />
+                            </div>
+                          )}
+                          <p className="text-[9px] text-slate-500 mt-1.5 line-clamp-2 text-center leading-tight">{b.title}</p>
+                          {b.publishedDate && (
+                            <p className="text-[8px] text-slate-300 text-center">{b.publishedDate.slice(0, 4)}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!bio && books.length === 0 && (
+                  <p className="text-xs text-slate-400 text-center py-8">Sin información disponible</p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showPicker && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[85]" onClick={() => setShowPicker(false)} />
+          <div className="fixed inset-0 z-[86] flex items-end">
+            <ImagePickerSheet
+              title={`Foto de ${author.name}`}
+              onSave={handlePhotoSave}
+              onClose={() => setShowPicker(false)}
+            />
+          </div>
+        </>
+      )}
+    </>
+  )
+}
+
+// ── Avatar de autor favorito — toca para abrir detalle ────────────────
+function FavAuthorAvatar({ author, uid, onPhotoSaved }) {
+  const [photo,      setPhoto]      = useState(author.photoUrl || null)
+  const [showDetail, setShowDetail] = useState(false)
+
+  useEffect(() => {
+    getGlobalAuthorPhoto(author.name).then(url => { if (url) setPhoto(url) })
+  }, [author.name])
+
+  return (
+    <>
       <button
-        onClick={() => setShowPicker(true)}
-        className="relative group flex flex-col items-center w-16"
+        onClick={() => setShowDetail(true)}
+        className="flex flex-col items-center w-16 active:scale-95 transition-all"
       >
         {photo ? (
           <img
@@ -52,24 +193,16 @@ function FavAuthorAvatar({ author, uid, onPhotoSaved }) {
             <span className="text-[7px] text-slate-400">+ foto</span>
           </div>
         )}
-        {/* Botón de editar visible al tocar */}
-        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-amber-500 rounded-full items-center justify-center shadow-sm border border-white hidden group-hover:flex">
-          <Upload size={9} className="text-white"/>
-        </div>
         <p className="text-[9px] text-slate-600 text-center leading-tight mt-1.5 line-clamp-2">{author.name}</p>
       </button>
 
-      {showPicker && (
-        <>
-          <div className="fixed inset-0 bg-black/40 z-[75]" onClick={() => setShowPicker(false)} />
-          <div className="fixed inset-0 z-[76] flex items-end">
-            <ImagePickerSheet
-              title={`Foto de ${author.name}`}
-              onSave={handleSave}
-              onClose={() => setShowPicker(false)}
-            />
-          </div>
-        </>
+      {showDetail && (
+        <AuthorDetailSheet
+          author={author}
+          uid={uid}
+          onPhotoSaved={(id, url) => { setPhoto(url); onPhotoSaved?.(id, url) }}
+          onClose={() => setShowDetail(false)}
+        />
       )}
     </>
   )
