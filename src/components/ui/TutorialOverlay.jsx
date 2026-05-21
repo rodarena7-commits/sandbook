@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X, ChevronRight, BookOpen, Search, Users, MessageCircle, User, CalendarDays, ShoppingBag } from 'lucide-react'
 
 const SEEN_KEY = 'sandbook_tutorial_v1'
@@ -57,14 +57,7 @@ const STEPS = [
 
 export default function TutorialOverlay({ onDone }) {
   const [step,    setStep]    = useState(0)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    // Mostrar si no fue visto antes (aplica a usuarios nuevos Y existentes)
-    if (!localStorage.getItem(SEEN_KEY)) {
-      setVisible(true)
-    }
-  }, [])
+  const [visible, setVisible] = useState(() => !localStorage.getItem(SEEN_KEY))
 
   function next() {
     if (step < STEPS.length - 1) setStep(s => s + 1)

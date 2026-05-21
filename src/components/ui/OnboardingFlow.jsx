@@ -152,7 +152,8 @@ export default function OnboardingFlow() {
   const { addFavoriteAuthor } = useFavoriteAuthors(user?.uid)
   const { results: bookResults, loading: bookLoading, search: searchBooks } = useGoogleBooks()
 
-  const [visible,       setVisible]       = useState(false)
+  // Inicializa síncronamente desde localStorage para evitar parpadeo
+  const [visible,       setVisible]       = useState(() => !localStorage.getItem(SEEN_KEY))
   const [step,          setStep]          = useState(0)   // 0=autor 1=libro
   const [authorQ,       setAuthorQ]       = useState('')
   const [authorResults, setAuthorResults] = useState([])
@@ -160,10 +161,6 @@ export default function OnboardingFlow() {
   const [addedBooks,    setAddedBooks]    = useState(new Set())
 
   const timer = useRef(null)
-
-  useEffect(() => {
-    if (!localStorage.getItem(SEEN_KEY)) setVisible(true)
-  }, [])
 
   function debounce(fn, value) {
     clearTimeout(timer.current)
