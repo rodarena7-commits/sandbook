@@ -670,7 +670,7 @@ export default function BookDetailSheet({
 
       {/* Centered Add Modal */}
       {addOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center px-6" onClick={() => setAddOpen(false)}>
+        <div className="fixed inset-0 flex items-center justify-center px-6" style={{ zIndex: sheetZ + 10 }} onClick={() => setAddOpen(false)}>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
             <div className="flex gap-3 mb-5">
               {cover ? (
