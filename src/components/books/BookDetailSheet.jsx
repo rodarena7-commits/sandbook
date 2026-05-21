@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload, ShoppingCart, ExternalLink } from 'lucide-react'
+import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload, ShoppingCart, ExternalLink, Heart } from 'lucide-react'
 import { useAuthorBooks } from '../../hooks/useAuthorBooks'
 import { doc, updateDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
@@ -11,6 +11,7 @@ import ImagePickerSheet from '../ui/ImagePickerSheet'
 import CreatePlanSheet from './CreatePlanSheet'
 import { getGlobalCover, saveGlobalCover, getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 import { useMercadoLibrePrice } from '../../hooks/useMercadoLibrePrice'
+import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
 
 const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca', ebook: 'Ebook' }
 const STATUS_COLORS = {
@@ -87,13 +88,14 @@ function StatusMenu({ current, onChange }) {
 function AuthorSection({ authorName }) {
   const { user } = useAuth()
   const author = useAuthor(authorName)
-  const [expanded, setExpanded] = useState(false)
-  const [imgError, setImgError]       = useState(false)
-  const [globalPhoto, setGlobalPhoto] = useState(null)
+  const { isFavorite, addFavoriteAuthor, removeFavoriteAuthor } = useFavoriteAuthors(user?.uid)
+  const [expanded,       setExpanded]       = useState(false)
+  const [imgError,       setImgError]       = useState(false)
+  const [globalPhoto,    setGlobalPhoto]    = useState(null)
   const [showPhotoPicker, setShowPhotoPicker] = useState(false)
+  const [favLoading,     setFavLoading]     = useState(false)
 
   useEffect(() => {
-    // Siempre carga la foto global — tiene prioridad (usuario la subió manualmente)
     if (authorName) {
       getGlobalAuthorPhoto(authorName).then(url => { if (url) setGlobalPhoto(url) })
     }
@@ -101,8 +103,26 @@ function AuthorSection({ authorName }) {
 
   if (!authorName) return null
 
-  // globalPhoto (subida manualmente) tiene prioridad sobre Open Library
-  const photo = globalPhoto || ((!imgError && author?.photoUrl) ? author.photoUrl : null)
+  const photo   = globalPhoto || ((!imgError && author?.photoUrl) ? author.photoUrl : null)
+  const fav     = isFavorite(author?.olid, authorName)
+
+  async function toggleFav() {
+    if (!user || !author) return
+    setFavLoading(true)
+    if (fav) {
+      const id = author.olid || authorName.replace(/\s+/g, '_').toLowerCase()
+      await removeFavoriteAuthor(id)
+    } else {
+      await addFavoriteAuthor({
+        name:      author.name || authorName,
+        olid:      author.olid      || null,
+        photoUrl:  photo            || null,
+        topWork:   author.topWork   || null,
+        workCount: author.workCount || 0,
+      })
+    }
+    setFavLoading(false)
+  }
 
   return (
     <div className="mb-5">
@@ -129,7 +149,19 @@ function AuthorSection({ authorName }) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-800 text-sm">{author?.name || authorName}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-slate-800 text-sm flex-1 min-w-0">{author?.name || authorName}</p>
+            {user && (
+              <button
+                onClick={toggleFav}
+                disabled={favLoading || !author}
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-90 ${fav ? 'bg-red-100' : 'bg-slate-100 hover:bg-red-50'} disabled:opacity-40`}
+                title={fav ? 'Quitar de favoritos' : 'Agregar a escritores favoritos'}
+              >
+                <Heart size={15} className={fav ? 'fill-red-500 text-red-500' : 'text-slate-400'} />
+              </button>
+            )}
+          </div>
           {author?.birthDate && <p className="text-xs text-slate-400 mt-0.5">{author.birthDate}</p>}
           {author?.workCount > 0 && <p className="text-xs text-slate-400">{author.workCount} obras</p>}
           {author?.bio && (

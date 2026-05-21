@@ -42,10 +42,12 @@ export function useAuthor(authorName) {
         if (!cancelled) {
           setAuthor({
             name:      first.name,
+            olid,
             photoUrl,
             bio,
             birthDate: first.birth_date || null,
             workCount: first.work_count || 0,
+            topWork:   first.top_work   || null,
           })
         }
       } catch {}
