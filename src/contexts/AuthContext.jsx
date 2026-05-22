@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db, googleProvider } from '../firebase'
 
 const AuthContext = createContext(null)
@@ -19,16 +19,45 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let heartbeat = null
+    let currentUid = null
+
+    async function setOnline(uid, online) {
+      try {
+        await updateDoc(doc(db, 'users', uid), {
+          isOnline: online,
+          lastSeen: serverTimestamp(),
+        })
+      } catch {}
+    }
+
+    function startHeartbeat(uid) {
+      heartbeat = setInterval(() => setOnline(uid, true), 2 * 60 * 1000)
+    }
+
+    const handleUnload = () => {
+      if (currentUid) setOnline(currentUid, false)
+    }
+    const handleVisibility = () => {
+      if (!currentUid) return
+      if (document.hidden) setOnline(currentUid, false)
+      else setOnline(currentUid, true)
+    }
+    window.addEventListener('beforeunload', handleUnload)
+    document.addEventListener('visibilitychange', handleVisibility)
+
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (heartbeat) { clearInterval(heartbeat); heartbeat = null }
+
       if (firebaseUser) {
+        currentUid = firebaseUser.uid
         setUser(firebaseUser)
-        // Cargar o crear perfil en Firestore
         const ref = doc(db, 'users', firebaseUser.uid)
         const snap = await getDoc(ref)
         if (snap.exists()) {
           setProfile(snap.data())
+          setOnline(firebaseUser.uid, true)
         } else {
-          // Primer login: crear perfil
           const newProfile = {
             uid: firebaseUser.uid,
             displayName: firebaseUser.displayName || 'Lector',
@@ -39,18 +68,29 @@ export function AuthProvider({ children }) {
             totalPages: 0,
             followers: [],
             following: [],
+            isOnline: true,
+            lastSeen: serverTimestamp(),
             createdAt: serverTimestamp(),
           }
           await setDoc(ref, newProfile)
           setProfile(newProfile)
         }
+        startHeartbeat(firebaseUser.uid)
       } else {
+        if (currentUid) setOnline(currentUid, false)
+        currentUid = null
         setUser(null)
         setProfile(null)
       }
       setLoading(false)
     })
-    return unsub
+
+    return () => {
+      unsub()
+      if (heartbeat) clearInterval(heartbeat)
+      window.removeEventListener('beforeunload', handleUnload)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [])
 
   async function loginWithGoogle() {
@@ -87,6 +127,11 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), { isOnline: false, lastSeen: serverTimestamp() })
+      } catch {}
+    }
     await signOut(auth)
   }
 

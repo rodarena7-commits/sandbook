@@ -1,5 +1,5 @@
 // Service Worker para Sandbook PWA
-const CACHE_NAME = 'sandbook-v2.0';
+const CACHE_NAME = 'sandbook-v3.0';
 const urlsToCache = [
   '/',
   '/index.html',

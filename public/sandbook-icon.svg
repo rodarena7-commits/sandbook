@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo redondeado -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="110" fill="url(#shine)"/>
+
+  <!-- Libro abierto -->
+  <!-- Tapa izquierda -->
+  <path d="M90 155 Q90 130 115 130 L245 140 L245 380 L115 370 Q90 370 90 345 Z"
+        fill="#ffffff" opacity="0.95"/>
+  <!-- Tapa derecha -->
+  <path d="M422 155 Q422 130 397 130 L267 140 L267 380 L397 370 Q422 370 422 345 Z"
+        fill="#ffffff" opacity="0.85"/>
+
+  <!-- Lomo central -->
+  <rect x="245" y="130" width="22" height="250" rx="4" fill="#c4b5fd"/>
+
+  <!-- Líneas de texto izquierda -->
+  <rect x="118" y="185" width="108" height="8" rx="4" fill="#6d28d9" opacity="0.35"/>
+  <rect x="118" y="205" width="90" height="8" rx="4" fill="#6d28d9" opacity="0.25"/>
+  <rect x="118" y="225" width="100" height="8" rx="4" fill="#6d28d9" opacity="0.25"/>
+  <rect x="118" y="245" width="80" height="8" rx="4" fill="#6d28d9" opacity="0.20"/>
+  <rect x="118" y="265" width="105" height="8" rx="4" fill="#6d28d9" opacity="0.20"/>
+  <rect x="118" y="285" width="75" height="8" rx="4" fill="#6d28d9" opacity="0.15"/>
+
+  <!-- Líneas de texto derecha -->
+  <rect x="286" y="185" width="108" height="8" rx="4" fill="#6d28d9" opacity="0.25"/>
+  <rect x="286" y="205" width="90" height="8" rx="4" fill="#6d28d9" opacity="0.20"/>
+  <rect x="286" y="225" width="100" height="8" rx="4" fill="#6d28d9" opacity="0.20"/>
+  <rect x="286" y="245" width="80" height="8" rx="4" fill="#6d28d9" opacity="0.15"/>
+
+  <!-- Estrella/marcador arriba -->
+  <polygon points="256,62 263,82 284,82 268,94 274,114 256,102 238,114 244,94 228,82 249,82"
+           fill="#fbbf24"/>
+
+  <!-- Texto "SB" -->
+  <text x="256" y="460" text-anchor="middle" font-family="Georgia, serif"
+        font-size="72" font-weight="bold" fill="#ffffff" opacity="0.92"
+        letter-spacing="2">SB</text>
+</svg>

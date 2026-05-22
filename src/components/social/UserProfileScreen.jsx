@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import {
   ArrowLeft, UserPlus, UserMinus, MessageCircle,
-  BookOpen, Send, Loader2, Star, X, ThumbsUp, ThumbsDown,
+  BookOpen, Send, Loader2, Star, X, ThumbsUp, ThumbsDown, Heart,
 } from 'lucide-react'
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import { useBookLikes } from '../../hooks/useBookLikes'
 import { db } from '../../firebase'
 import { useAuth } from '../../contexts/AuthContext'
 import BookCoverUpload from '../books/BookCoverUpload'
@@ -18,6 +19,20 @@ import BiblePlanView from '../books/BiblePlanView'
 import BookThread from './BookThread'
 
 const STATUS_LABELS = { reading:'Leyendo', read:'Leído', pending:'Pendiente', library:'Biblioteca' }
+
+function BookLikeButton({ bookId, ownerUid, myUid }) {
+  const { count, liked, loading, toggle } = useBookLikes(bookId, ownerUid, myUid)
+  return (
+    <button
+      onClick={e => { e.stopPropagation(); toggle() }}
+      disabled={loading || !myUid}
+      className={`flex items-center gap-0.5 mt-1 transition-all active:scale-110 ${liked ? 'text-red-500' : 'text-slate-300 hover:text-red-300'}`}
+    >
+      <Heart size={11} fill={liked ? 'currentColor' : 'none'} strokeWidth={2}/>
+      {count > 0 && <span className="text-[9px] font-semibold">{count}</span>}
+    </button>
+  )
+}
 
 function Avatar({ photoURL, displayName, size = 'lg' }) {
   const init = (displayName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
@@ -239,6 +254,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
                         <p className="text-[10px] font-semibold text-slate-700 line-clamp-2 mt-1.5 leading-tight">{b.title}</p>
                         {b.authors?.[0] && <p className="text-[9px] text-slate-400 line-clamp-1">{b.authors[0]}</p>}
                         {b.rating>0 && <p className="text-[9px] text-amber-500">{'★'.repeat(b.rating)}</p>}
+                        <BookLikeButton bookId={b.bookId} ownerUid={targetUser.uid} myUid={me?.uid} />
                       </div>
                     ))}
                   </div>
