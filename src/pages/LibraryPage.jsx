@@ -127,7 +127,7 @@ function AssignShelfModal({ book, shelves, currentShelfId, onAssign, onClose }) 
 // ── Main Page ──────────────────────────────────────────────
 export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   const { user } = useAuth()
-  const { books, loading, updateStatus, toggleFavorite, removeBook, saveReview, updateReaction, assignShelf } = useBooks(user?.uid)
+  const { books, loading, updateStatus, toggleFavorite, removeBook, saveReview, updateReaction, assignShelf, savePrivateNotes } = useBooks(user?.uid)
   const { shelves, createShelf, renameShelf, deleteShelf } = useShelves(user?.uid)
 
   const [statusTab, setStatusTab]       = useState('all')
@@ -488,6 +488,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
             onToggleFavorite={(bookId, current) => toggleFavorite(user.uid, bookId, current)}
             onSaveRating={(bookId, rating) => saveReview(user.uid, bookId, rating, '')}
             onRemove={(bookId) => removeBook(user.uid, bookId)}
+            onSavePrivateNotes={savePrivateNotes}
             onOpenPlan={b => {
               // 1. Cierra el BookDetailSheet
               setSelectedBook(null)

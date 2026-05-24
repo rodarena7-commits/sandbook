@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { User, BookOpen, ChevronDown, ChevronUp, Heart, X, Upload } from 'lucide-react'
+import { User, BookOpen, ChevronDown, ChevronUp, Heart, X, Upload, FileText } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 import ImagePickerSheet from '../ui/ImagePickerSheet'
@@ -60,7 +60,7 @@ function AuthorBookSheet({ book, author, allBooks, onClose }) {
 }
 
 // ── Author Card ────────────────────────────────────────────
-export default function AuthorCard({ author, isFav = false, onToggleFav }) {
+export default function AuthorCard({ author, isFav = false, onToggleFav, onViewPosts }) {
   const { user } = useAuth()
   const [expanded, setExpanded]         = useState(false)
   const [imgError, setImgError]         = useState(false)
@@ -161,6 +161,16 @@ export default function AuthorCard({ author, isFav = false, onToggleFav }) {
       )}
       {!author.books?.length && (
         <p className="text-xs text-slate-300 text-center px-4 pb-3">Sin libros disponibles</p>
+      )}
+
+      {onViewPosts && (
+        <button
+          onClick={() => onViewPosts(author)}
+          className="flex items-center justify-center gap-1.5 w-full py-2.5 text-xs text-slate-500 font-medium border-t border-slate-100 hover:bg-slate-50 transition-all"
+        >
+          <FileText size={12} className="text-amber-500" />
+          Ver publicaciones sobre {author.name.split(' ')[0]}
+        </button>
       )}
     </div>
 

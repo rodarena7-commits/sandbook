@@ -19,18 +19,66 @@ export function usePosts() {
     }, () => setLoading(false))
   }, [])
 
-  async function createPost(uid, profile, { text, book }) {
+  async function createPost(uid, profile, { text, book, authorId, authorName, authorPhotoUrl }) {
     await addDoc(collection(db, 'posts'), {
       uid,
       displayName: profile?.displayName || 'Lector',
       photoURL:    profile?.photoURL    || null,
       text: text.trim(),
-      bookId:        book?.bookId        || null,
-      bookTitle:     book?.title         || null,
-      bookAuthors:   book?.authors       || [],
-      bookThumbnail: book?.customThumbnail || book?.thumbnail || null,
+      bookId:         book?.bookId          || null,
+      bookTitle:      book?.title           || null,
+      bookAuthors:    book?.authors         || [],
+      bookThumbnail:  book?.customThumbnail || book?.thumbnail || null,
+      authorId:       authorId              || null,
+      authorName:     authorName            || null,
+      authorPhotoUrl: authorPhotoUrl        || null,
       likedBy:   [],
       likeCount: 0,
+      createdAt: serverTimestamp(),
+    })
+  }
+
+  async function updatePost(postId, { text, book, authorId, authorName, authorPhotoUrl }) {
+    await updateDoc(doc(db, 'posts', postId), {
+      text:           text.trim(),
+      bookId:         book?.bookId          || null,
+      bookTitle:      book?.title           || null,
+      bookAuthors:    book?.authors         || [],
+      bookThumbnail:  book?.customThumbnail || book?.thumbnail || null,
+      authorId:       authorId              || null,
+      authorName:     authorName            || null,
+      authorPhotoUrl: authorPhotoUrl        || null,
+      editedAt:       serverTimestamp(),
+    })
+  }
+
+  async function repostPost(uid, profile, originalPost) {
+    await addDoc(collection(db, 'posts'), {
+      uid,
+      displayName: profile?.displayName || 'Lector',
+      photoURL:    profile?.photoURL    || null,
+      text:        '',
+      bookId:         null,
+      bookTitle:      null,
+      bookAuthors:    [],
+      bookThumbnail:  null,
+      authorId:       null,
+      authorName:     null,
+      authorPhotoUrl: null,
+      likedBy:   [],
+      likeCount: 0,
+      repostOf: {
+        postId:         originalPost.id,
+        uid:            originalPost.uid,
+        displayName:    originalPost.displayName,
+        photoURL:       originalPost.photoURL       || null,
+        text:           originalPost.text,
+        bookTitle:      originalPost.bookTitle      || null,
+        bookAuthors:    originalPost.bookAuthors    || [],
+        bookThumbnail:  originalPost.bookThumbnail  || null,
+        authorName:     originalPost.authorName     || null,
+        authorPhotoUrl: originalPost.authorPhotoUrl || null,
+      },
       createdAt: serverTimestamp(),
     })
   }
@@ -47,5 +95,5 @@ export function usePosts() {
     await deleteDoc(doc(db, 'posts', postId))
   }
 
-  return { posts, loading, createPost, toggleLike, deletePost }
+  return { posts, loading, createPost, updatePost, repostPost, toggleLike, deletePost }
 }

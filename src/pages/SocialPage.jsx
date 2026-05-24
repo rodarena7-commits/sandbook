@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   Search, X, BookOpen, Users, Loader2,
   ChevronRight, RefreshCw, Plus, MessageCircle,
-  Feather, ShieldCheck,
+  Feather, ShieldCheck, User, FileText, Repeat2,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useUsers } from '../hooks/useUsers'
@@ -154,7 +154,7 @@ export default function SocialPage() {
 
   const followingUids = profile?.following || []
   const { items: feedItems, loading: feedLoading, loaded: feedLoaded, load: loadFeed } = useFeed(user?.uid, followingUids)
-  const { posts, loading: postsLoading, createPost, toggleLike, deletePost } = usePosts()
+  const { posts, loading: postsLoading, createPost, updatePost, repostPost, toggleLike, deletePost } = usePosts()
   const { books } = useBooks(user?.uid)
   const { canMessage, sendMessage } = useConversations(user?.uid)
   const { users: allUsers, loading: allUsersLoading } = useAllUsers(user?.uid)
@@ -172,7 +172,10 @@ export default function SocialPage() {
   const [adminQuery, setAdminQuery]         = useState('')
   const [selectedUser, setSelectedUser]     = useState(null)
   const [showCreatePost, setShowCreatePost] = useState(false)
+  const [editingPost, setEditingPost]       = useState(null)
   const [chatTarget, setChatTarget]         = useState(null)
+  const [sendPostTarget, setSendPostTarget] = useState(null) // { post, users }
+  const [authorPostsFilter, setAuthorPostsFilter] = useState(null) // nombre del autor
 
   const followingSet = new Set(followingUids)
 
@@ -331,7 +334,11 @@ export default function SocialPage() {
                 <PostCard key={post.id} post={post} myUid={user?.uid}
                   onLike={(postId,liked)=>toggleLike(postId,user.uid,liked)}
                   onDelete={deletePost}
-                  onUserPress={setSelectedUser}/>
+                  onUserPress={setSelectedUser}
+                  onEdit={p => { setEditingPost(p); setShowCreatePost(true) }}
+                  onRepost={p => repostPost(user.uid, profile, p)}
+                  onSendToUser={p => setSendPostTarget({ post: p, users: followingUsers })}
+                />
               ))}
             </>
           )}
@@ -407,6 +414,7 @@ export default function SocialPage() {
                   author={a}
                   isFav={isAuthorFav(a.olid, a.name)}
                   onToggleFav={(author, fav) => fav ? removeFavoriteAuthor(author.olid || author.name.replace(/\s+/g,'_').toLowerCase()) : addFavoriteAuthor(author)}
+                  onViewPosts={a => setAuthorPostsFilter(a.name)}
                 />
               ))}
             </>
@@ -507,15 +515,174 @@ export default function SocialPage() {
         />
       )}
 
-      {/* Create Post Sheet */}
+      {/* Create / Edit Post Sheet */}
       {showCreatePost && (
         <>
-          <div className="fixed inset-0 bg-black/40 z-40" onClick={()=>setShowCreatePost(false)}/>
-          <CreatePostSheet myBooks={books}
-            onPublish={({text,book})=>createPost(user.uid,profile,{text,book})}
-            onClose={()=>setShowCreatePost(false)}/>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => { setShowCreatePost(false); setEditingPost(null) }}/>
+          <CreatePostSheet
+            myBooks={books}
+            editPost={editingPost}
+            onPublish={({ text, book, authorId, authorName, authorPhotoUrl }) =>
+              createPost(user.uid, profile, { text, book, authorId, authorName, authorPhotoUrl })
+            }
+            onUpdate={(postId, { text, book, authorId, authorName, authorPhotoUrl }) =>
+              updatePost(postId, { text, book, authorId, authorName, authorPhotoUrl })
+            }
+            onClose={() => { setShowCreatePost(false); setEditingPost(null) }}
+          />
         </>
       )}
+
+      {/* Sheet: Enviar publicación a un usuario */}
+      {sendPostTarget && (
+        <SendPostToUserSheet
+          post={sendPostTarget.post}
+          followingUsers={followingUsers}
+          allUsers={allUsers}
+          myUid={user?.uid}
+          myProfile={profile}
+          sendMessage={sendMessage}
+          canMessage={canMessage}
+          onClose={() => setSendPostTarget(null)}
+        />
+      )}
+
+      {/* Sheet: Publicaciones sobre un escritor */}
+      {authorPostsFilter && (
+        <AuthorPostsSheet
+          authorName={authorPostsFilter}
+          posts={posts}
+          myUid={user?.uid}
+          onLike={(postId, liked) => toggleLike(postId, user.uid, liked)}
+          onUserPress={u => { setAuthorPostsFilter(null); setSelectedUser(u) }}
+          onClose={() => setAuthorPostsFilter(null)}
+        />
+      )}
     </div>
+  )
+}
+
+// ── Sheet: enviar post a un usuario ─────────────────────────
+function SendPostToUserSheet({ post, followingUsers, allUsers, myUid, myProfile, sendMessage, canMessage, onClose }) {
+  const [query, setQuery]       = useState('')
+  const [sending, setSending]   = useState(null) // uid del que se está enviando
+
+  const candidates = useMemo(() => {
+    const base = followingUsers.length > 0 ? followingUsers : allUsers.filter(u => u.uid !== myUid)
+    if (!query.trim()) return base.slice(0, 20)
+    const q = query.toLowerCase()
+    return base.filter(u => (u.displayName || '').toLowerCase().includes(q)).slice(0, 20)
+  }, [followingUsers, allUsers, myUid, query])
+
+  const shareText = post.repostOf
+    ? `"${post.repostOf.text}"${post.repostOf.bookTitle ? ` — ${post.repostOf.bookTitle}` : ''}`
+    : `"${post.text}"${post.bookTitle ? ` — ${post.bookTitle}` : ''}`
+
+  async function handleSend(targetUser) {
+    setSending(targetUser.uid)
+    try {
+      const allowed = await canMessage(myUid, targetUser.uid, myProfile)
+      if (!allowed) { alert('Este usuario no acepta mensajes'); setSending(null); return }
+      await sendMessage(myUid, myProfile, targetUser.uid, targetUser, `📖 ${shareText}`)
+      onClose()
+    } catch { setSending(null) }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-50" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-end">
+        <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col">
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
+            <h3 className="font-bold text-slate-800">Enviar a un usuario</h3>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
+              <X size={15} />
+            </button>
+          </div>
+          <div className="px-5 py-3 border-b border-slate-50 flex-shrink-0">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input value={query} onChange={e => setQuery(e.target.value)}
+                placeholder="Buscar usuario…"
+                className="w-full pl-9 pr-3 py-2 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400" />
+            </div>
+          </div>
+          <div className="overflow-y-auto flex-1 px-5 py-2">
+            {candidates.length === 0 && (
+              <p className="text-xs text-slate-400 text-center py-8">Sin usuarios para mostrar</p>
+            )}
+            {candidates.map(u => (
+              <button key={u.uid} onClick={() => handleSend(u)}
+                disabled={sending === u.uid}
+                className="flex items-center gap-3 w-full py-3 border-b border-slate-50 last:border-0 active:bg-slate-50 text-left">
+                {u.photoURL
+                  ? <img src={u.photoURL} alt="" className="w-9 h-9 rounded-full object-cover border border-amber-200 flex-shrink-0" />
+                  : <div className="w-9 h-9 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0 text-amber-600 font-bold text-xs">
+                      {(u.displayName || '?')[0].toUpperCase()}
+                    </div>
+                }
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800 line-clamp-1">{u.displayName || 'Lector'}</p>
+                </div>
+                {sending === u.uid
+                  ? <Loader2 size={14} className="animate-spin text-amber-400 flex-shrink-0" />
+                  : <MessageCircle size={14} className="text-slate-300 flex-shrink-0" />
+                }
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ── Sheet: publicaciones sobre un autor ──────────────────────
+function AuthorPostsSheet({ authorName, posts, myUid, onLike, onUserPress, onClose }) {
+  const filtered = useMemo(() =>
+    posts.filter(p => p.authorName && p.authorName.toLowerCase() === authorName.toLowerCase()),
+    [posts, authorName]
+  )
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-50" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-end">
+        <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <FileText size={15} className="text-amber-500" />
+              <h3 className="font-bold text-slate-800 line-clamp-1">Publicaciones sobre {authorName}</h3>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
+              <X size={15} />
+            </button>
+          </div>
+          <div className="overflow-y-auto flex-1 px-4 py-4 flex flex-col gap-3">
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                <FileText size={36} className="mb-3 text-slate-200" />
+                <p className="text-sm font-semibold text-slate-500">Sin publicaciones aún</p>
+                <p className="text-xs mt-1">Nadie etiquetó a {authorName} todavía</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-slate-400 font-medium px-1">{filtered.length} publicacion{filtered.length !== 1 ? 'es' : ''}</p>
+                {filtered.map(post => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    myUid={myUid}
+                    onLike={onLike}
+                    onDelete={() => {}}
+                    onUserPress={onUserPress}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   )
 }

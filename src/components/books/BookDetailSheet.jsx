@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload, ShoppingCart, ExternalLink, Heart } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload, ShoppingCart, ExternalLink, Heart, Lock, Save } from 'lucide-react'
 import { useAuthorBooks } from '../../hooks/useAuthorBooks'
 import { doc, updateDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
@@ -351,10 +351,54 @@ function ReviewsSection({ bookId, bookMeta, myUid, myProfile }) {
   )
 }
 
+// ── Sección de notas privadas ──────────────────────────────
+function PrivateNotesSection({ bookId, initialNotes, uid, onSave }) {
+  const [notes, setNotes] = useState(initialNotes || '')
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    await onSave(uid, bookId, notes)
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  return (
+    <div className="border-t border-slate-100 pt-5 mb-5">
+      <div className="flex items-center gap-2 mb-3">
+        <Lock size={12} className="text-slate-400" />
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Notas privadas</p>
+        <span className="text-[9px] text-slate-300 font-normal normal-case">Solo vos podés verlas</span>
+      </div>
+      <textarea
+        value={notes}
+        onChange={e => setNotes(e.target.value)}
+        placeholder="Anotá lo que quieras sobre este libro: páginas favoritas, citas, reflexiones…"
+        rows={5}
+        maxLength={2000}
+        className="w-full px-3 py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder-slate-300 outline-none focus:ring-2 focus:ring-amber-400 resize-none leading-relaxed"
+      />
+      <div className="flex items-center justify-between mt-2">
+        <span className="text-[10px] text-slate-300">{notes.length}/2000</span>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-800 text-white rounded-full text-xs font-semibold disabled:opacity-40 active:scale-95 transition-all"
+        >
+          <Save size={11} />
+          {saved ? '¡Guardado!' : saving ? 'Guardando…' : 'Guardar notas'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function BookDetailSheet({
   book, onClose,
   // Library mode
-  onStatusChange, onToggleFavorite, onSaveRating, onRemove, onOpenPlan,
+  onStatusChange, onToggleFavorite, onSaveRating, onRemove, onOpenPlan, onSavePrivateNotes,
   // Search mode (book not yet saved)
   onAdd,
   // Create plan from search (saves book + creates plan)
@@ -653,6 +697,16 @@ export default function BookDetailSheet({
                 <CalendarDays size={15} className="text-amber-500" />
                 Crear plan de lectura
               </button>
+            )}
+
+            {/* Notas privadas (solo en modo biblioteca) */}
+            {isLibrary && onSavePrivateNotes && user && (
+              <PrivateNotesSection
+                bookId={book.bookId}
+                initialNotes={book.privateNotes || ''}
+                uid={user.uid}
+                onSave={onSavePrivateNotes}
+              />
             )}
 
             {/* Eliminar (library only) */}

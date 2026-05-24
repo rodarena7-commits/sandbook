@@ -76,5 +76,9 @@ export function useBooks(uid) {
     await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), { shelfId: shelfId || null })
   }
 
-  return { books, loading, addBook, updateStatus, toggleFavorite, saveReview, removeBook, updateReaction, assignShelf }
+  async function savePrivateNotes(uid, bookId, notes) {
+    await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), { privateNotes: notes })
+  }
+
+  return { books, loading, addBook, updateStatus, toggleFavorite, saveReview, removeBook, updateReaction, assignShelf, savePrivateNotes }
 }
