@@ -6312,14 +6312,19 @@ export default function App() {
               </div>
             </div>
             
-            <div className="flex flex-wrap gap-2">
-              {['all', 'favorite', 'read', 'liked', 'disliked', 'in_plan', 'in_library'].map((type) => (
-                <button 
-                  key={type} 
-                  onClick={() => setFilterType(type)} 
-                  className={`px-4 py-2 rounded-2xl text-xs font-bold uppercase transition-all ${filterType === type ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'}`}
+            <div className="flex gap-2">
+              {[
+                { key: 'all',     label: lang === 'es' ? 'Total'     : 'All'       },
+                { key: 'in_plan', label: lang === 'es' ? 'Leyendo'   : 'Reading'   },
+                { key: 'read',    label: lang === 'es' ? 'Leídos'    : 'Read'      },
+                { key: 'favorite',label: lang === 'es' ? 'Favoritos' : 'Favorites' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilterType(key)}
+                  className={`flex-1 py-2.5 rounded-2xl text-xs font-bold uppercase transition-all ${filterType === key ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'}`}
                 >
-                  {type === 'all' ? t.all : type === 'favorite' ? t.favorites : type === 'read' ? t.read : type === 'liked' ? t.liked : type === 'disliked' ? t.dislike : type === 'in_plan' ? t.in_plan : t.in_library}
+                  {label}
                 </button>
               ))}
             </div>
@@ -6850,6 +6855,22 @@ export default function App() {
               </div>
             </div>
             
+            {/* Botones de acción rápida — visibles sin scrollear */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowMyReadingPlans(true)}
+                className="py-4 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm uppercase transition-all flex items-center justify-center gap-2 shadow-md"
+              >
+                <Calendar size={18}/> {t.reading_plan}
+              </button>
+              <button
+                onClick={inviteWhatsApp}
+                className="py-4 rounded-3xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm uppercase transition-all flex items-center justify-center gap-2 shadow-md"
+              >
+                <Share2 size={18}/> {t.invite}
+              </button>
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div className={`${themeClasses.card} rounded-3xl p-4 text-center shadow-md border ${themeClasses.border}`}>
                 <p className="font-black text-2xl">{userStats.readCount}</p>
