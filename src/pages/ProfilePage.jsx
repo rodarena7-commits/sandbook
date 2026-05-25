@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
-import { BookOpen, Star, LogOut, Pencil, Check, X, Bell, BellOff, Camera, Settings, Loader2, ChevronRight, ArrowLeft, Upload } from 'lucide-react'
+import { BookOpen, Star, LogOut, Pencil, Check, X, Bell, BellOff, Camera, Settings, Loader2, ChevronRight, ArrowLeft, Upload, CalendarDays, Share2 } from 'lucide-react'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
@@ -524,7 +524,6 @@ export default function ProfilePage() {
 
           {/* Name + info */}
           <h2 className="text-lg font-bold text-slate-800">{profile?.displayName || 'Lector'}</h2>
-          {profile?.email && <p className="text-xs text-slate-400">{profile.email}</p>}
           {memberSince && <p className="text-[10px] text-slate-300 mt-0.5">Miembro desde {memberSince}</p>}
 
           {/* Followers / Following — clickeables */}
@@ -572,6 +571,27 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Botones de acción rápida */}
+      <div className="mx-4 mt-4 flex gap-3">
+        <button
+          onClick={() => {
+            const url = window.location.href
+            const msg = `¡Unite a Sandbook! Leé y compartí libros con amigos: ${url}`
+            if (navigator.share) { navigator.share({ title: 'Sandbook', text: msg, url }).catch(() => {}) }
+            else window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+          }}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-green-500 text-white text-sm font-semibold shadow-sm active:scale-95 transition-all"
+        >
+          <Share2 size={16}/> Invitar
+        </button>
+        <button
+          onClick={() => document.getElementById('reading-plan-section')?.scrollIntoView({ behavior: 'smooth' })}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-amber-500 text-white text-sm font-semibold shadow-sm active:scale-95 transition-all"
+        >
+          <CalendarDays size={16}/> En plan
+        </button>
+      </div>
+
       {/* Stats */}
       <div className="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
         <div className="flex divide-x divide-slate-100">
@@ -595,7 +615,7 @@ export default function ProfilePage() {
       </div>
 
       {reading.length > 0 && (
-        <div className="mx-4 mt-4">
+        <div id="reading-plan-section" className="mx-4 mt-4">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Leyendo ahora</p>
           <div className="flex flex-col gap-2">{reading.map(b => <BookRow key={b.id} book={b} />)}</div>
         </div>

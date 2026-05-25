@@ -14,21 +14,17 @@ import { createReadingPlan, createRelaxPlan } from '../hooks/useReadingPlan'
 import { isBibleBook, initBiblePlan, countCompleted, TOTAL_CHAPTERS } from '../hooks/useBibleProgress'
 
 const STATUS_TABS = [
-  { key: 'all',     label: 'Todos' },
+  { key: 'all',     label: 'Total' },
   { key: 'reading', label: 'Leyendo' },
   { key: 'read',    label: 'Leídos' },
-  { key: 'pending', label: 'Pendientes' },
-  { key: 'fav',     label: '⭐' },
-  { key: 'plan',    label: '📅 En plan' },
+  { key: 'fav',     label: 'Favoritos' },
 ]
 
 const EMPTY_MESSAGES = {
-  all:     { icon: '📚', text: 'Tu biblioteca está vacía',           sub: 'Buscá libros en la pestaña Buscar' },
-  reading: { icon: '📖', text: 'No estás leyendo nada',              sub: 'Marcá un libro como "Leyendo"' },
-  read:    { icon: '✅', text: 'Todavía no leíste ningún libro',      sub: 'Marcá un libro como "Leído"' },
-  pending: { icon: '🕐', text: 'No tenés libros pendientes',          sub: 'Guardá libros para leer después' },
-  fav:     { icon: '⭐', text: 'No tenés favoritos',                  sub: 'Tocá la estrella en cualquier libro' },
-  plan:    { icon: '📅', text: 'No tenés libros con plan de lectura', sub: 'Creá un plan desde el detalle de cualquier libro' },
+  all:     { icon: '📚', text: 'Tu biblioteca está vacía',      sub: 'Buscá libros en la pestaña Buscar' },
+  reading: { icon: '📖', text: 'No estás leyendo nada',         sub: 'Marcá un libro como "Leyendo"' },
+  read:    { icon: '✅', text: 'Todavía no leíste ningún libro', sub: 'Marcá un libro como "Leído"' },
+  fav:     { icon: '⭐', text: 'No tenés favoritos',             sub: 'Tocá la estrella en cualquier libro' },
 }
 
 // ── Create/Rename Shelf Modal ──────────────────────────────

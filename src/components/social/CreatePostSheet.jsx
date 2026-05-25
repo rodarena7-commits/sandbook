@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { X, BookOpen, Search, Loader2, ChevronLeft, User, ImagePlus } from 'lucide-react'
 import { useGoogleBooks } from '../../hooks/useGoogleBooks'
 import { useAuthorSearch } from '../../hooks/useAuthorSearch'
-import { getGlobalCover, saveGlobalCover } from '../../hooks/useGlobalMedia'
+import { getGlobalCover, saveGlobalCover, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 import { useAuth } from '../../contexts/AuthContext'
 import ImagePickerSheet from '../ui/ImagePickerSheet'
 
@@ -74,6 +74,8 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
   const [publishing, setPublishing] = useState(false)
   const [showCoverPicker, setShowCoverPicker] = useState(false)
   const [localCover, setLocalCover] = useState(null) // portada subida localmente para el libro
+  const [showAuthorPhotoPicker, setShowAuthorPhotoPicker] = useState(false)
+  const [localAuthorPhoto, setLocalAuthorPhoto] = useState(null) // foto personalizada del escritor
 
   const { results: bookResults, loading: bookSearching, search: searchBooks, clear: clearBooks } = useGoogleBooks()
   const { authors: authorResults, loading: authorSearching, search: searchAuthors, clear: clearAuthors, setQuery: setAuthorQuery } = useAuthorSearch()
@@ -111,7 +113,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
       book:           bookPayload,
       authorId:       selectedAuthor?.olid       || null,
       authorName:     selectedAuthor?.name       || null,
-      authorPhotoUrl: selectedAuthor?.photoUrl   || null,
+      authorPhotoUrl: localAuthorPhoto || selectedAuthor?.photoUrl || null,
     }
 
     if (isEdit) {
@@ -332,21 +334,34 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Etiquetar escritor/a</p>
               {selectedAuthor ? (
                 <div className="flex gap-3 items-center bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                  {selectedAuthor.photoUrl ? (
-                    <img src={selectedAuthor.photoUrl} alt=""
-                      className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-slate-100" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                      <User size={16} className="text-slate-300" />
-                    </div>
-                  )}
+                  <div className="relative flex-shrink-0">
+                    {localAuthorPhoto || selectedAuthor.photoUrl ? (
+                      <img src={localAuthorPhoto || selectedAuthor.photoUrl} alt=""
+                        className="w-10 h-10 rounded-full object-cover border border-slate-100" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                        <User size={16} className="text-slate-300" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setShowAuthorPhotoPicker(true)}
+                      className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-600 rounded-full flex items-center justify-center shadow border-2 border-white"
+                      title="Cambiar foto"
+                    >
+                      <ImagePlus size={8} className="text-white" />
+                    </button>
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-slate-800">{selectedAuthor.name}</p>
                     {selectedAuthor.topWork && (
                       <p className="text-[10px] text-slate-400 italic line-clamp-1">"{selectedAuthor.topWork}"</p>
                     )}
+                    <button onClick={() => setShowAuthorPhotoPicker(true)}
+                      className="text-[10px] text-slate-500 font-medium mt-0.5">
+                      {localAuthorPhoto || selectedAuthor.photoUrl ? 'Cambiar foto' : '+ Agregar foto'}
+                    </button>
                   </div>
-                  <button onClick={() => setSelectedAuthor(null)} className="text-slate-300 hover:text-slate-500 flex-shrink-0">
+                  <button onClick={() => { setSelectedAuthor(null); setLocalAuthorPhoto(null) }} className="text-slate-300 hover:text-slate-500 flex-shrink-0">
                     <X size={15} />
                   </button>
                 </div>
@@ -388,6 +403,26 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
                 }
               }}
               onClose={() => setShowCoverPicker(false)}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Foto picker para el escritor */}
+      {showAuthorPhotoPicker && selectedAuthor && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[60]" onClick={() => setShowAuthorPhotoPicker(false)} />
+          <div className="fixed inset-0 z-[61] flex items-end">
+            <ImagePickerSheet
+              title={`Foto: ${selectedAuthor.name}`}
+              storagePath={`authorPhotos/${selectedAuthor.olid || selectedAuthor.name}`}
+              onSave={async url => {
+                setLocalAuthorPhoto(url)
+                if (selectedAuthor.name && user) {
+                  await saveGlobalAuthorPhoto(selectedAuthor.name, url, user.uid)
+                }
+              }}
+              onClose={() => setShowAuthorPhotoPicker(false)}
             />
           </div>
         </>
