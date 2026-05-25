@@ -12,6 +12,7 @@ import CreatePlanSheet from './CreatePlanSheet'
 import { getGlobalCover, saveGlobalCover, getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 import { useMercadoLibrePrice } from '../../hooks/useMercadoLibrePrice'
 import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
+import { useBookPosts } from '../../hooks/useBookPosts'
 
 const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca', ebook: 'Ebook' }
 const STATUS_COLORS = {
@@ -432,6 +433,7 @@ export default function BookDetailSheet({
   const cover = customThumb || largeCover(book.thumbnail) || globalCover
   const isLibrary = !!onStatusChange
   const stats = useBookStats(book.bookId)
+  const { posts: bookPosts } = useBookPosts(book.bookId)
 
   async function handleRating(n) {
     setRating(n)
@@ -681,6 +683,39 @@ export default function BookDetailSheet({
                 currentBookId={book.bookId}
                 onOpenRelated={setRelatedBook}
               />
+            )}
+
+            {/* Publicaciones sobre este libro */}
+            {bookPosts.length > 0 && (
+              <div className="border-t border-slate-100 pt-5 mb-1">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Frases publicadas</p>
+                <div className="flex flex-col gap-3">
+                  {bookPosts.map(post => {
+                    const date = post.createdAt?.seconds
+                      ? new Date(post.createdAt.seconds * 1000).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
+                      : ''
+                    return (
+                      <div key={post.id} className="bg-amber-50 border border-amber-100 rounded-2xl px-3 py-3">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          {post.photoURL ? (
+                            <img src={post.photoURL} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0">
+                              <span className="text-[9px] font-bold text-amber-700">{(post.displayName||'L')[0].toUpperCase()}</span>
+                            </div>
+                          )}
+                          <span className="text-[11px] font-semibold text-slate-700 flex-1 line-clamp-1">{post.displayName || 'Lector'}</span>
+                          <span className="text-[10px] text-slate-400">{date}</span>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed italic">"{post.text}"</p>
+                        {post.likeCount > 0 && (
+                          <p className="text-[10px] text-slate-400 mt-1.5">❤️ {post.likeCount}</p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             )}
 
             <div className="border-t border-slate-100 pt-5 mb-1">

@@ -1,5 +1,6 @@
 import { doc, updateDoc, increment, deleteField } from 'firebase/firestore'
 import { db } from '../firebase'
+import { logReadingActivity } from './useStreak'
 
 export function calculatePlan(totalPages, totalDays) {
   const daily = Math.ceil(totalPages / totalDays)
@@ -30,6 +31,7 @@ export async function updatePlanDay(uid, bookId, day, data) {
   await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
     [`planDays.${day}`]: data,
   })
+  if (data?.checked) logReadingActivity(uid)
 }
 
 export async function savePlanMeta(uid, bookId, field, value) {
@@ -68,6 +70,7 @@ export async function updateRelaxPage(uid, bookId, newPage, diffPages) {
   }
   if (diffPages > 0) {
     updates[`dailyHistory.${today}.pagesRead`] = increment(diffPages)
+    logReadingActivity(uid)
   }
   await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), updates)
 }

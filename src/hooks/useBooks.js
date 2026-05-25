@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { incrementBookStat } from './useBookStats'
+import { logReadingActivity } from './useStreak'
 
 export function useBooks(uid) {
   const [books, setBooks] = useState([])
@@ -43,7 +44,7 @@ export function useBooks(uid) {
     const old = booksRef.current.find(b => b.bookId === bookId)
     await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), { status: newStatus })
     if (old?.status !== newStatus) {
-      if (newStatus === 'read') await incrementBookStat(bookId, 'readers', 1)
+      if (newStatus === 'read') { await incrementBookStat(bookId, 'readers', 1); logReadingActivity(uid) }
       if (old?.status === 'read') await incrementBookStat(bookId, 'readers', -1)
     }
   }

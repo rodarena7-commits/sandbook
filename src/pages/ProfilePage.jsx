@@ -592,6 +592,25 @@ export default function ProfilePage({ onGoToPlan }) {
         </button>
       </div>
 
+      {/* Racha de lectura */}
+      {(profile?.currentStreak > 0) && (
+        <div className="mx-4 mt-4 bg-orange-50 border border-orange-100 rounded-2xl px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">🔥</span>
+            <div>
+              <p className="text-sm font-bold text-orange-600">{profile.currentStreak} {profile.currentStreak === 1 ? 'día' : 'días'} seguidos</p>
+              <p className="text-[10px] text-orange-400">Seguí leyendo para no perder la racha</p>
+            </div>
+          </div>
+          {profile?.longestStreak > 1 && (
+            <div className="text-right">
+              <p className="text-[10px] text-slate-400">Récord</p>
+              <p className="text-sm font-bold text-slate-600">{profile.longestStreak} días</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Stats */}
       <div className="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
         <div className="flex divide-x divide-slate-100">
