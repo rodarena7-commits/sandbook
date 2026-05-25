@@ -1249,6 +1249,7 @@ export default function App() {
   const [taggedWriterName, setTaggedWriterName] = useState('');
   const [taggedWriterImageUrl, setTaggedWriterImageUrl] = useState('');
   const [showWriterTagSection, setShowWriterTagSection] = useState(false);
+  const [uploadingWriterImage, setUploadingWriterImage] = useState(false);
   const [showMyReadingPlans, setShowMyReadingPlans] = useState(false);
   const [postSearch, setPostSearch] = useState('');
   const [showBookSelector, setShowBookSelector] = useState(false);
@@ -2328,6 +2329,7 @@ export default function App() {
       setTaggedWriterName('');
       setTaggedWriterImageUrl('');
       setShowWriterTagSection(false);
+      setUploadingWriterImage(false);
       alert(lang === 'es' ? "¡Publicación creada!" : "Post created!");
     } catch (error) {
       console.error("Error al publicar:", error);
@@ -5404,12 +5406,30 @@ export default function App() {
                       className={`w-full rounded-xl px-4 py-2 text-sm outline-none ${theme === 'dark' ? 'bg-gray-600 text-gray-100 border-gray-500' : theme === 'sunset' ? 'bg-amber-50 text-gray-800 border-amber-200' : 'bg-white text-slate-900 border-slate-200'} border`}
                       placeholder={lang === 'es' ? 'Nombre del escritor' : 'Writer name'}
                     />
+                    {/* Subir imagen o pegar URL */}
+                    <div className="flex gap-2">
+                      <label className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all ${uploadingWriterImage ? 'opacity-50 cursor-wait' : ''} ${theme === 'dark' ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : theme === 'sunset' ? 'bg-amber-200 hover:bg-amber-300 text-amber-900' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'}`}>
+                        <Upload size={14}/> {uploadingWriterImage ? (lang === 'es' ? 'Subiendo...' : 'Uploading...') : (lang === 'es' ? 'Subir foto' : 'Upload photo')}
+                        <input type="file" accept="image/*" className="hidden" disabled={uploadingWriterImage} onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setUploadingWriterImage(true);
+                          try {
+                            const storageRef = ref(storage, `writerImages/${Date.now()}_${file.name}`);
+                            await uploadBytes(storageRef, file);
+                            const url = await getDownloadURL(storageRef);
+                            setTaggedWriterImageUrl(url);
+                          } catch { alert(lang === 'es' ? 'Error al subir imagen' : 'Error uploading image'); }
+                          finally { setUploadingWriterImage(false); }
+                        }}/>
+                      </label>
+                    </div>
                     <input
                       type="url"
                       value={taggedWriterImageUrl}
                       onChange={(e) => setTaggedWriterImageUrl(e.target.value)}
                       className={`w-full rounded-xl px-4 py-2 text-sm outline-none ${theme === 'dark' ? 'bg-gray-600 text-gray-100 border-gray-500' : theme === 'sunset' ? 'bg-amber-50 text-gray-800 border-amber-200' : 'bg-white text-slate-900 border-slate-200'} border`}
-                      placeholder={lang === 'es' ? 'URL de imagen del escritor' : 'Writer image URL'}
+                      placeholder={lang === 'es' ? 'O pegar URL de imagen' : 'Or paste image URL'}
                     />
                     {taggedWriterImageUrl && (
                       <div className="flex items-center gap-3">
@@ -6259,7 +6279,7 @@ export default function App() {
       </header>
 
       {/* CONTENIDO PRINCIPAL */}
-      <main className="pt-20 px-4 max-w-5xl mx-auto">
+      <main className="pt-20 pb-28 px-4 max-w-5xl mx-auto">
         {/* PESTAÑA: BIBLIOTECA */}
         {activeTab === 'library' && (
           <div className="space-y-6 animate-in slide-in-from-bottom-4">
