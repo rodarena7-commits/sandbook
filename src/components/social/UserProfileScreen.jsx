@@ -176,7 +176,6 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
         </div>
 
         <h2 className="text-lg font-bold text-slate-800">{fullUser.displayName||'Lector'}</h2>
-        {fullUser.email && <p className="text-xs text-slate-400">{fullUser.email}</p>}
         {fullUser.bio && <p className="text-sm text-slate-600 italic mt-1">"{fullUser.bio}"</p>}
 
         <div className="flex gap-4 mt-2 text-xs text-slate-500">

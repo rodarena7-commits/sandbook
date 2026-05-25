@@ -112,7 +112,7 @@ function AdminUserRow({ user, onSelect }) {
           <p className="text-xs font-semibold text-slate-800 line-clamp-1">{user.displayName||'(sin nombre)'}</p>
           {user.online && <span className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0" style={{boxShadow:'0 0 5px #4ade80'}}/>}
         </div>
-        <p className="text-[10px] text-slate-400 line-clamp-1">{user.email||'(anónimo)'}</p>
+        <p className="text-[10px] text-slate-400 line-clamp-1">{user.bio || ''}</p>
       </div>
       <div className="text-right flex-shrink-0">
         <p className="text-[9px] text-slate-300">{createdAt}</p>

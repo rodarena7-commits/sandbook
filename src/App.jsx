@@ -34,7 +34,7 @@ function AppContent() {
     search:   <SearchPage   onGoToPlan={navigateToPlan} />,
     social:   <SocialPage />,
     messages: <MessagesPage />,
-    profile:  <ProfilePage />,
+    profile:  <ProfilePage onGoToPlan={navigateToPlan} />,
   }
 
   return (

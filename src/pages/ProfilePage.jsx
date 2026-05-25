@@ -417,7 +417,7 @@ function BookRow({ book }) {
 }
 
 // ── Main Page ──────────────────────────────────────────────
-export default function ProfilePage() {
+export default function ProfilePage({ onGoToPlan }) {
   const { user, profile, setProfile, logout } = useAuth()
   const { books } = useBooks(user?.uid)
   const { authors: favAuthors, updateAuthorPhoto } = useFavoriteAuthors(user?.uid)
@@ -585,7 +585,7 @@ export default function ProfilePage() {
           <Share2 size={16}/> Invitar
         </button>
         <button
-          onClick={() => document.getElementById('reading-plan-section')?.scrollIntoView({ behavior: 'smooth' })}
+          onClick={() => onGoToPlan?.()}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-amber-500 text-white text-sm font-semibold shadow-sm active:scale-95 transition-all"
         >
           <CalendarDays size={16}/> En plan
