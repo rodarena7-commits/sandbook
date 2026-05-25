@@ -1246,6 +1246,10 @@ export default function App() {
   const [postContent, setPostContent] = useState('');
   const [selectedBookForPost, setSelectedBookForPost] = useState(null);
   const [booksForPost, setBooksForPost] = useState([]);
+  const [taggedWriterName, setTaggedWriterName] = useState('');
+  const [taggedWriterImageUrl, setTaggedWriterImageUrl] = useState('');
+  const [showWriterTagSection, setShowWriterTagSection] = useState(false);
+  const [showMyReadingPlans, setShowMyReadingPlans] = useState(false);
   const [postSearch, setPostSearch] = useState('');
   const [showBookSelector, setShowBookSelector] = useState(false);
   const [currentlyReadingCount, setCurrentlyReadingCount] = useState(0);
@@ -2286,7 +2290,9 @@ export default function App() {
         likes: 0,
         likesBy: [],
         comments: [],
-        isPublic: true
+        isPublic: true,
+        taggedWriterName: taggedWriterName.trim() || null,
+        taggedWriterImage: taggedWriterImageUrl.trim() || null,
       };
       const postRef = await addDoc(collection(db, 'wallPosts'), postData);
       if (userProfile.following?.length > 0) {
@@ -2319,6 +2325,9 @@ export default function App() {
       setShowBookSelector(false);
       setBooksForPost([]);
       setPostSearch('');
+      setTaggedWriterName('');
+      setTaggedWriterImageUrl('');
+      setShowWriterTagSection(false);
       alert(lang === 'es' ? "¡Publicación creada!" : "Post created!");
     } catch (error) {
       console.error("Error al publicar:", error);
@@ -3082,7 +3091,6 @@ export default function App() {
           const newProfile = {
             userId: u.uid,
             name: u.displayName || 'Lector',
-            email: u.email || '',
             profilePic: u.photoURL || '',
             badges: [],
             scanCount: 0,
@@ -3401,8 +3409,14 @@ export default function App() {
     }
   };
 
-  const inviteWhatsApp = () => {
-    const msg = `¡Seamos amigos en Sandbook! Descarga la app aquí: ${window.location.href}`;
+  const inviteWhatsApp = async () => {
+    const url = window.location.href;
+    const msg = lang === 'es'
+      ? `¡Unite a Sandbook! Leé y compartí libros con amigos: ${url}`
+      : `Join me on Sandbook! Read and share books with friends: ${url}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Sandbook', text: msg, url }); return; } catch {}
+    }
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -5369,9 +5383,52 @@ export default function App() {
                   </div>
                 )}
               </div>
-              <textarea 
-                value={postContent} 
-                onChange={(e) => setPostContent(e.target.value)} 
+              {/* Tag escritor */}
+              <div className="mb-4">
+                <button
+                  onClick={() => setShowWriterTagSection(!showWriterTagSection)}
+                  className={`w-full py-3 px-4 rounded-2xl flex items-center justify-between ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-100 hover:bg-slate-200'} transition-all`}
+                >
+                  <span className="font-bold text-sm flex items-center gap-2">
+                    <PenTool size={15}/>
+                    {taggedWriterName || (lang === 'es' ? 'Etiquetar escritor (opcional)' : 'Tag writer (optional)')}
+                  </span>
+                  {showWriterTagSection ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                </button>
+                {showWriterTagSection && (
+                  <div className={`mt-2 p-4 rounded-2xl space-y-3 ${theme === 'dark' ? 'bg-gray-700' : theme === 'sunset' ? 'bg-amber-100' : 'bg-slate-50'}`}>
+                    <input
+                      type="text"
+                      value={taggedWriterName}
+                      onChange={(e) => setTaggedWriterName(e.target.value)}
+                      className={`w-full rounded-xl px-4 py-2 text-sm outline-none ${theme === 'dark' ? 'bg-gray-600 text-gray-100 border-gray-500' : theme === 'sunset' ? 'bg-amber-50 text-gray-800 border-amber-200' : 'bg-white text-slate-900 border-slate-200'} border`}
+                      placeholder={lang === 'es' ? 'Nombre del escritor' : 'Writer name'}
+                    />
+                    <input
+                      type="url"
+                      value={taggedWriterImageUrl}
+                      onChange={(e) => setTaggedWriterImageUrl(e.target.value)}
+                      className={`w-full rounded-xl px-4 py-2 text-sm outline-none ${theme === 'dark' ? 'bg-gray-600 text-gray-100 border-gray-500' : theme === 'sunset' ? 'bg-amber-50 text-gray-800 border-amber-200' : 'bg-white text-slate-900 border-slate-200'} border`}
+                      placeholder={lang === 'es' ? 'URL de imagen del escritor' : 'Writer image URL'}
+                    />
+                    {taggedWriterImageUrl && (
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={taggedWriterImageUrl}
+                          onError={(e) => { e.target.style.display = 'none' }}
+                          className="w-14 h-14 rounded-full object-cover border-2 border-indigo-400"
+                          alt={taggedWriterName}
+                        />
+                        {taggedWriterName && <p className="text-sm font-bold">{taggedWriterName}</p>}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <textarea
+                value={postContent}
+                onChange={(e) => setPostContent(e.target.value)}
                 className={`w-full rounded-2xl p-4 text-sm outline-none min-h-[200px] ${theme === 'dark' ? 'bg-gray-700 text-gray-100 border-gray-600' : theme === 'sunset' ? 'bg-amber-100 text-gray-800 border-amber-300' : 'bg-white text-slate-900 border-slate-200'} border`}
                 placeholder={t.write_quote}
                 maxLength={2500}
@@ -6565,8 +6622,8 @@ export default function App() {
                       {(post.bookThumbnail || post.bookTitle) && (
                         <div className="flex items-center gap-3 mb-3 p-3 bg-slate-50 dark:bg-gray-700/50 rounded-2xl">
                           {post.bookThumbnail && (
-                            <img 
-                              src={post.bookThumbnail} 
+                            <img
+                              src={post.bookThumbnail}
                               className="w-12 h-16 object-contain rounded-lg cursor-pointer hover:scale-105 transition-all"
                               alt={post.bookTitle}
                               onClick={() => openBookDetailModal({ title: post.bookTitle, thumbnail: post.bookThumbnail, authors: post.bookAuthors })}
@@ -6577,7 +6634,7 @@ export default function App() {
                               <p className="font-bold text-xs cursor-pointer" onClick={() => openBookDetailModal({ title: post.bookTitle, thumbnail: post.bookThumbnail, authors: post.bookAuthors })}>{post.bookTitle}</p>
                             )}
                             {post.bookAuthors && post.bookAuthors.length > 0 && (
-                              <p 
+                              <p
                                 className="text-[10px] text-slate-500 dark:text-gray-400 cursor-pointer hover:text-indigo-500"
                                 onClick={() => {
                                   const authorName = post.bookAuthors?.[0];
@@ -6587,6 +6644,17 @@ export default function App() {
                                 {post.bookAuthors?.join(', ')}
                               </p>
                             )}
+                          </div>
+                        </div>
+                      )}
+                      {post.taggedWriterName && (
+                        <div className="flex items-center gap-3 mb-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-200 dark:border-purple-700">
+                          {post.taggedWriterImage && (
+                            <img src={post.taggedWriterImage} className="w-10 h-10 rounded-full object-cover border-2 border-purple-400" alt={post.taggedWriterName} onError={(e) => { e.target.style.display='none' }}/>
+                          )}
+                          <div>
+                            <p className="text-[10px] text-purple-500 dark:text-purple-400 font-bold uppercase tracking-wide"><PenTool size={10} className="inline mr-1"/>{lang === 'es' ? 'Escritor' : 'Writer'}</p>
+                            <p className="text-sm font-bold">{post.taggedWriterName}</p>
                           </div>
                         </div>
                       )}
@@ -6851,7 +6919,13 @@ export default function App() {
             </div>
             
             <div className="space-y-3">
-              <button 
+              <button
+                onClick={() => setShowMyReadingPlans(true)}
+                className="w-full py-4 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm uppercase transition-all flex items-center justify-center gap-2"
+              >
+                <Calendar size={18}/> {t.reading_plan}
+              </button>
+              <button
                 onClick={() => setShowWriters(true)}
                 className={`w-full py-4 rounded-3xl ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : theme === 'sunset' ? 'bg-amber-100 hover:bg-amber-200' : 'bg-slate-100 hover:bg-slate-200'} font-bold text-sm uppercase transition-all flex items-center justify-center gap-2`}
               >
@@ -6907,6 +6981,50 @@ export default function App() {
       {showFollowingModal && renderFollowModal(t.following_list, followingList, 'following')}
       {showFollowersModal && renderFollowModal(t.followers_list_full, followersList, 'followers')}
       {showMutualFriendsModal && renderFollowModal(t.mutual_friends, mutualFriendsList, 'mutual')}
+
+      {/* MODAL PLAN DE LECTURA (PERFIL) */}
+      {showMyReadingPlans && (
+        <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className={`${themeClasses.card} w-full max-w-md h-[90vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95`}>
+            <div className={`relative p-6 ${theme === 'dark' ? 'bg-indigo-800' : theme === 'sunset' ? 'bg-orange-500' : 'bg-indigo-600'} flex-shrink-0`}>
+              <h2 className="text-xl font-black text-white text-center">{t.reading_plan}</h2>
+              <button onClick={() => setShowMyReadingPlans(false)} className="absolute top-6 right-6 p-2 bg-white/20 text-white rounded-full">
+                <X size={24}/>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {myBooks.filter(b => b.status === 'reading').length === 0 ? (
+                <div className="text-center py-12">
+                  <BookOpen className="mx-auto text-slate-300 dark:text-gray-600 mb-3" size={40}/>
+                  <p className="text-sm text-slate-400">{lang === 'es' ? 'No tenés libros en plan de lectura activo' : 'No active reading plans'}</p>
+                </div>
+              ) : (
+                myBooks.filter(b => b.status === 'reading').map(book => (
+                  <div key={book.bookId} className={`${theme === 'dark' ? 'bg-gray-800' : theme === 'sunset' ? 'bg-amber-50' : 'bg-slate-50'} rounded-2xl p-4 border ${themeClasses.border}`}>
+                    <div className="flex gap-3 mb-3">
+                      <img src={book.thumbnail || 'https://via.placeholder.com/60x80?text=📖'} className="w-12 h-16 object-contain rounded-lg" alt={book.title}/>
+                      <div>
+                        <h3 className="font-bold text-sm">{book.title}</h3>
+                        <p className="text-xs text-slate-400">{Array.isArray(book.authors) ? book.authors.join(', ') : book.authors}</p>
+                      </div>
+                    </div>
+                    <ReadingPlanDetail
+                      book={book}
+                      onToggleCheckpoint={toggleCheckpoint}
+                      onSaveNote={saveCheckpointNote}
+                      onSavePage={saveCheckpointPage}
+                      t={t}
+                      theme={theme}
+                      checkpointNotes={checkpointNotes}
+                      currentPageInputs={currentPageInputs}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
