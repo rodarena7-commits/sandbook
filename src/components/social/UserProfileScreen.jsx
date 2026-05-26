@@ -184,6 +184,27 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
           {books && <span><b className="text-green-500">{books.filter(b=>b.status==='read').length}</b> leídos</span>}
         </div>
 
+        {/* Racha de lectura */}
+        {(() => {
+          const streak = fullUser.currentStreak || 0
+          if (streak < 1) return null
+          const today     = new Date().toISOString().slice(0, 10)
+          const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+          const active    = fullUser.lastReadDate === today || fullUser.lastReadDate === yesterday
+          if (!active) return null
+          return (
+            <div className="mt-3 flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-2xl px-3 py-2">
+              <span className="text-lg">🔥</span>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-orange-600">{streak} {streak === 1 ? 'día' : 'días'} seguidos</p>
+                {fullUser.longestStreak > 1 && (
+                  <p className="text-[10px] text-orange-400">Récord: {fullUser.longestStreak} días</p>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Recommendation input */}
         <div className="flex gap-2 mt-3">
           <input value={recMsg} onChange={e=>setRecMsg(e.target.value)} maxLength={120}
