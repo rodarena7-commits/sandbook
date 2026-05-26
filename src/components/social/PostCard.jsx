@@ -102,8 +102,16 @@ function MoreMenu({ isOwn, onEdit, onShare, onSendToUser, onRepost, onClose }) {
   )
 }
 
+function activeStreak(u) {
+  const streak = u?.currentStreak || 0
+  if (streak < 1) return 0
+  const today     = new Date().toISOString().slice(0, 10)
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  return (u.lastReadDate === today || u.lastReadDate === yesterday) ? streak : 0
+}
+
 // ── PostCard principal ───────────────────────────────────────
-export default function PostCard({ post, myUid, onLike, onDelete, onUserPress, onEdit, onRepost, onSendToUser }) {
+export default function PostCard({ post, myUid, authorUser, onLike, onDelete, onUserPress, onEdit, onRepost, onSendToUser }) {
   const liked     = (post.likedBy || []).includes(myUid)
   const isOwn     = post.uid === myUid
   const likeCount = post.likeCount || 0
@@ -146,10 +154,17 @@ export default function PostCard({ post, myUid, onLike, onDelete, onUserPress, o
           <Avatar photoURL={post.photoURL} displayName={post.displayName} />
         </button>
         <div className="flex-1 min-w-0">
-          <button onClick={() => onUserPress?.({ uid: post.uid, displayName: post.displayName, photoURL: post.photoURL })}
-            className="text-xs font-semibold text-slate-800 hover:text-amber-600 transition-colors">
-            {post.displayName || 'Lector'}
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => onUserPress?.({ uid: post.uid, displayName: post.displayName, photoURL: post.photoURL })}
+              className="text-xs font-semibold text-slate-800 hover:text-amber-600 transition-colors">
+              {post.displayName || 'Lector'}
+            </button>
+            {activeStreak(authorUser) > 0 && (
+              <span className="flex items-center gap-0.5 bg-orange-50 border border-orange-100 rounded-full px-1.5 py-0.5 text-[9px] font-bold text-orange-500 leading-none">
+                🔥{activeStreak(authorUser)}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1.5">
             <p className="text-[10px] text-slate-400">{timeAgo(post.createdAt)}</p>
             {post.editedAt && <p className="text-[10px] text-slate-300">· editado</p>}

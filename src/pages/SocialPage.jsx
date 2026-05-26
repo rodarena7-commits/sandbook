@@ -179,6 +179,10 @@ export default function SocialPage() {
 
   const followingSet = new Set(followingUids)
 
+  const userStreakMap = useMemo(() =>
+    Object.fromEntries(allUsers.map(u => [u.uid, u]))
+  , [allUsers])
+
   const readerInputRef = useRef(null)
   const authorInputRef = useRef(null)
 
@@ -332,6 +336,7 @@ export default function SocialPage() {
               </div>
               {posts.map(post => (
                 <PostCard key={post.id} post={post} myUid={user?.uid}
+                  authorUser={userStreakMap[post.uid]}
                   onLike={(postId,liked)=>toggleLike(postId,user.uid,liked)}
                   onDelete={deletePost}
                   onUserPress={setSelectedUser}
