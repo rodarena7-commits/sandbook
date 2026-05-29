@@ -81,5 +81,20 @@ export function useBooks(uid) {
     await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), { privateNotes: notes })
   }
 
-  return { books, loading, addBook, updateStatus, toggleFavorite, saveReview, removeBook, updateReaction, assignShelf, savePrivateNotes }
+  async function setCoReader(uid, bookId, coReader) {
+    const book = booksRef.current.find(b => b.bookId === bookId)
+    const existing = book?.coReaders || []
+    if (existing.some(r => r.uid === coReader.uid)) return
+    await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
+      coReaders: [...existing, { uid: coReader.uid, displayName: coReader.displayName || '', photoURL: coReader.photoURL || null }],
+    })
+  }
+
+  async function removeCoReader(uid, bookId, coReaderUid) {
+    const book = booksRef.current.find(b => b.bookId === bookId)
+    const updated = (book?.coReaders || []).filter(r => r.uid !== coReaderUid)
+    await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), { coReaders: updated })
+  }
+
+  return { books, loading, addBook, updateStatus, toggleFavorite, saveReview, removeBook, updateReaction, assignShelf, savePrivateNotes, setCoReader, removeCoReader }
 }

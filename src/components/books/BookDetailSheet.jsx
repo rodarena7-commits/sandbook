@@ -9,6 +9,7 @@ import { useAuthor } from '../../hooks/useAuthor'
 import { useBookStats } from '../../hooks/useBookStats'
 import ImagePickerSheet from '../ui/ImagePickerSheet'
 import CreatePlanSheet from './CreatePlanSheet'
+import CoReaderPickerSheet from './CoReaderPickerSheet'
 import { getGlobalCover, saveGlobalCover, getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 import { useMercadoLibrePrice } from '../../hooks/useMercadoLibrePrice'
 import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
@@ -400,6 +401,7 @@ export default function BookDetailSheet({
   book, onClose,
   // Library mode
   onStatusChange, onToggleFavorite, onSaveRating, onRemove, onOpenPlan, onSavePrivateNotes,
+  onSetCoReader, onRemoveCoReader,
   // Search mode (book not yet saved)
   onAdd,
   // Create plan from search (saves book + creates plan)
@@ -417,9 +419,10 @@ export default function BookDetailSheet({
 
   const [customThumb, setCustomThumb] = useState(book.customThumbnail || null)
   const [globalCover, setGlobalCover]   = useState(null)
-  const [showImgPicker, setShowImgPicker] = useState(false)
-  const [showPlanForm, setShowPlanForm]   = useState(false)
-  const [relatedBook, setRelatedBook]     = useState(null)
+  const [showImgPicker, setShowImgPicker]       = useState(false)
+  const [showPlanForm, setShowPlanForm]           = useState(false)
+  const [showCoReaderPicker, setShowCoReaderPicker] = useState(false)
+  const [relatedBook, setRelatedBook]             = useState(null)
 
   const { mlPrice, mlLoading, mlUrl } = useMercadoLibrePrice(book)
 
@@ -600,6 +603,45 @@ export default function BookDetailSheet({
                   {rating > 0 && <p className="text-xs text-slate-400 mt-1">{RATING_LABELS[rating]}</p>}
                 </div>
               </>
+            )}
+
+            {/* Co-readers */}
+            {isLibrary && (
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Leyendo con</p>
+                  <button
+                    onClick={() => setShowCoReaderPicker(true)}
+                    className="text-xs text-amber-500 font-medium active:scale-95 transition-all"
+                  >
+                    + Agregar
+                  </button>
+                </div>
+                {(book.coReaders || []).length === 0 ? (
+                  <p className="text-xs text-slate-400">Nadie aún. ¿Tenés un compañero de lectura?</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {book.coReaders.map(r => (
+                      <div key={r.uid} className="flex items-center gap-2.5">
+                        {r.photoURL ? (
+                          <img src={r.photoURL} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-200" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-blue-600">{(r.displayName || '?')[0].toUpperCase()}</span>
+                          </div>
+                        )}
+                        <p className="text-sm text-slate-700 flex-1">{r.displayName || 'Usuario'}</p>
+                        <button
+                          onClick={() => onRemoveCoReader?.(book.bookId, r.uid)}
+                          className="text-slate-300 hover:text-red-400 transition-colors p-1"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Categories */}
@@ -844,6 +886,22 @@ export default function BookDetailSheet({
           </button>
           <img src={cover} alt={book.title} className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain" onClick={e => e.stopPropagation()} />
         </div>
+      )}
+
+      {/* Co-reader picker */}
+      {showCoReaderPicker && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[69]" onClick={() => setShowCoReaderPicker(false)} />
+          <CoReaderPickerSheet
+            myUid={user?.uid}
+            existingUids={(book.coReaders || []).map(r => r.uid)}
+            onSelect={coReader => {
+              onSetCoReader?.(book.bookId, coReader)
+              setShowCoReaderPicker(false)
+            }}
+            onClose={() => setShowCoReaderPicker(false)}
+          />
+        </>
       )}
 
       {/* Libro relacionado — siempre en modo descubrimiento (no biblioteca) */}

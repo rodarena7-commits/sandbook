@@ -58,6 +58,19 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
         >
           <Star size={13} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
         </button>
+
+        {/* Co-reader avatars */}
+        {book.coReaders?.length > 0 && (
+          <div className="absolute bottom-1.5 left-1.5 flex -space-x-1.5">
+            {book.coReaders.slice(0, 2).map(r => (
+              r.photoURL
+                ? <img key={r.uid} src={r.photoURL} alt={r.displayName} className="w-5 h-5 rounded-full border-2 border-white object-cover shadow-sm" />
+                : <div key={r.uid} className="w-5 h-5 rounded-full border-2 border-white bg-blue-400 flex items-center justify-center shadow-sm">
+                    <span className="text-[7px] text-white font-bold">{(r.displayName || '?')[0].toUpperCase()}</span>
+                  </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Info */}

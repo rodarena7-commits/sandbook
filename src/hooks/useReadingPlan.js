@@ -1,4 +1,4 @@
-import { doc, updateDoc, increment, deleteField } from 'firebase/firestore'
+import { doc, updateDoc, deleteField } from 'firebase/firestore'
 import { db } from '../firebase'
 import { logReadingActivity } from './useStreak'
 
@@ -62,17 +62,13 @@ export async function createRelaxPlan(uid, bookId, totalPages) {
   })
 }
 
-export async function updateRelaxPage(uid, bookId, newPage, diffPages) {
+export async function updateRelaxPage(uid, bookId, newPage) {
   const today = new Date().toISOString().slice(0, 10)
-  const updates = {
+  await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
     currentPage: Number(newPage),
     [`dailyHistory.${today}.endPage`]: Number(newPage),
-  }
-  if (diffPages > 0) {
-    updates[`dailyHistory.${today}.pagesRead`] = increment(diffPages)
-    logReadingActivity(uid)
-  }
-  await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), updates)
+  })
+  logReadingActivity(uid)
 }
 
 export async function addRelaxNote(uid, bookId, id, page, text) {

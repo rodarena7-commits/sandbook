@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import {
   ArrowLeft, Bookmark, Trash2, PenLine, Plus, X, Coffee,
 } from 'lucide-react'
@@ -33,8 +33,6 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
   const [newNoteText,   setNewNoteText]   = useState('')
   const [newNotePage,   setNewNotePage]   = useState(String(book.currentPage || 0))
 
-  const prevPage = useRef(Number(book.currentPage) || 0)
-
   const saveNoteDebounced = useCallback(
     debounce(val => savePlanMeta(uid, book.bookId, 'relaxNote', val), 800),
     []
@@ -42,17 +40,13 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
 
   async function handlePageChange(val) {
     const newPage = Number(val)
-    const diff = Math.max(0, newPage - prevPage.current)
     setCurrentPage(val)
-
     const today = new Date().toISOString().slice(0, 10)
-    setDailyHistory(prev => {
-      const day = prev[today] || { pagesRead: 0, endPage: 0 }
-      return { ...prev, [today]: { endPage: newPage, pagesRead: (day.pagesRead || 0) + diff } }
-    })
-
-    prevPage.current = newPage
-    await updateRelaxPage(uid, book.bookId, newPage, diff)
+    setDailyHistory(prev => ({
+      ...prev,
+      [today]: { ...prev[today], endPage: newPage },
+    }))
+    await updateRelaxPage(uid, book.bookId, newPage)
   }
 
   async function handleAddNote() {
@@ -77,10 +71,17 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
     onClose()
   }
 
-  const cover         = book.customThumbnail || book.thumbnail
-  const sortedHistory = Object.entries(dailyHistory).sort((a, b) => b[0].localeCompare(a[0]))
+  const cover = book.customThumbnail || book.thumbnail
+
+  // Compute daily progress as endPage diff between consecutive days (not cumulative input)
+  const sortedAsc = Object.entries(dailyHistory).sort((a, b) => a[0].localeCompare(b[0]))
+  const historyWithProgress = sortedAsc.map(([date, data], i) => {
+    const prevEnd = i > 0 ? (sortedAsc[i - 1][1].endPage || 0) : 0
+    return [date, { ...data, pagesRead: Math.max(0, (data.endPage || 0) - prevEnd) }]
+  })
+  const sortedHistory = [...historyWithProgress].reverse()
   const sortedNotes   = Object.entries(relaxNotes).sort((a, b) => b[1].createdAt.localeCompare(a[1].createdAt))
-  const totalRead     = sortedHistory.reduce((sum, [, d]) => sum + (d.pagesRead || 0), 0)
+  const totalRead     = historyWithProgress.reduce((sum, [, d]) => sum + d.pagesRead, 0)
 
   return (
     <div className="fixed inset-0 z-[60] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto">
