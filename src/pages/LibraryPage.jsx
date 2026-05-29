@@ -18,6 +18,7 @@ const STATUS_TABS = [
   { key: 'reading', label: 'Leyendo' },
   { key: 'read',    label: 'Leídos' },
   { key: 'fav',     label: 'Favoritos' },
+  { key: 'shared',  label: 'Compartidos' },
 ]
 
 const EMPTY_MESSAGES = {
@@ -25,6 +26,7 @@ const EMPTY_MESSAGES = {
   reading: { icon: '📖', text: 'No estás leyendo nada',         sub: 'Marcá un libro como "Leyendo"' },
   read:    { icon: '✅', text: 'Todavía no leíste ningún libro', sub: 'Marcá un libro como "Leído"' },
   fav:     { icon: '⭐', text: 'No tenés favoritos',             sub: 'Tocá la estrella en cualquier libro' },
+  shared:  { icon: '👥', text: 'Ningún libro compartido',        sub: 'Abrí un libro y agregá un compañero de lectura' },
 }
 
 // ── Create/Rename Shelf Modal ──────────────────────────────
@@ -163,6 +165,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   const filtered = useMemo(() => {
     let list = books
     if (statusTab === 'fav')        list = list.filter(b => b.isFavorite)
+    else if (statusTab === 'shared') list = list.filter(b => b.coReaders?.length > 0)
     else if (statusTab === 'plan')  list = list.filter(b => !!b.readingPlan || !!b.relaxPlan || !!b.biblePlan)
     else if (statusTab !== 'all')   list = list.filter(b => b.status === statusTab)
     if (shelfFilter !== null)       list = list.filter(b => b.shelfId === shelfFilter)

@@ -6,5 +6,8 @@ dist/
 scripts/serviceAccount.json
 scripts/*adminsdk*.json
 scripts/*firebase*.json
+service-key.json
+*service-account*.json
+*adminsdk*.json
 scripts/node_modules/
 scripts/package-lock.json
