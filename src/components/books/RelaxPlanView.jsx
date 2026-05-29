@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react'
 import {
-  ArrowLeft, Bookmark, Trash2, PenLine, Plus, X, Coffee,
+  ArrowLeft, Bookmark, Trash2, PenLine, Plus, X, Coffee, Pencil, Check,
 } from 'lucide-react'
 import {
   updateRelaxPage, addRelaxNote, deleteRelaxNote,
   savePlanMeta, deleteRelaxPlan,
+  deleteRelaxHistoryDay, updateRelaxHistoryDay,
 } from '../../hooks/useReadingPlan'
 
 function debounce(fn, ms) {
@@ -32,6 +33,8 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
   const [showAddNote,   setShowAddNote]   = useState(false)
   const [newNoteText,   setNewNoteText]   = useState('')
   const [newNotePage,   setNewNotePage]   = useState(String(book.currentPage || 0))
+  const [editingDay,    setEditingDay]    = useState(null)   // date string being edited
+  const [editDayPage,   setEditDayPage]   = useState('')
 
   const saveNoteDebounced = useCallback(
     debounce(val => savePlanMeta(uid, book.bookId, 'relaxNote', val), 800),
@@ -63,6 +66,18 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
   async function handleDeleteNote(noteId) {
     setRelaxNotes(prev => { const n = { ...prev }; delete n[noteId]; return n })
     await deleteRelaxNote(uid, book.bookId, noteId)
+  }
+
+  async function handleDeleteHistoryDay(date) {
+    setDailyHistory(prev => { const n = { ...prev }; delete n[date]; return n })
+    await deleteRelaxHistoryDay(uid, book.bookId, date)
+  }
+
+  async function handleSaveHistoryDay(date) {
+    const newPage = Number(editDayPage)
+    setDailyHistory(prev => ({ ...prev, [date]: { ...prev[date], endPage: newPage } }))
+    setEditingDay(null)
+    await updateRelaxHistoryDay(uid, book.bookId, date, newPage)
   }
 
   async function handleDelete() {
@@ -147,19 +162,64 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
           ) : (
             <div className="flex flex-col gap-2">
               {sortedHistory.map(([date, data]) => (
-                <div key={date} className="bg-white rounded-2xl border border-slate-100 px-4 py-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 capitalize">{formatDate(date)}</p>
-                    {data.endPage > 0 && (
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        {isBible ? `Versículo: ${data.endPage}` : `Marcador en pág. ${data.endPage}`}
-                      </p>
-                    )}
-                  </div>
-                  {(data.pagesRead || 0) > 0 && (
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-blue-500">{data.pagesRead}</p>
-                      <p className="text-[10px] text-slate-400">{labelHistorial}</p>
+                <div key={date} className="bg-white rounded-2xl border border-slate-100 px-4 py-3">
+                  {editingDay === date ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-slate-700 capitalize mb-1">{formatDate(date)}</p>
+                        <input
+                          type={isBible ? 'text' : 'number'}
+                          inputMode={isBible ? 'text' : 'numeric'}
+                          value={editDayPage}
+                          onChange={e => setEditDayPage(e.target.value)}
+                          autoFocus
+                          className="w-full px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-300"
+                          placeholder={isBible ? 'Versículo' : 'Página'}
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleSaveHistoryDay(date)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-white flex-shrink-0"
+                      >
+                        <Check size={14} />
+                      </button>
+                      <button
+                        onClick={() => setEditingDay(null)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 flex-shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700 capitalize">{formatDate(date)}</p>
+                        {data.endPage > 0 && (
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {isBible ? `Versículo: ${data.endPage}` : `Marcador en pág. ${data.endPage}`}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {(data.pagesRead || 0) > 0 && (
+                          <div className="text-right mr-2">
+                            <p className="text-lg font-bold text-blue-500">{data.pagesRead}</p>
+                            <p className="text-[10px] text-slate-400">{labelHistorial}</p>
+                          </div>
+                        )}
+                        <button
+                          onClick={() => { setEditingDay(date); setEditDayPage(String(data.endPage || '')) }}
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-500 transition-colors"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteHistoryDay(date)}
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

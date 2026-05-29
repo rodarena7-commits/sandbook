@@ -83,6 +83,18 @@ export async function deleteRelaxNote(uid, bookId, noteId) {
   })
 }
 
+export async function deleteRelaxHistoryDay(uid, bookId, date) {
+  await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
+    [`dailyHistory.${date}`]: deleteField(),
+  })
+}
+
+export async function updateRelaxHistoryDay(uid, bookId, date, endPage) {
+  await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
+    [`dailyHistory.${date}.endPage`]: Number(endPage),
+  })
+}
+
 export async function deleteRelaxPlan(uid, bookId) {
   await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
     relaxPlan:    deleteField(),
