@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 const ML_API_BASE = 'https://sandbook-api.onrender.com'
 
 function buildMlSearchUrl(book) {
-  const q = (book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim())
+  const q = `${book.title} ${book.authors?.[0] || ''}`.trim()
     .toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9\s]/g, '')
@@ -27,7 +27,7 @@ export function useMercadoLibrePrice(book) {
     let cancelled = false
     async function fetchPrice() {
       try {
-        const q   = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
+        const q   = `${book.title} ${book.authors?.[0] || ''}`.trim()
         const res  = await fetch(`${ML_API_BASE}/ml-price?q=${encodeURIComponent(q)}`)
         const data = await res.json()
         if (!cancelled && data.price) {
