@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   ArrowLeft, Bookmark, Trash2, PenLine, Plus, X, Coffee, Pencil, Check,
 } from 'lucide-react'
@@ -17,7 +17,7 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
-export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = false }) {
+export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = false, onFinish }) {
   const plan       = book.relaxPlan || {}
   const totalPages = plan.totalPages || 0
   // Etiquetas adaptadas según si es Biblia o libro normal
@@ -35,11 +35,19 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
   const [newNotePage,   setNewNotePage]   = useState(String(book.currentPage || 0))
   const [editingDay,    setEditingDay]    = useState(null)   // date string being edited
   const [editDayPage,   setEditDayPage]   = useState('')
+  const [showFinished, setShowFinished] = useState(false)
+  const wasComplete = useRef(totalPages > 0 && Number(book.currentPage || 0) >= totalPages)
 
   const saveNoteDebounced = useCallback(
     debounce(val => savePlanMeta(uid, book.bookId, 'relaxNote', val), 800),
     []
   )
+
+  useEffect(() => {
+    const complete = totalPages > 0 && Number(currentPage) >= totalPages
+    if (complete && !wasComplete.current) setShowFinished(true)
+    wasComplete.current = complete
+  }, [currentPage])
 
   async function handlePageChange(val) {
     const newPage = Number(val)
@@ -336,6 +344,21 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
 
         <div className="h-4" />
       </div>
+
+      {/* Completion modal */}
+      {showFinished && onFinish && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6 bg-black/40">
+          <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl text-center">
+            <p className="text-4xl mb-3">🎉</p>
+            <p className="font-bold text-slate-800 mb-1">¡Terminaste el libro!</p>
+            <p className="text-sm text-slate-500 mb-4">Llegaste a la última página. ¿Lo marcás como leído?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setShowFinished(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Después</button>
+              <button onClick={() => { onFinish(); onClose() }} className="flex-1 py-3 bg-green-500 text-white rounded-2xl text-sm font-semibold">✅ Marcar como leído</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirm */}
       {showDelete && (

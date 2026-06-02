@@ -532,6 +532,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
           uid={user.uid}
           onClose={() => setViewPlanBook(null)}
           onDelete={() => setViewPlanBook(null)}
+          onFinish={() => updateStatus(user.uid, viewPlanBook.bookId, 'read')}
         />
       )}
 
@@ -543,6 +544,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
           isBible={isBibleBook(viewRelaxBook)}
           onClose={() => setViewRelaxBook(null)}
           onDelete={() => setViewRelaxBook(null)}
+          onFinish={() => updateStatus(user.uid, viewRelaxBook.bookId, 'read')}
         />
       )}
 

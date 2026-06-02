@@ -194,7 +194,7 @@ function WeekSection({ weekNum, days, dayData, startDate, uid, bookId, onToggle 
 }
 
 // ── Main View ──────────────────────────────────────────────
-export default function ReadingPlanView({ book, uid, onClose, onDelete }) {
+export default function ReadingPlanView({ book, uid, onClose, onDelete, onFinish }) {
   const plan      = book.readingPlan
   const allDays   = calculatePlan(plan.totalPages, plan.totalDays)
   const startDate = plan.startDate || new Date().toISOString().slice(0,10)
@@ -203,6 +203,10 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete }) {
   const [currentPage, setCurrentPage] = useState(book.currentPage || 0)
   const [planNote, setPlanNote]     = useState(book.planNote || '')
   const [showDelete, setShowDelete] = useState(false)
+  const [showFinished, setShowFinished] = useState(false)
+  const wasComplete = useRef(
+    allDays.length > 0 && Object.values(book.planDays || {}).filter(d => d?.checked).length === allDays.length
+  )
 
   const savePageDebounced = useCallback(debounce(val =>
     savePlanMeta(uid, book.bookId, 'currentPage', Number(val)), 800), [])
@@ -214,6 +218,12 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete }) {
     setDayData(d => ({ ...d, [day]: next }))
     await updatePlanDay(uid, book.bookId, day, next)
   }
+
+  useEffect(() => {
+    const complete = allDays.length > 0 && Object.values(dayData).filter(d => d?.checked).length === allDays.length
+    if (complete && !wasComplete.current) setShowFinished(true)
+    wasComplete.current = complete
+  }, [dayData])
 
   async function handleDelete() {
     await deleteReadingPlan(uid, book.bookId)
@@ -314,6 +324,21 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete }) {
         ))}
         <div className="h-4" />
       </div>
+
+      {/* Completion modal */}
+      {showFinished && onFinish && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6 bg-black/40">
+          <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl text-center">
+            <p className="text-4xl mb-3">🎉</p>
+            <p className="font-bold text-slate-800 mb-1">¡Completaste el plan!</p>
+            <p className="text-sm text-slate-500 mb-4">Terminaste todos los días de lectura.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setShowFinished(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Después</button>
+              <button onClick={() => { onFinish(); onClose() }} className="flex-1 py-3 bg-green-500 text-white rounded-2xl text-sm font-semibold">✅ Marcar como leído</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirm */}
       {showDelete && (

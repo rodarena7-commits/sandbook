@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
-import { BookOpen, Star, LogOut, Pencil, Check, X, Bell, BellOff, Camera, Settings, Loader2, ChevronRight, ArrowLeft, Upload, CalendarDays, Share2 } from 'lucide-react'
+import { BookOpen, Star, LogOut, Pencil, Check, X, Bell, BellOff, Camera, Settings, Loader2, ChevronRight, ArrowLeft, Upload, CalendarDays, Share2, Plus } from 'lucide-react'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
@@ -9,6 +9,12 @@ import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import SettingsSheet from '../components/profile/SettingsSheet'
 import { respondToLoan } from '../hooks/useLoanRequests'
 import { cleanThumbnail } from '../utils/cleanThumbnail'
+import ReadingPlanView from '../components/books/ReadingPlanView'
+import RelaxPlanView from '../components/books/RelaxPlanView'
+import BiblePlanView from '../components/books/BiblePlanView'
+import CreatePlanSheet from '../components/books/CreatePlanSheet'
+import { createReadingPlan, createRelaxPlan } from '../hooks/useReadingPlan'
+import { isBibleBook, initBiblePlan } from '../hooks/useBibleProgress'
 import { useFavoriteAuthors } from '../hooks/useFavoriteAuthors'
 import { getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../hooks/useGlobalMedia'
 import UserProfileScreen from '../components/social/UserProfileScreen'
@@ -416,10 +422,203 @@ function BookRow({ book }) {
   )
 }
 
+// ── Plan Screen ────────────────────────────────────────────
+function PlanScreen({ books, uid, updateStatus, onClose }) {
+  const planBooks    = books.filter(b => b.readingPlan || b.relaxPlan || b.biblePlan)
+  const nonPlanBooks = books.filter(b => !b.readingPlan && !b.relaxPlan && !b.biblePlan)
+
+  const [viewPlanBook,  setViewPlanBook]  = useState(null)
+  const [viewRelaxBook, setViewRelaxBook] = useState(null)
+  const [viewBibleBook, setViewBibleBook] = useState(null)
+  const [showPicker,    setShowPicker]    = useState(false)
+  const [createBook,    setCreateBook]    = useState(null)
+
+  if (viewPlanBook) return (
+    <ReadingPlanView
+      book={books.find(b => b.bookId === viewPlanBook.bookId) || viewPlanBook}
+      uid={uid}
+      onClose={() => setViewPlanBook(null)}
+      onDelete={() => setViewPlanBook(null)}
+      onFinish={() => { updateStatus(uid, viewPlanBook.bookId, 'read'); setViewPlanBook(null) }}
+    />
+  )
+
+  if (viewRelaxBook) return (
+    <RelaxPlanView
+      book={books.find(b => b.bookId === viewRelaxBook.bookId) || viewRelaxBook}
+      uid={uid}
+      isBible={isBibleBook(viewRelaxBook)}
+      onClose={() => setViewRelaxBook(null)}
+      onDelete={() => setViewRelaxBook(null)}
+      onFinish={() => { updateStatus(uid, viewRelaxBook.bookId, 'read'); setViewRelaxBook(null) }}
+    />
+  )
+
+  if (viewBibleBook) return (
+    <BiblePlanView
+      book={books.find(b => b.bookId === viewBibleBook.bookId) || viewBibleBook}
+      uid={uid}
+      onClose={() => setViewBibleBook(null)}
+      onDelete={() => setViewBibleBook(null)}
+    />
+  )
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="bg-white shadow-sm flex items-center gap-3 px-4 pt-12 pb-3 flex-shrink-0">
+        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 flex-shrink-0">
+          <ArrowLeft size={16} />
+        </button>
+        <h1 className="flex-1 text-base font-bold text-slate-800">Mi Plan de Lectura</h1>
+        <button
+          onClick={() => setShowPicker(true)}
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-amber-500 text-white shadow-sm active:scale-95 transition-all"
+        >
+          <Plus size={16} />
+        </button>
+      </div>
+
+      {/* Plan books list */}
+      <div className="overflow-y-auto flex-1 px-4 py-4 flex flex-col gap-3">
+        {planBooks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+            <CalendarDays size={40} className="mb-3 text-slate-200" />
+            <p className="font-semibold text-slate-500 text-sm">Sin planes activos</p>
+            <p className="text-xs mt-1">Tocá + para agregar un libro</p>
+          </div>
+        ) : (
+          planBooks.map(book => {
+            const cover = cleanThumbnail(book.customThumbnail || book.thumbnail)
+            const metaPct = book.readingPlan?.totalDays > 0
+              ? Math.round((Object.values(book.planDays || {}).filter(d => d?.checked).length / book.readingPlan.totalDays) * 100)
+              : null
+            const relaxPct = book.relaxPlan?.totalPages > 0
+              ? Math.min(100, Math.round(((book.currentPage || 0) / book.relaxPlan.totalPages) * 100))
+              : null
+            const pct = metaPct ?? relaxPct ?? null
+
+            return (
+              <button
+                key={book.bookId}
+                onClick={() => {
+                  if (book.relaxPlan)        setViewRelaxBook(book)
+                  else if (book.readingPlan) setViewPlanBook(book)
+                  else if (book.biblePlan)   setViewBibleBook(book)
+                }}
+                className="flex gap-3 items-center bg-white rounded-2xl px-3 py-3 shadow-sm border border-slate-100 text-left active:bg-slate-50 transition-all"
+              >
+                {cover ? (
+                  <img src={cover} alt="" className="w-10 h-14 object-cover rounded-xl shadow-sm flex-shrink-0" />
+                ) : (
+                  <div className="w-10 h-14 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <BookOpen size={14} className="text-slate-300" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800 line-clamp-1">{book.title}</p>
+                  {book.authors?.length > 0 && (
+                    <p className="text-[10px] text-slate-400 mb-1.5 line-clamp-1">{book.authors[0]}</p>
+                  )}
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    book.relaxPlan ? 'bg-blue-100 text-blue-600'
+                    : book.biblePlan ? 'bg-purple-100 text-purple-600'
+                    : 'bg-amber-100 text-amber-600'
+                  }`}>
+                    {book.biblePlan ? 'Plan Bíblico' : book.relaxPlan ? 'Plan Relax' : 'Plan con Meta'}
+                  </span>
+                  {pct !== null && (
+                    <>
+                      <div className="w-full h-1 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${book.relaxPlan ? 'bg-blue-400' : 'bg-amber-400'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{pct}% completado</p>
+                    </>
+                  )}
+                </div>
+                <ChevronRight size={14} className="text-slate-300 flex-shrink-0" />
+              </button>
+            )
+          })
+        )}
+      </div>
+
+      {/* Book picker sheet */}
+      {showPicker && (
+        <div className="fixed inset-0 z-[65] flex items-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowPicker(false)} />
+          <div className="relative w-full bg-white rounded-t-3xl shadow-2xl max-h-[75vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100 flex-shrink-0">
+              <h3 className="font-bold text-slate-800">Agregar libro al plan</h3>
+              <button onClick={() => setShowPicker(false)} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                <X size={14} />
+              </button>
+            </div>
+            {nonPlanBooks.length === 0 ? (
+              <div className="flex flex-col items-center py-12 text-slate-400">
+                <p className="text-sm text-center px-6">Todos los libros de tu biblioteca ya tienen un plan activo</p>
+              </div>
+            ) : (
+              <div className="overflow-y-auto flex-1 px-4 py-3 flex flex-col gap-2 pb-8">
+                {nonPlanBooks.map(book => {
+                  const cover = cleanThumbnail(book.customThumbnail || book.thumbnail)
+                  return (
+                    <button
+                      key={book.bookId}
+                      onClick={() => { setCreateBook(book); setShowPicker(false) }}
+                      className="flex gap-3 items-center bg-slate-50 rounded-2xl px-3 py-2.5 text-left active:bg-amber-50 transition-all"
+                    >
+                      {cover ? (
+                        <img src={cover} alt="" className="w-8 h-11 object-cover rounded-lg shadow-sm flex-shrink-0" />
+                      ) : (
+                        <div className="w-8 h-11 bg-slate-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <BookOpen size={12} className="text-slate-300" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-800 line-clamp-1">{book.title}</p>
+                        {book.authors?.length > 0 && (
+                          <p className="text-[10px] text-slate-400 line-clamp-1">{book.authors[0]}</p>
+                        )}
+                      </div>
+                      <Plus size={14} className="text-amber-400 flex-shrink-0" />
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Create plan sheet */}
+      {createBook && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[65]" onClick={() => setCreateBook(null)} />
+          <CreatePlanSheet
+            book={createBook}
+            isBible={isBibleBook(createBook)}
+            onCreate={async (type, pages, days) => {
+              if (type === 'relax')       await createRelaxPlan(uid, createBook.bookId, pages)
+              else if (type === 'bible')  await initBiblePlan(uid, createBook.bookId)
+              else                        await createReadingPlan(uid, createBook.bookId, pages, days)
+              setCreateBook(null)
+            }}
+            onClose={() => setCreateBook(null)}
+          />
+        </>
+      )}
+    </div>
+  )
+}
+
 // ── Main Page ──────────────────────────────────────────────
 export default function ProfilePage({ onGoToPlan }) {
   const { user, profile, setProfile, logout } = useAuth()
-  const { books } = useBooks(user?.uid)
+  const { books, updateStatus } = useBooks(user?.uid)
   const { authors: favAuthors, updateAuthorPhoto } = useFavoriteAuthors(user?.uid)
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(user?.uid)
 
@@ -427,6 +626,7 @@ export default function ProfilePage({ onGoToPlan }) {
   const [pickerTarget, setPickerTarget] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [userListMode, setUserListMode] = useState(null) // 'following' | 'followers' | 'mutual'
+  const [showPlanScreen, setShowPlanScreen] = useState(false)
 
   const stats = useMemo(() => ({
     total:     books.length,
@@ -585,7 +785,7 @@ export default function ProfilePage({ onGoToPlan }) {
           <Share2 size={16}/> Invitar
         </button>
         <button
-          onClick={() => onGoToPlan?.()}
+          onClick={() => setShowPlanScreen(true)}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-amber-500 text-white text-sm font-semibold shadow-sm active:scale-95 transition-all"
         >
           <CalendarDays size={16}/> En plan
@@ -671,6 +871,16 @@ export default function ProfilePage({ onGoToPlan }) {
           <p className="font-semibold text-slate-500">Tu biblioteca está vacía</p>
           <p className="text-xs mt-1">Buscá libros en la pestaña Buscar para empezar</p>
         </div>
+      )}
+
+      {/* Plan Screen */}
+      {showPlanScreen && (
+        <PlanScreen
+          books={books}
+          uid={user?.uid}
+          updateStatus={updateStatus}
+          onClose={() => setShowPlanScreen(false)}
+        />
       )}
 
       {/* User list modal */}
