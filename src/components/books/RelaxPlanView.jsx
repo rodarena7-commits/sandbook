@@ -35,8 +35,8 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
   const [newNotePage,   setNewNotePage]   = useState(String(book.currentPage || 0))
   const [editingDay,    setEditingDay]    = useState(null)   // date string being edited
   const [editDayPage,   setEditDayPage]   = useState('')
-  const [showFinished, setShowFinished] = useState(false)
   const wasComplete = useRef(totalPages > 0 && Number(book.currentPage || 0) >= totalPages)
+  const isComplete  = totalPages > 0 && Number(currentPage) >= totalPages
 
   const saveNoteDebounced = useCallback(
     debounce(val => savePlanMeta(uid, book.bookId, 'relaxNote', val), 800),
@@ -45,7 +45,7 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
 
   useEffect(() => {
     const complete = totalPages > 0 && Number(currentPage) >= totalPages
-    if (complete && !wasComplete.current) setShowFinished(true)
+    if (complete && !wasComplete.current) onFinish?.()
     wasComplete.current = complete
   }, [currentPage])
 
@@ -130,8 +130,8 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
 
       {/* Bookmark bar */}
       <div className="bg-white px-4 pb-3 pt-2 flex-shrink-0 border-b border-slate-100">
-        <div className="flex items-center gap-2 bg-blue-50 rounded-2xl px-3 py-2.5 border border-blue-100">
-          <Bookmark size={14} className="text-blue-500 flex-shrink-0" />
+        <div className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 border ${isComplete ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-100'}`}>
+          <Bookmark size={14} className={`${isComplete ? 'text-green-500' : 'text-blue-500'} flex-shrink-0`} />
           <input
             type={isBible ? 'text' : 'number'}
             min="0" max={totalPages || 99999}
@@ -151,10 +151,20 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
       <div className="overflow-y-auto flex-1 px-4 py-4 flex flex-col gap-4">
 
         {/* Stats summary */}
-        {totalRead > 0 && (
-          <div className="bg-blue-500 rounded-2xl p-4 text-white text-center shadow-sm">
-            <p className="text-3xl font-bold">{totalRead}</p>
-            <p className="text-xs text-blue-100 mt-0.5">{labelHistorial} en total</p>
+        {(totalRead > 0 || isComplete) && (
+          <div className={`${isComplete ? 'bg-green-500' : 'bg-blue-500'} rounded-2xl p-4 text-white text-center shadow-sm`}>
+            {isComplete ? (
+              <>
+                <p className="text-2xl mb-1">✅</p>
+                <p className="text-sm font-bold">¡Libro terminado!</p>
+                <p className="text-xs text-white/80 mt-0.5">Marcado como leído</p>
+              </>
+            ) : (
+              <>
+                <p className="text-3xl font-bold">{totalRead}</p>
+                <p className="text-xs text-blue-100 mt-0.5">{labelHistorial} en total</p>
+              </>
+            )}
           </div>
         )}
 
@@ -344,21 +354,6 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = 
 
         <div className="h-4" />
       </div>
-
-      {/* Completion modal */}
-      {showFinished && onFinish && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6 bg-black/40">
-          <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl text-center">
-            <p className="text-4xl mb-3">🎉</p>
-            <p className="font-bold text-slate-800 mb-1">¡Terminaste el libro!</p>
-            <p className="text-sm text-slate-500 mb-4">Llegaste a la última página. ¿Lo marcás como leído?</p>
-            <div className="flex gap-2">
-              <button onClick={() => setShowFinished(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Después</button>
-              <button onClick={() => { onFinish(); onClose() }} className="flex-1 py-3 bg-green-500 text-white rounded-2xl text-sm font-semibold">✅ Marcar como leído</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete confirm */}
       {showDelete && (

@@ -531,11 +531,13 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
                     <>
                       <div className="w-full h-1 bg-slate-100 rounded-full mt-2 overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all ${book.relaxPlan ? 'bg-blue-400' : 'bg-amber-400'}`}
+                          className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-green-400' : book.relaxPlan ? 'bg-blue-400' : 'bg-amber-400'}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{pct}% completado</p>
+                      <p className={`text-[10px] mt-0.5 ${pct >= 100 ? 'text-green-500 font-medium' : 'text-slate-400'}`}>
+                        {pct >= 100 ? '✅ Completado' : `${pct}% completado`}
+                      </p>
                     </>
                   )}
                 </div>

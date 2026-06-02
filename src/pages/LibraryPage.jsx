@@ -375,13 +375,13 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                               {relaxPct !== null && (
                                 <div className="flex items-center gap-1.5 mb-1">
                                   <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-400 rounded-full" style={{ width: `${relaxPct}%` }} />
+                                    <div className={`h-full rounded-full ${relaxPct >= 100 ? 'bg-green-400' : 'bg-blue-400'}`} style={{ width: `${relaxPct}%` }} />
                                   </div>
-                                  <span className="text-[10px] text-blue-500 font-medium flex-shrink-0">{relaxPct}%</span>
+                                  <span className={`text-[10px] font-medium flex-shrink-0 ${relaxPct >= 100 ? 'text-green-500' : 'text-blue-500'}`}>{relaxPct}%</span>
                                 </div>
                               )}
                               <p className="text-[10px] text-slate-400">
-                                ☕ Plan Relax{b.currentPage > 0 ? ` · Pág. ${b.currentPage}` : ''}
+                                {relaxPct >= 100 ? '✅ Completado' : `☕ Plan Relax${b.currentPage > 0 ? ` · Pág. ${b.currentPage}` : ''}`}
                               </p>
                             </div>
                           )}
