@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload, ShoppingCart, ExternalLink, Heart, Lock, Save } from 'lucide-react'
+import { X, Star, BookOpen, ChevronDown, Trash2, ZoomIn, Send, User, ThumbsUp, Users, ImagePlus, CalendarDays, Loader2, Upload, ShoppingCart, ExternalLink, Heart, Lock, Save, FileText, Pencil, Check } from 'lucide-react'
 import { useAuthorBooks } from '../../hooks/useAuthorBooks'
 import { doc, updateDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
@@ -12,6 +12,7 @@ import CreatePlanSheet from './CreatePlanSheet'
 import CoReaderPickerSheet from './CoReaderPickerSheet'
 import { getGlobalCover, saveGlobalCover, getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 import { useMercadoLibrePrice } from '../../hooks/useMercadoLibrePrice'
+import { useBookDemo } from '../../hooks/useBookDemo'
 import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
 import { useBookPosts } from '../../hooks/useBookPosts'
 
@@ -425,6 +426,11 @@ export default function BookDetailSheet({
   const [relatedBook, setRelatedBook]             = useState(null)
 
   const { mlPrice, mlLoading, mlUrl } = useMercadoLibrePrice(book)
+  const { demoUrl, saveDemo } = useBookDemo(book.bookId)
+  const isAdmin = user?.email === 'rodrigo.n.arena@hotmail.com'
+  const [editingDemo, setEditingDemo] = useState(false)
+  const [demoInput,   setDemoInput]   = useState('')
+  const isGoogleBook = book.bookId && !book.bookId.startsWith('ol_')
 
   // Load global cover if no personal/book cover
   useEffect(() => {
@@ -659,6 +665,63 @@ export default function BookDetailSheet({
               const q         = book.isbn13 || book.isbn10 || `${book.title} ${book.authors?.[0] || ''}`.trim()
               const amazonUrl = `https://www.amazon.es/s?k=${encodeURIComponent(q)}&i=stripbooks&tag=${AMAZON_TAG}`
               return (
+                <>
+                {/* Vista Previa */}
+                {(isGoogleBook || demoUrl || isAdmin) && (
+                  <div className="mb-5">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Vista Previa</p>
+                      {isAdmin && (
+                        <button
+                          onClick={() => { setEditingDemo(v => !v); setDemoInput(demoUrl || '') }}
+                          className="text-[10px] text-amber-500 font-medium flex items-center gap-1"
+                        >
+                          <Pencil size={10} /> {demoUrl ? 'Editar' : 'Agregar demo'}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Admin: input para URL de demo */}
+                    {isAdmin && editingDemo && (
+                      <div className="flex gap-2 mb-2">
+                        <input
+                          value={demoInput}
+                          onChange={e => setDemoInput(e.target.value)}
+                          placeholder="URL del PDF o página de muestra…"
+                          className="flex-1 px-3 py-2 bg-slate-100 rounded-xl text-xs text-slate-700 outline-none focus:ring-2 focus:ring-amber-400"
+                        />
+                        <button
+                          onClick={async () => { await saveDemo(demoInput); setEditingDemo(false) }}
+                          className="w-9 h-9 flex items-center justify-center rounded-xl bg-amber-500 text-white flex-shrink-0"
+                        >
+                          <Check size={14} />
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 flex-wrap">
+                      {isGoogleBook && (
+                        <a
+                          href={`https://books.google.com/books?id=${book.bookId}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-700 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
+                        >
+                          <BookOpen size={14} /> Google Books
+                        </a>
+                      )}
+                      {demoUrl && (
+                        <a
+                          href={demoUrl}
+                          target="_blank" rel="noopener noreferrer"
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
+                        >
+                          <FileText size={14} /> Demo / Muestra
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="mb-5">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dónde comprar</p>
                   <div className="flex gap-2 flex-wrap">
@@ -695,6 +758,7 @@ export default function BookDetailSheet({
                     </a>
                   </div>
                 </div>
+                </>
               )
             })()}
 
