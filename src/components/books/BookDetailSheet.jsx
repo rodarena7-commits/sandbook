@@ -702,11 +702,11 @@ export default function BookDetailSheet({
                     <div className="flex gap-2 flex-wrap">
                       {isGoogleBook && (
                         <a
-                          href={`https://books.google.com/books?id=${book.bookId}`}
+                          href={`https://books.google.com/books?id=${book.bookId}&printsec=frontcover`}
                           target="_blank" rel="noopener noreferrer"
                           className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-700 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
                         >
-                          <BookOpen size={14} /> Google Books
+                          <BookOpen size={14} /> Vista previa
                         </a>
                       )}
                       {demoUrl && (
