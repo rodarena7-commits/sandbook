@@ -16,20 +16,21 @@ import { useBookDemo } from '../../hooks/useBookDemo'
 import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
 import { useBookPosts } from '../../hooks/useBookPosts'
 
-const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca', ebook: 'Ebook' }
+const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca', ebook: 'Ebook', loaned: 'Prestado' }
 const STATUS_COLORS = {
   reading: 'bg-amber-500 text-white',
   read:    'bg-green-500 text-white',
   pending: 'bg-slate-200 text-slate-600',
   library: 'bg-blue-500 text-white',
   ebook:   'bg-purple-500 text-white',
+  loaned:  'bg-rose-500 text-white',
 }
 const ADD_OPTIONS = [
   { key: 'reading', label: 'Leyendo ahora',  color: 'bg-amber-500 text-white' },
   { key: 'pending', label: 'Quiero leer',     color: 'bg-slate-100 text-slate-700 border border-slate-200' },
   { key: 'read',    label: 'Ya lo leí',       color: 'bg-green-100 text-green-700' },
   { key: 'library', label: 'Solo guardar',    color: 'bg-blue-100 text-blue-600' },
-  { key: 'ebook',   label: 'Tengo el Ebook',  color: 'bg-purple-100 text-purple-600', noLend: true },
+  { key: 'ebook',   label: 'Tengo el Ebook (no disponible para préstamo)',  color: 'bg-purple-100 text-purple-600', noLend: true },
 ]
 const RATING_LABELS = ['', 'No me gustó', 'Estuvo bien', 'Bueno', 'Muy bueno', 'Excelente']
 
@@ -403,6 +404,7 @@ export default function BookDetailSheet({
   // Library mode
   onStatusChange, onToggleFavorite, onSaveRating, onRemove, onOpenPlan, onSavePrivateNotes,
   onSetCoReader, onRemoveCoReader,
+  onUpdateLoanedTo,
   // Search mode (book not yet saved)
   onAdd,
   // Create plan from search (saves book + creates plan)
@@ -417,6 +419,20 @@ export default function BookDetailSheet({
   const [addOpen, setAddOpen] = useState(false)
   const [adding, setAdding] = useState(false)
   const [descExpanded, setDescExpanded] = useState(false)
+
+  const [loanedToInput, setLoanedToInput] = useState(book.loanedTo || '')
+  const [savingLoanedTo, setSavingLoanedTo] = useState(false)
+
+  useEffect(() => {
+    setLoanedToInput(book.loanedTo || '')
+  }, [book.loanedTo])
+
+  async function handleSaveLoanedTo() {
+    if (!onUpdateLoanedTo) return
+    setSavingLoanedTo(true)
+    await onUpdateLoanedTo(book.bookId, loanedToInput.trim())
+    setSavingLoanedTo(false)
+  }
 
   const [customThumb, setCustomThumb] = useState(book.customThumbnail || null)
   const [globalCover, setGlobalCover]   = useState(null)
@@ -601,6 +617,31 @@ export default function BookDetailSheet({
                   <span className="text-xs text-slate-400 font-medium">Estado:</span>
                   <StatusMenu current={book.status} onChange={s => onStatusChange?.(book.bookId, s)} />
                 </div>
+
+                {book.status === 'loaned' && (
+                  <div className="mb-5 bg-rose-50 border border-rose-100 rounded-2xl p-4 animate-in fade-in duration-200">
+                    <p className="text-xs font-semibold text-rose-800 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <User size={13} className="text-rose-500" /> ¿A quién se lo prestaste?
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={loanedToInput}
+                        onChange={e => setLoanedToInput(e.target.value)}
+                        placeholder="Nombre de la persona…"
+                        className="flex-1 px-3.5 py-2 bg-white rounded-xl border border-rose-200 text-sm text-slate-700 placeholder-slate-300 outline-none focus:ring-2 focus:ring-rose-400"
+                      />
+                      <button
+                        onClick={handleSaveLoanedTo}
+                        disabled={savingLoanedTo}
+                        className="px-4 py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-sm active:scale-95 transition-all hover:bg-rose-600 disabled:opacity-50 flex items-center gap-1"
+                      >
+                        {savingLoanedTo ? 'Guardando…' : 'Guardar'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mb-5">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
                     Mi calificación {rateSaving && <span className="normal-case text-amber-400 font-normal">· guardando…</span>}
@@ -908,17 +949,15 @@ export default function BookDetailSheet({
       {showPlanForm && (
         <>
           <div className="fixed inset-0 bg-black/50 z-[68]" onClick={() => setShowPlanForm(false)} />
-          <div className="fixed inset-0 z-[69] flex items-center justify-center px-4">
-            <CreatePlanSheet
-              book={book}
-              onSave={async (planData) => {
-                setShowPlanForm(false)
-                await onCreatePlan(planData)
-                onClose()
-              }}
-              onClose={() => setShowPlanForm(false)}
-            />
-          </div>
+          <CreatePlanSheet
+            book={book}
+            onSave={async (planData) => {
+              setShowPlanForm(false)
+              await onCreatePlan(planData)
+              onClose()
+            }}
+            onClose={() => setShowPlanForm(false)}
+          />
         </>
       )}
 

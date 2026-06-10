@@ -44,7 +44,7 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-5 max-h-[90vh] overflow-y-auto">
 
         {/* Header */}

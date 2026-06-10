@@ -125,7 +125,7 @@ function AssignShelfModal({ book, shelves, currentShelfId, onAssign, onClose }) 
 // ── Main Page ──────────────────────────────────────────────
 export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   const { user } = useAuth()
-  const { books, loading, updateStatus, toggleFavorite, removeBook, saveReview, updateReaction, assignShelf, savePrivateNotes, setCoReader, removeCoReader } = useBooks(user?.uid)
+  const { books, loading, updateStatus, toggleFavorite, removeBook, saveReview, updateReaction, assignShelf, savePrivateNotes, setCoReader, removeCoReader, updateLoanedTo } = useBooks(user?.uid)
   const { shelves, createShelf, renameShelf, deleteShelf } = useShelves(user?.uid)
 
   const [statusTab, setStatusTab]       = useState('all')
@@ -452,6 +452,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                     onReaction={(bookId, reaction) => updateReaction(user.uid, bookId, reaction)}
                     onSelect={setSelectedBook}
                     onOpenPlan={b => b.relaxPlan ? setViewRelaxBook(b) : setViewPlanBook(b)}
+                    onUpdateLoanedTo={(bookId, name) => updateLoanedTo(user.uid, bookId, name)}
                   />
                   {(hasPlan || book.biblePlan) && (
                     <button onClick={e => {
@@ -495,6 +496,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
             }}
             onSetCoReader={(bookId, coReader) => setCoReader(user.uid, bookId, coReader)}
             onRemoveCoReader={(bookId, coReaderUid) => removeCoReader(user.uid, bookId, coReaderUid)}
+            onUpdateLoanedTo={(bookId, name) => updateLoanedTo(user.uid, bookId, name)}
           />
         </>
       )}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, Star, Trash2, ChevronDown, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { BookOpen, Star, Trash2, ChevronDown, ThumbsUp, ThumbsDown, User, Pencil } from 'lucide-react'
 import BookCoverUpload from './BookCoverUpload'
 
 const STATUS_LABELS = {
@@ -8,6 +8,7 @@ const STATUS_LABELS = {
   pending: 'Pendiente',
   library: 'Biblioteca',
   ebook:   'Ebook',
+  loaned:  'Prestado',
 }
 
 const STATUS_COLORS = {
@@ -16,10 +17,12 @@ const STATUS_COLORS = {
   pending: 'bg-slate-100 text-slate-500',
   library: 'bg-blue-100 text-blue-600',
   ebook:   'bg-purple-100 text-purple-600',
+  loaned:  'bg-rose-100 text-rose-700',
 }
 
-export default function BookCard({ book, onStatusChange, onToggleFavorite, onRemove, onReaction, onSelect, onOpenPlan }) {
+export default function BookCard({ book, onStatusChange, onToggleFavorite, onRemove, onReaction, onSelect, onOpenPlan, onUpdateLoanedTo }) {
   const [showMenu, setShowMenu] = useState(false)
+  const [showLoanedName, setShowLoanedName] = useState(false)
 
   function handleStatusChange(status) {
     setShowMenu(false)
@@ -58,6 +61,43 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
         >
           <Star size={13} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
         </button>
+
+        {/* Loaned person icon */}
+        {book.status === 'loaned' && (
+          <div className="absolute top-2 left-2 z-10">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLoanedName(v => !v);
+              }}
+              className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-md hover:bg-rose-600 transition-all active:scale-90"
+              title="Libro prestado"
+            >
+              <User size={13} />
+            </button>
+            {showLoanedName && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setShowLoanedName(false); }} />
+                <div className="absolute left-0 top-8 bg-slate-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-xl shadow-lg whitespace-nowrap z-20 border border-slate-800 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <span>Prestado a: {book.loanedTo || 'Persona sin nombre'}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const name = prompt('¿A quién le prestaste este libro?', book.loanedTo || '');
+                      if (name !== null) {
+                        onUpdateLoanedTo?.(book.bookId, name.trim());
+                      }
+                      setShowLoanedName(false);
+                    }}
+                    className="p-0.5 hover:text-rose-300 transition-colors"
+                  >
+                    <Pencil size={10} />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Co-reader avatars */}
         {book.coReaders?.length > 0 && (

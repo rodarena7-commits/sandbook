@@ -96,5 +96,9 @@ export function useBooks(uid) {
     await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), { coReaders: updated })
   }
 
-  return { books, loading, addBook, updateStatus, toggleFavorite, saveReview, removeBook, updateReaction, assignShelf, savePrivateNotes, setCoReader, removeCoReader }
+  async function updateLoanedTo(uid, bookId, name) {
+    await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), { loanedTo: name || '' })
+  }
+
+  return { books, loading, addBook, updateStatus, toggleFavorite, saveReview, removeBook, updateReaction, assignShelf, savePrivateNotes, setCoReader, removeCoReader, updateLoanedTo }
 }

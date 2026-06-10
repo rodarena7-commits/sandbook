@@ -18,7 +18,7 @@ import { isBibleBook, countCompleted, TOTAL_CHAPTERS } from '../../hooks/useBibl
 import BiblePlanView from '../books/BiblePlanView'
 import BookThread from './BookThread'
 
-const STATUS_LABELS = { reading:'Leyendo', read:'Leído', pending:'Pendiente', library:'Biblioteca' }
+const STATUS_LABELS = { reading:'Leyendo', read:'Leído', pending:'Pendiente', library:'Biblioteca', ebook:'Ebook', loaned:'Prestado' }
 
 function BookLikeButton({ bookId, ownerUid, myUid }) {
   const { count, liked, loading, toggle } = useBookLikes(bookId, ownerUid, myUid)

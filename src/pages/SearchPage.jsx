@@ -27,6 +27,8 @@ const STATUS_LABELS = {
   read:    'Leído',
   pending: 'Pendiente',
   library: 'Biblioteca',
+  ebook:   'Ebook',
+  loaned:  'Prestado',
 }
 
 // ── IDs de afiliado ───────────────────────────────────────────────────
