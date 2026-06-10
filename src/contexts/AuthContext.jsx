@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore'
 import { auth, db, googleProvider } from '../firebase'
 
 const AuthContext = createContext(null)
@@ -17,6 +17,36 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [appConfig, setAppConfig] = useState(null)
+
+  // Real-time app config listener
+  useEffect(() => {
+    const unsubConfig = onSnapshot(
+      doc(db, 'appConfig', 'settings'),
+      (snap) => {
+        if (snap.exists()) {
+          setAppConfig(snap.data())
+        } else {
+          setAppConfig(null)
+        }
+      },
+      (err) => console.error('Error fetching app settings:', err)
+    )
+    return () => unsubConfig()
+  }, [])
+
+  // Dynamically update favicon and app icons in HTML DOM
+  useEffect(() => {
+    if (appConfig?.logoUrl) {
+      // Update link[rel="icon"]
+      const icons = document.querySelectorAll("link[rel='icon']")
+      icons.forEach(el => el.setAttribute('href', appConfig.logoUrl))
+
+      // Update link[rel="apple-touch-icon"]
+      const appleIcons = document.querySelectorAll("link[rel='apple-touch-icon']")
+      appleIcons.forEach(el => el.setAttribute('href', appConfig.logoUrl))
+    }
+  }, [appConfig?.logoUrl])
 
   useEffect(() => {
     let heartbeat = null
@@ -136,7 +166,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, setProfile, loading, loginWithGoogle, loginAnonymously, registerWithEmail, loginWithEmail, logout }}>
+    <AuthContext.Provider value={{ user, profile, setProfile, loading, loginWithGoogle, loginAnonymously, registerWithEmail, loginWithEmail, logout, appConfig }}>
       {children}
     </AuthContext.Provider>
   )

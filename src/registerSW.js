@@ -16,6 +16,18 @@ if ('serviceWorker' in navigator) {
             }
           })
         })
+
+        // Poll for updates every 60 seconds
+        setInterval(() => {
+          registration.update().catch(err => console.log('Error updating SW:', err))
+        }, 60000)
+
+        // Check for updates immediately when the app becomes visible
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            registration.update().catch(err => console.log('Error updating SW:', err))
+          }
+        })
       })
       .catch(err => console.error('Service Worker registration failed:', err))
   })

@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { X, BookOpen, CalendarDays, Coffee, Target, BookMarked } from 'lucide-react'
 
 // isBible: true cuando el libro es una Biblia — cambia "Plan con Meta" por "Plan Bíblico"
-export default function CreatePlanSheet({ book, onSave, onClose, isBible = false }) {
+export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBible = false }) {
   const [planType, setPlanType] = useState(null) // 'relax' | 'meta' | 'bible'
-  const [totalPages, setTotalPages] = useState(book.pageCount > 0 ? String(book.pageCount) : '')
+  const initialPages = book.pageCount || book.totalPages || book.volumeInfo?.pageCount || book.readingPlan?.totalPages || book.relaxPlan?.totalPages || '';
+  const [totalPages, setTotalPages] = useState(initialPages > 0 ? String(initialPages) : '')
   const [totalDays,  setTotalDays]  = useState('')
   const [saving,     setSaving]     = useState(false)
 
@@ -15,13 +16,28 @@ export default function CreatePlanSheet({ book, onSave, onClose, isBible = false
 
   async function handleCreate() {
     setSaving(true)
-    if (planType === 'bible') {
-      await onSave({ type: 'bible' })
-    } else if (planType === 'meta') {
-      if (!validMeta) { setSaving(false); return }
-      await onSave({ type: 'meta', pages, days })
-    } else {
-      await onSave({ type: 'relax', pages })
+    const saveFn = onSave || onCreate
+    if (saveFn) {
+      if (planType === 'bible') {
+        if (onSave) {
+          await onSave({ type: 'bible' })
+        } else {
+          await onCreate('bible')
+        }
+      } else if (planType === 'meta') {
+        if (!validMeta) { setSaving(false); return }
+        if (onSave) {
+          await onSave({ type: 'meta', pages, days })
+        } else {
+          await onCreate('meta', pages, days)
+        }
+      } else {
+        if (onSave) {
+          await onSave({ type: 'relax', pages })
+        } else {
+          await onCreate('relax', pages)
+        }
+      }
     }
     setSaving(false)
     onClose()

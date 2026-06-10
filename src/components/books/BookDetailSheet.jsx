@@ -911,9 +911,9 @@ export default function BookDetailSheet({
           <div className="fixed inset-0 z-[69] flex items-center justify-center px-4">
             <CreatePlanSheet
               book={book}
-              onSave={async (pages, days) => {
+              onSave={async (planData) => {
                 setShowPlanForm(false)
-                await onCreatePlan(pages, days)
+                await onCreatePlan(planData)
                 onClose()
               }}
               onClose={() => setShowPlanForm(false)}

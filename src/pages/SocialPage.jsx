@@ -13,11 +13,14 @@ import { useConversations } from '../hooks/useConversations'
 import { useAllUsers } from '../hooks/useAllUsers'
 import { useAuthorSearch } from '../hooks/useAuthorSearch'
 import { useFavoriteAuthors } from '../hooks/useFavoriteAuthors'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 import PostCard from '../components/social/PostCard'
 import CreatePostSheet from '../components/social/CreatePostSheet'
 import AuthorCard from '../components/social/AuthorCard'
 import UserProfileScreen from '../components/social/UserProfileScreen'
 import ChatWindow from '../components/chat/ChatWindow'
+import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import MarketplacePage from './MarketplacePage'
 
 const ADMIN_EMAIL = 'rodrigo.n.arena@hotmail.com'
@@ -145,7 +148,7 @@ function FollowingCard({ user, onSelect }) {
 
 // ── Main Page ──────────────────────────────────────────────
 export default function SocialPage() {
-  const { user, profile, setProfile } = useAuth()
+  const { user, profile, setProfile, appConfig } = useAuth()
   const isAdmin = user?.email === ADMIN_EMAIL
 
   const { searchResults, searchLoading, searchUsers,
@@ -172,6 +175,7 @@ export default function SocialPage() {
   const [adminQuery, setAdminQuery]         = useState('')
   const [selectedUser, setSelectedUser]     = useState(null)
   const [showCreatePost, setShowCreatePost] = useState(false)
+  const [showLogoPicker, setShowLogoPicker] = useState(false)
   const [editingPost, setEditingPost]       = useState(null)
   const [chatTarget, setChatTarget]         = useState(null)
   const [sendPostTarget, setSendPostTarget] = useState(null) // { post, users }
@@ -478,6 +482,45 @@ export default function SocialPage() {
             </div>
           </div>
 
+          {/* Configuración de logotipo */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-2">
+            <h3 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-2 uppercase tracking-wide">
+              ⚙️ Logotipo de la App
+            </h3>
+            <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <img 
+                src={appConfig?.logoUrl || '/logosandbook.png'} 
+                alt="Logo actual" 
+                className="w-14 h-14 rounded-2xl object-cover shadow-sm border border-white"
+                onError={(e) => { e.target.src = '/logosandbook.png' }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-slate-700">Imagen del Logotipo</p>
+                <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                  {appConfig?.logoUrl ? 'Personalizado (Base64)' : 'Predeterminado (/logosandbook.png)'}
+                </p>
+                <div className="flex gap-2 mt-2">
+                  <button 
+                    onClick={() => setShowLogoPicker(true)}
+                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-bold active:scale-95 transition-all shadow-sm"
+                  >
+                    Subir nuevo
+                  </button>
+                  {appConfig?.logoUrl && (
+                    <button 
+                      onClick={async () => {
+                        await setDoc(doc(db, 'appConfig', 'settings'), { logoUrl: '' }, { merge: true })
+                      }}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl text-[10px] font-semibold active:scale-95 transition-all"
+                    >
+                      Restablecer
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <p className="text-xs text-slate-400 font-medium px-1 flex items-center gap-1.5">
             <ShieldCheck size={12} className="text-indigo-400"/> Panel de administrador · {displayedAdmin.length} usuarios
           </p>
@@ -562,6 +605,20 @@ export default function SocialPage() {
           onUserPress={u => { setAuthorPostsFilter(null); setSelectedUser(u) }}
           onClose={() => setAuthorPostsFilter(null)}
         />
+      )}
+
+      {/* Dynamic Logo Picker Sheet */}
+      {showLogoPicker && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[65]" onClick={() => setShowLogoPicker(false)} />
+          <ImagePickerSheet
+            title="Logotipo de la aplicación"
+            onSave={async (url) => {
+              await setDoc(doc(db, 'appConfig', 'settings'), { logoUrl: url }, { merge: true })
+            }}
+            onClose={() => setShowLogoPicker(false)}
+          />
+        </>
       )}
     </div>
   )

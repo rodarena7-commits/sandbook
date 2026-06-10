@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
 import { X, Download, Smartphone } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 const DISMISSED_KEY = 'sandbook_install_dismissed'
 
 export default function InstallPrompt() {
+  const { appConfig } = useAuth()
   const [prompt,  setPrompt]  = useState(null)
   const [visible, setVisible] = useState(false)
+
+  const logoSrc = appConfig?.logoUrl || '/logosandbook.png'
 
   useEffect(() => {
     // No mostrar si ya está instalada como PWA
@@ -46,7 +50,7 @@ export default function InstallPrompt() {
 
         {/* Logo + título */}
         <div className="flex flex-col items-center text-center mb-5">
-          <img src="/logosandbook.png" alt="Sandbook" className="w-20 h-20 rounded-2xl shadow-md mb-3 object-cover" />
+          <img src={logoSrc} alt="Sandbook" className="w-20 h-20 rounded-2xl shadow-md mb-3 object-cover" />
           <h2 className="text-lg font-bold text-slate-800">Instalá Sandbook</h2>
           <p className="text-sm text-slate-500 mt-1">
             Agregala a tu pantalla de inicio para acceder más rápido, sin abrir el navegador.

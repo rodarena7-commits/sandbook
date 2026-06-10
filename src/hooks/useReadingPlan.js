@@ -14,6 +14,7 @@ export function calculatePlan(totalPages, totalDays) {
 export async function createReadingPlan(uid, bookId, totalPages, totalDays) {
   const startDate = new Date().toISOString().slice(0, 10)
   await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
+    pageCount:   Number(totalPages),
     readingPlan: {
       totalPages: Number(totalPages),
       totalDays:  Number(totalDays),
@@ -51,6 +52,7 @@ export async function deleteReadingPlan(uid, bookId) {
 
 export async function createRelaxPlan(uid, bookId, totalPages) {
   await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
+    pageCount:    Number(totalPages) || 0,
     relaxPlan: {
       totalPages: Number(totalPages) || 0,
       createdAt: new Date().toISOString(),

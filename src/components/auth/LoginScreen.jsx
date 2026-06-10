@@ -156,10 +156,12 @@ function EmailForm({ onBack, onRegister, onLogin }) {
 
 // ── Pantalla principal ─────────────────────────────────────
 export default function LoginScreen() {
-  const { loginWithGoogle, loginAnonymously, registerWithEmail, loginWithEmail } = useAuth()
+  const { loginWithGoogle, loginAnonymously, registerWithEmail, loginWithEmail, appConfig } = useAuth()
   const [screen,  setScreen]  = useState('methods') // 'methods' | 'email'
   const [loading, setLoading] = useState(null)
   const [error,   setError]   = useState('')
+
+  const logoSrc = appConfig?.logoUrl || '/logosandbook.png'
 
   async function handleGoogle() {
     setLoading('google'); setError('')
@@ -181,7 +183,7 @@ export default function LoginScreen() {
       {/* Logo */}
       <div className="flex flex-col items-center mb-10">
         <div className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl mb-4">
-          <img src="/logosandbook.png" alt="Sandbook" className="w-full h-full object-cover"
+          <img src={logoSrc} alt="Sandbook" className="w-full h-full object-cover"
             onError={e => {
               e.target.style.display = 'none'
               e.target.parentElement.classList.add('bg-amber-500', 'flex', 'items-center', 'justify-center')

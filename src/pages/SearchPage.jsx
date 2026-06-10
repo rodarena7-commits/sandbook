@@ -3,7 +3,7 @@ import { Search, X, BookOpen, Plus, Check, Loader2, Camera, Star, ThumbsUp, Thum
 import { useMercadoLibrePrice } from '../hooks/useMercadoLibrePrice'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
-import { createReadingPlan } from '../hooks/useReadingPlan'
+import { createReadingPlan, createRelaxPlan } from '../hooks/useReadingPlan'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
 import { useGoogleBooks } from '../hooks/useGoogleBooks'
@@ -219,8 +219,10 @@ export default function SearchPage({ onGoToPlan }) {
     })
   }
 
-  async function handleCreatePlan(book, pages, days) {
+  async function handleCreatePlan(book, planData) {
     // Add to library first if not already there
+    const pages = planData.pages || 0
+    const days = planData.days || 0
     if (!savedMap[book.bookId]) {
       await addBook(user.uid, book.bookId, {
         title: book.title,
@@ -236,7 +238,11 @@ export default function SearchPage({ onGoToPlan }) {
       })
     }
     // Create the reading plan
-    await createReadingPlan(user.uid, book.bookId, pages, days)
+    if (planData.type === 'relax') {
+      await createRelaxPlan(user.uid, book.bookId, pages)
+    } else {
+      await createReadingPlan(user.uid, book.bookId, pages, days)
+    }
   }
 
   return (
@@ -380,7 +386,7 @@ export default function SearchPage({ onGoToPlan }) {
             book={selectedBook}
             onClose={() => setSelectedBook(null)}
             onAdd={handleAdd}
-            onCreatePlan={(pages, days) => handleCreatePlan(selectedBook, pages, days)}
+            onCreatePlan={(planData) => handleCreatePlan(selectedBook, planData)}
           />
         </>
       )}
@@ -393,7 +399,7 @@ export default function SearchPage({ onGoToPlan }) {
             book={{ ...viewBook, ...(savedMap[viewBook.bookId] || {}) }}
             onClose={() => setViewBook(null)}
             onAdd={savedMap[viewBook.bookId] ? undefined : handleAdd}
-            onCreatePlan={(pages, days) => handleCreatePlan(viewBook, pages, days)}
+            onCreatePlan={(planData) => handleCreatePlan(viewBook, planData)}
           />
         </>
       )}
