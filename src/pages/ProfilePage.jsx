@@ -425,7 +425,7 @@ function BookRow({ book }) {
 // ── Plan Screen ────────────────────────────────────────────
 function PlanScreen({ books, uid, updateStatus, onClose }) {
   const planBooks    = books.filter(b => b.readingPlan || b.relaxPlan || b.biblePlan)
-  const nonPlanBooks = books.filter(b => !b.readingPlan && !b.relaxPlan && !b.biblePlan)
+  const nonPlanBooks = books.filter(b => !b.readingPlan && !b.relaxPlan && !b.biblePlan && b.status !== 'read')
 
   const [viewPlanBook,  setViewPlanBook]  = useState(null)
   const [viewRelaxBook, setViewRelaxBook] = useState(null)

@@ -307,12 +307,13 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
             {/* Books matching search OR all library books */}
             {(() => {
               const q = planSearch.trim().toLowerCase()
-              const list = q
+              const list = (q
                 ? books.filter(b =>
                     b.title?.toLowerCase().includes(q) ||
                     b.authors?.some(a => a.toLowerCase().includes(q))
                   )
                 : books
+              ).filter(b => !!b.readingPlan || !!b.relaxPlan || !!b.biblePlan || b.status !== 'read')
 
               if (!list.length) {
                 return (

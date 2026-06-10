@@ -830,7 +830,7 @@ export default function BookDetailSheet({
             </div>
 
             {/* Crear plan desde búsqueda */}
-            {!isLibrary && onCreatePlan && (
+            {!isLibrary && onCreatePlan && book.status !== 'read' && (
               <button
                 onClick={() => setShowPlanForm(true)}
                 className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-sm font-medium w-full active:scale-95 transition-all mt-4"
