@@ -441,7 +441,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
         {statusTab !== 'plan' && filtered.length > 0 && (
           <div className="grid grid-cols-3 lg:grid-cols-8 gap-3">
             {filtered.map(book => {
-              const hasPlan = !!book.readingPlan || !!book.relaxPlan
+              const hasPlan = book.status !== 'read' && (!!book.readingPlan || !!book.relaxPlan || !!book.biblePlan)
               return (
                 <div key={book.id} className="relative group">
                   <BookCard
@@ -454,7 +454,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                     onOpenPlan={b => b.relaxPlan ? setViewRelaxBook(b) : setViewPlanBook(b)}
                     onUpdateLoanedTo={(bookId, name) => updateLoanedTo(user.uid, bookId, name)}
                   />
-                  {(hasPlan || book.biblePlan) && (
+                  {hasPlan && (
                     <button onClick={e => {
                       e.stopPropagation()
                       if (book.biblePlan)       setViewBibleBook(book)
