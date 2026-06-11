@@ -1,5 +1,5 @@
 // Service Worker para Sandbook PWA
-const CACHE_NAME = 'sandbook-v4.2';
+const CACHE_NAME = 'sandbook-v4.3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -45,8 +45,10 @@ self.addEventListener('message', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.url.includes('firebase') ||
-      event.request.url.includes('googleapis')) {
-    return fetch(event.request);
+      event.request.url.includes('googleapis') ||
+      event.request.url.includes('manifest.json') ||
+      event.request.url.includes('/api/')) {
+    return;
   }
 
   event.respondWith(
