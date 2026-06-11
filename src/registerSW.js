@@ -7,15 +7,24 @@ if ('serviceWorker' in navigator) {
           window.location.reload()
         })
 
+        const onUpdateFound = (worker) => {
+          window.swUpdateAvailable = true
+          window.swWaitingWorker = worker
+          window.dispatchEvent(new CustomEvent('sw-update-available'))
+        }
+
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing
           newWorker.addEventListener('statechange', () => {
-            // If for some reason skipWaiting wasn't called from the SW itself, trigger it here
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              newWorker.postMessage({ type: 'SKIP_WAITING' })
+              onUpdateFound(newWorker)
             }
           })
         })
+
+        if (registration.waiting) {
+          onUpdateFound(registration.waiting)
+        }
 
         // Poll for updates every 60 seconds
         setInterval(() => {

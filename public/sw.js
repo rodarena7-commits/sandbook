@@ -1,5 +1,5 @@
 // Service Worker para Sandbook PWA
-const CACHE_NAME = 'sandbook-v4.1';
+const CACHE_NAME = 'sandbook-v4.2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -25,7 +25,6 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
-      .then(() => self.skipWaiting())
   );
 });
 

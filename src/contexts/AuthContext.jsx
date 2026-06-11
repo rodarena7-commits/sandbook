@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
     return () => unsubConfig()
   }, [])
 
-  // Dynamically update favicon and app icons in HTML DOM
+  // Dynamically update favicon, app icons and manifest in HTML DOM
   useEffect(() => {
     if (appConfig?.logoUrl) {
       // Update link[rel="icon"]
@@ -45,6 +45,65 @@ export function AuthProvider({ children }) {
       // Update link[rel="apple-touch-icon"]
       const appleIcons = document.querySelectorAll("link[rel='apple-touch-icon']")
       appleIcons.forEach(el => el.setAttribute('href', appConfig.logoUrl))
+
+      // Update manifest dynamically
+      const manifestEl = document.querySelector("link[rel='manifest']")
+      if (manifestEl) {
+        const dynamicManifest = {
+          name: "Sandbook",
+          short_name: "Sandbook",
+          description: "Tu compañero de lectura perfecto. Organiza libros, crea planes y conecta con lectores.",
+          start_url: "/",
+          display: "standalone",
+          orientation: "portrait",
+          background_color: "#ffffff",
+          theme_color: "#4f46e5",
+          categories: ["books", "education", "social", "productivity"],
+          lang: "es",
+          dir: "ltr",
+          icons: [
+            {
+              src: appConfig.logoUrl,
+              sizes: "192x192",
+              type: "image/png",
+              purpose: "any"
+            },
+            {
+              src: appConfig.logoUrl,
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable"
+            }
+          ],
+          shortcuts: [
+            {
+              name: "Añadir libro",
+              short_name: "Añadir",
+              description: "Escanea o busca un nuevo libro",
+              url: "/?source=pwa&action=add",
+              icons: [{ src: "/papel.png", sizes: "192x192" }]
+            },
+            {
+              name: "Mi biblioteca",
+              short_name: "Biblioteca",
+              description: "Ver todos mis libros",
+              url: "/?source=pwa&action=library",
+              icons: [{ src: "/madera.png", sizes: "192x192" }]
+            },
+            {
+              name: "Plan de lectura",
+              short_name: "Plan",
+              description: "Crear un nuevo plan de lectura",
+              url: "/?source=pwa&action=plan",
+              icons: [{ src: "/vidrio.png", sizes: "192x192" }]
+            }
+          ]
+        }
+        const stringManifest = JSON.stringify(dynamicManifest)
+        const blob = new Blob([stringManifest], { type: 'application/json' })
+        const manifestURL = URL.createObjectURL(blob)
+        manifestEl.setAttribute('href', manifestURL)
+      }
     }
   }, [appConfig?.logoUrl])
 
