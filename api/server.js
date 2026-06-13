@@ -61,6 +61,43 @@ app.get('/ml-price', async (req, res) => {
   }
 })
 
+// ── GET /api/app-logo.png ───────────────────────────────────────────
+app.get('/api/app-logo.png', async (req, res) => {
+  try {
+    const firestoreRes = await fetch(
+      'https://firestore.googleapis.com/v1/projects/playmobil-2d74d/databases/(default)/documents/appConfig/settings'
+    )
+    const docData = await firestoreRes.json()
+    const customLogo = docData?.fields?.logoUrl?.stringValue
+
+    if (customLogo) {
+      if (customLogo.startsWith('data:image/')) {
+        const matches = customLogo.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)
+        if (matches && matches.length === 3) {
+          const type = matches[1]
+          const buffer = Buffer.from(matches[2], 'base64')
+          res.setHeader('Content-Type', type)
+          res.setHeader('Access-Control-Allow-Origin', '*')
+          res.setHeader('Cache-Control', 'public, max-age=3600')
+          return res.send(buffer)
+        }
+      }
+      if (customLogo.startsWith('http')) {
+        const logoRes = await fetch(customLogo)
+        const contentType = logoRes.headers.get('content-type') || 'image/png'
+        const buffer = Buffer.from(await logoRes.arrayBuffer())
+        res.setHeader('Content-Type', contentType)
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        res.setHeader('Cache-Control', 'public, max-age=3600')
+        return res.send(buffer)
+      }
+    }
+  } catch (e) {
+    console.error('Error serving app-logo.png:', e.message)
+  }
+  res.redirect('https://sandbook-5qfn.onrender.com/logosandbook.png')
+})
+
 app.get('/health', (_req, res) => res.json({ ok: true }))
 
 
