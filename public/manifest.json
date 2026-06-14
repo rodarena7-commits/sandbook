@@ -20,13 +20,11 @@
     {
       "src": "https://sandbook-api.onrender.com/api/app-logo.png",
       "sizes": "192x192",
-      "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "https://sandbook-api.onrender.com/api/app-logo.png",
       "sizes": "512x512",
-      "type": "image/png",
       "purpose": "maskable"
     }
   ],

@@ -90,7 +90,7 @@ app.get('/api/app-logo.png', async (req, res) => {
           const type = matches[1]
           const buffer = Buffer.from(matches[2], 'base64')
           res.setHeader('Content-Type', type)
-          res.setHeader('Cache-Control', 'public, max-age=3600')
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
           return res.send(buffer)
         }
       }
@@ -99,7 +99,7 @@ app.get('/api/app-logo.png', async (req, res) => {
         const contentType = logoRes.headers.get('content-type') || 'image/png'
         const buffer = Buffer.from(await logoRes.arrayBuffer())
         res.setHeader('Content-Type', contentType)
-        res.setHeader('Cache-Control', 'public, max-age=3600')
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
         return res.send(buffer)
       }
     }
