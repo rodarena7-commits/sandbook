@@ -16,14 +16,13 @@ function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
 }
-
-export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible = false, onFinish }) {
+export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: initialIsBible = false, onFinish }) {
+  const isBible = false // Plan Relax siempre realiza seguimiento por páginas
   const plan       = book.relaxPlan || {}
   const totalPages = plan.totalPages || 0
-  // Etiquetas adaptadas según si es Biblia o libro normal
-  const labelMarcador  = isBible ? '¿En qué versículo quedaste? (ej: Juan 3:16)' : '¿En qué página quedaste?'
-  const labelPagina    = isBible ? 'Versículo' : 'Página'
-  const labelHistorial = isBible ? 'capítulos / versículos leídos' : 'págs leídas'
+  const labelMarcador  = '¿En qué página quedaste?'
+  const labelPagina    = 'Página'
+  const labelHistorial = 'págs leídas'
 
   const [currentPage,   setCurrentPage]   = useState(book.currentPage || 0)
   const [relaxNote,     setRelaxNote]     = useState(book.relaxNote || '')
