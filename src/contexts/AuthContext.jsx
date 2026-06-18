@@ -7,9 +7,13 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  signInWithCredential,
+  GoogleAuthProvider,
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore'
 import { auth, db, googleProvider } from '../firebase'
+import { Capacitor } from '@capacitor/core'
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
 
 const AuthContext = createContext(null)
 
@@ -124,7 +128,13 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function loginWithGoogle() {
-    await signInWithPopup(auth, googleProvider)
+    if (Capacitor.isNativePlatform()) {
+      const result = await FirebaseAuthentication.signInWithGoogle()
+      const credential = GoogleAuthProvider.credential(result.credential?.idToken)
+      await signInWithCredential(auth, credential)
+    } else {
+      await signInWithPopup(auth, googleProvider)
+    }
   }
 
   async function loginAnonymously() {
