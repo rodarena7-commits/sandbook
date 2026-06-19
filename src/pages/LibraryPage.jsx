@@ -12,6 +12,7 @@ import BiblePlanView from '../components/books/BiblePlanView'
 import Loader from '../components/ui/Loader'
 import { createReadingPlan, createRelaxPlan } from '../hooks/useReadingPlan'
 import { isBibleBook, initBiblePlan, countCompleted, TOTAL_CHAPTERS } from '../hooks/useBibleProgress'
+import MyEbooksSection from '../components/books/MyEbooksSection'
 
 const STATUS_TABS = [
   { key: 'all',     label: 'Total' },
@@ -128,6 +129,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   const { books, loading, updateStatus, toggleFavorite, removeBook, saveReview, updateReaction, assignShelf, savePrivateNotes, setCoReader, removeCoReader, updateLoanedTo } = useBooks(user?.uid)
   const { shelves, createShelf, renameShelf, deleteShelf } = useShelves(user?.uid)
 
+  const [libraryType, setLibraryType]   = useState('sync') // 'sync' | 'local'
   const [statusTab, setStatusTab]       = useState('all')
   const [shelfFilter, setShelfFilter]   = useState(null)
   const [selectedBook, setSelectedBook] = useState(null)
@@ -145,6 +147,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   // Navigate from Search page to plan tab
   useEffect(() => {
     if (startOnPlan) {
+      setLibraryType('sync')
       setStatusTab('plan')
       onPlanConsumed?.()
     }
@@ -210,7 +213,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
       <div className="bg-white px-4 pt-12 pb-3 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-slate-800">Mi Biblioteca</h1>
-          {stats.total > 0 && (
+          {libraryType === 'sync' && stats.total > 0 && (
             <div className="flex gap-3 text-xs text-slate-400">
               <span><span className="font-semibold text-slate-600">{stats.total}</span> libros</span>
               {stats.reading > 0 && <span><span className="font-semibold text-amber-500">{stats.reading}</span> leyendo</span>}
@@ -219,61 +222,86 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
           )}
         </div>
 
-        {/* Status tabs */}
-        <div className="flex gap-1 overflow-x-auto scrollbar-none pb-0.5 mb-2">
-          {STATUS_TABS.map(tab => (
-            <button key={tab.key} onClick={() => setStatusTab(tab.key)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                statusTab === tab.key ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500'
-              }`}>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Shelf tabs */}
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
-          {/* Todos */}
-          <button onClick={() => setShelfFilter(null)}
-            className={`flex-shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all border ${
-              shelfFilter === null
-                ? 'bg-slate-800 text-white border-slate-800'
-                : 'bg-white text-slate-500 border-slate-200'
-            }`}>
-            <BookOpen size={10} /> Todos
+        {/* Toggle de Tipo de Biblioteca */}
+        <div className="flex bg-slate-100 p-1 rounded-2xl mb-3">
+          <button
+            onClick={() => setLibraryType('sync')}
+            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all ${
+              libraryType === 'sync' ? 'bg-white text-amber-500 shadow-sm' : 'text-slate-500'
+            }`}
+          >
+            Sincronizada (Nube)
           </button>
-
-          {shelves.map(shelf => (
-            <button key={shelf.id}
-              onClick={() => setShelfFilter(shelfFilter === shelf.id ? null : shelf.id)}
-              onLongPress={() => setShelfMenu({ shelf })}
-              onContextMenu={e => { e.preventDefault(); setShelfMenu({ shelf }) }}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all border ${
-                shelfFilter === shelf.id
-                  ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-slate-500 border-slate-200'
-              }`}
-              style={{ WebkitUserSelect: 'none' }}
-              onTouchStart={e => {
-                const timer = setTimeout(() => setShelfMenu({ shelf }), 600)
-                e.currentTarget._timer = timer
-              }}
-              onTouchEnd={e => clearTimeout(e.currentTarget._timer)}
-            >
-              {shelf.name}
-            </button>
-          ))}
-
-          {/* Create shelf button */}
-          <button onClick={() => setShelfModal(true)}
-            className="flex-shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all">
-            <Plus size={11} /> Nuevo
+          <button
+            onClick={() => setLibraryType('local')}
+            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all ${
+              libraryType === 'local' ? 'bg-white text-amber-500 shadow-sm' : 'text-slate-500'
+            }`}
+          >
+            Mis Ebooks (Local)
           </button>
         </div>
+
+        {/* Status tabs & Shelves (solo para sincronizada) */}
+        {libraryType === 'sync' && (
+          <>
+            {/* Status tabs */}
+            <div className="flex gap-1 overflow-x-auto scrollbar-none pb-0.5 mb-2">
+              {STATUS_TABS.map(tab => (
+                <button key={tab.key} onClick={() => setStatusTab(tab.key)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    statusTab === tab.key ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Shelf tabs */}
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+              {/* Todos */}
+              <button onClick={() => setShelfFilter(null)}
+                className={`flex-shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all border ${
+                  shelfFilter === null
+                    ? 'bg-slate-800 text-white border-slate-800'
+                    : 'bg-white text-slate-500 border-slate-200'
+                }`}>
+                <BookOpen size={10} /> Todos
+              </button>
+
+              {shelves.map(shelf => (
+                <button key={shelf.id}
+                  onClick={() => setShelfFilter(shelfFilter === shelf.id ? null : shelf.id)}
+                  onLongPress={() => setShelfMenu({ shelf })}
+                  onContextMenu={e => { e.preventDefault(); setShelfMenu({ shelf }) }}
+                  className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all border ${
+                    shelfFilter === shelf.id
+                      ? 'bg-slate-800 text-white border-slate-800'
+                      : 'bg-white text-slate-500 border-slate-200'
+                  }`}
+                  style={{ WebkitUserSelect: 'none' }}
+                  onTouchStart={e => {
+                    const timer = setTimeout(() => setShelfMenu({ shelf }), 600)
+                    e.currentTarget._timer = timer
+                  }}
+                  onTouchEnd={e => clearTimeout(e.currentTarget._timer)}
+                >
+                  {shelf.name}
+                </button>
+              ))}
+
+              {/* Create shelf button */}
+              <button onClick={() => setShelfModal(true)}
+                className="flex-shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all">
+                <Plus size={11} /> Nuevo
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Active shelf label */}
-      {shelfFilter && (
+      {libraryType === 'sync' && shelfFilter && (
         <div className="px-4 pt-3 flex items-center gap-2">
           <span className="text-xs text-slate-500 font-medium">
             {shelves.find(s => s.id === shelfFilter)?.name}
@@ -286,195 +314,201 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
 
       {/* Content */}
       <div className="px-4 py-4">
-        {/* ── EN PLAN tab: buscador + lista de libros ── */}
-        {statusTab === 'plan' && (
-          <div className="mb-4">
-            <div className="relative mb-3">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <input
-                value={planSearch}
-                onChange={e => setPlanSearch(e.target.value)}
-                placeholder="Buscar libro por título o autor…"
-                className="w-full pl-9 pr-8 py-2.5 bg-white rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400 shadow-sm"
-              />
-              {planSearch && (
-                <button onClick={() => setPlanSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                  <X size={13} />
-                </button>
-              )}
-            </div>
+        {libraryType === 'local' ? (
+          <MyEbooksSection />
+        ) : (
+          <>
+            {/* ── EN PLAN tab: buscador + lista de libros ── */}
+            {statusTab === 'plan' && (
+              <div className="mb-4">
+                <div className="relative mb-3">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    value={planSearch}
+                    onChange={e => setPlanSearch(e.target.value)}
+                    placeholder="Buscar libro por título o autor…"
+                    className="w-full pl-9 pr-8 py-2.5 bg-white rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400 shadow-sm"
+                  />
+                  {planSearch && (
+                    <button onClick={() => setPlanSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
 
-            {/* Books matching search OR all library books */}
-            {(() => {
-              const q = planSearch.trim().toLowerCase()
-              const list = (q
-                ? books.filter(b =>
-                    b.title?.toLowerCase().includes(q) ||
-                    b.authors?.some(a => a.toLowerCase().includes(q))
-                  )
-                : books
-              ).filter(b => !!b.readingPlan || !!b.relaxPlan || !!b.biblePlan || b.status !== 'read')
+                {/* Books matching search OR all library books */}
+                {(() => {
+                  const q = planSearch.trim().toLowerCase()
+                  const list = (q
+                    ? books.filter(b =>
+                        b.title?.toLowerCase().includes(q) ||
+                        b.authors?.some(a => a.toLowerCase().includes(q))
+                      )
+                    : books
+                  ).filter(b => !!b.readingPlan || !!b.relaxPlan || !!b.biblePlan || b.status !== 'read')
 
-              if (!list.length) {
-                return (
-                  <p className="text-xs text-slate-400 text-center py-6">
-                    {q ? 'Sin resultados en tu biblioteca' : 'Tu biblioteca está vacía'}
-                  </p>
-                )
-              }
-
-              return (
-                <div className="flex flex-col gap-2">
-                  {list.map(b => {
-                    const hasMetaPlan  = !!b.readingPlan
-                    const hasRelaxPlan = !!b.relaxPlan
-                    const hasPlan      = hasMetaPlan || hasRelaxPlan
-
-                    const metaPct = hasMetaPlan
-                      ? Math.round((Object.values(b.planDays||{}).filter(d=>d?.checked).length / b.readingPlan.totalDays) * 100)
-                      : 0
-                    const relaxPct = hasRelaxPlan && b.relaxPlan.totalPages > 0
-                      ? Math.min(100, Math.round(((b.currentPage || 0) / b.relaxPlan.totalPages) * 100))
-                      : null
-
-                    function openPlan() {
-                      if (b.relaxPlan)      setViewRelaxBook(b)
-                      else if (b.readingPlan) setViewPlanBook(b)
-                      else setPlanBook(b)
-                    }
-
+                  if (!list.length) {
                     return (
-                      <div key={b.id} className="flex gap-3 items-center bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
-                        {b.customThumbnail || b.thumbnail ? (
-                          <img src={b.customThumbnail || b.thumbnail} alt=""
-                            className="w-10 h-14 object-cover rounded-xl flex-shrink-0 shadow-sm" />
-                        ) : (
-                          <div className="w-10 h-14 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <BookOpen size={14} className="text-slate-300" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-800 line-clamp-1">{b.title}</p>
-                          {b.authors?.[0] && <p className="text-xs text-slate-400">{b.authors[0]}</p>}
+                      <p className="text-xs text-slate-400 text-center py-6">
+                        {q ? 'Sin resultados en tu biblioteca' : 'Tu biblioteca está vacía'}
+                      </p>
+                    )
+                  }
 
-                          {hasMetaPlan && (
-                            <div className="mt-1.5">
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${metaPct}%` }} />
-                                </div>
-                                <span className="text-[10px] text-amber-500 font-medium flex-shrink-0">{metaPct}%</span>
+                  return (
+                    <div className="flex flex-col gap-2">
+                      {list.map(b => {
+                        const hasMetaPlan  = !!b.readingPlan
+                        const hasRelaxPlan = !!b.relaxPlan
+                        const hasPlan      = hasMetaPlan || hasRelaxPlan
+
+                        const metaPct = hasMetaPlan
+                          ? Math.round((Object.values(b.planDays||{}).filter(d=>d?.checked).length / b.readingPlan.totalDays) * 100)
+                          : 0
+                        const relaxPct = hasRelaxPlan && b.relaxPlan.totalPages > 0
+                          ? Math.min(100, Math.round(((b.currentPage || 0) / b.relaxPlan.totalPages) * 100))
+                          : null
+
+                        function openPlan() {
+                          if (b.relaxPlan)      setViewRelaxBook(b)
+                          else if (b.readingPlan) setViewPlanBook(b)
+                          else setPlanBook(b)
+                        }
+
+                        return (
+                          <div key={b.id} className="flex gap-3 items-center bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
+                            {b.customThumbnail || b.thumbnail ? (
+                              <img src={b.customThumbnail || b.thumbnail} alt=""
+                                className="w-10 h-14 object-cover rounded-xl flex-shrink-0 shadow-sm" />
+                            ) : (
+                              <div className="w-10 h-14 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <BookOpen size={14} className="text-slate-300" />
                               </div>
-                              <p className="text-[10px] text-slate-400">
-                                {b.readingPlan.dailyPages} págs/día · {b.readingPlan.totalDays} días
-                              </p>
-                            </div>
-                          )}
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-slate-800 line-clamp-1">{b.title}</p>
+                              {b.authors?.[0] && <p className="text-xs text-slate-400">{b.authors[0]}</p>}
 
-                          {hasRelaxPlan && (
-                            <div className="mt-1.5">
-                              {relaxPct !== null && (
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div className={`h-full rounded-full ${relaxPct >= 100 ? 'bg-green-400' : 'bg-blue-400'}`} style={{ width: `${relaxPct}%` }} />
+                              {hasMetaPlan && (
+                                <div className="mt-1.5">
+                                  <div className="flex items-center gap-1.5 mb-1">
+                                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${metaPct}%` }} />
+                                    </div>
+                                    <span className="text-[10px] text-amber-500 font-medium flex-shrink-0">{metaPct}%</span>
                                   </div>
-                                  <span className={`text-[10px] font-medium flex-shrink-0 ${relaxPct >= 100 ? 'text-green-500' : 'text-blue-500'}`}>{relaxPct}%</span>
+                                  <p className="text-[10px] text-slate-400">
+                                    {b.readingPlan.dailyPages} págs/día · {b.readingPlan.totalDays} días
+                                  </p>
                                 </div>
                               )}
-                              <p className="text-[10px] text-slate-400">
-                                {relaxPct >= 100 ? '✅ Completado' : `☕ Plan Relax${b.currentPage > 0 ? ` · Pág. ${b.currentPage}` : ''}`}
-                              </p>
+
+                              {hasRelaxPlan && (
+                                <div className="mt-1.5">
+                                  {relaxPct !== null && (
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full ${relaxPct >= 100 ? 'bg-green-400' : 'bg-blue-400'}`} style={{ width: `${relaxPct}%` }} />
+                                      </div>
+                                      <span className={`text-[10px] font-medium flex-shrink-0 ${relaxPct >= 100 ? 'text-green-500' : 'text-blue-500'}`}>{relaxPct}%</span>
+                                    </div>
+                                  )}
+                                  <p className="text-[10px] text-slate-400">
+                                    {relaxPct >= 100 ? '✅ Completado' : `☕ Plan Relax${b.currentPage > 0 ? ` · Pág. ${b.currentPage}` : ''}`}
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
 
-                        {isBibleBook(b) ? (
-                          <button
-                            onClick={() => {
-                              if (b.biblePlan)      setViewBibleBook(b)
-                              else if (b.relaxPlan) setViewRelaxBook(b)
-                              else setPlanBook(b)
-                            }}
-                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
-                              b.biblePlan ? 'bg-amber-500 text-white shadow-sm'
-                              : b.relaxPlan ? 'bg-blue-500 text-white shadow-sm'
-                              : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
-                            }`}
-                          >
-                            <CalendarDays size={13}/>
-                            {b.biblePlan ? 'Plan Bíblico' : b.relaxPlan ? 'Plan Relax' : 'Crear plan'}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={openPlan}
-                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
-                              hasRelaxPlan ? 'bg-blue-500 text-white shadow-sm'
-                              : hasMetaPlan ? 'bg-amber-500 text-white shadow-sm'
-                              : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
-                            }`}
-                          >
-                            <CalendarDays size={13}/>
-                            {hasPlan ? 'Ver plan' : 'Crear plan'}
-                          </button>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            })()}
-          </div>
-        )}
+                            {isBibleBook(b) ? (
+                              <button
+                                onClick={() => {
+                                  if (b.biblePlan)      setViewBibleBook(b)
+                                  else if (b.relaxPlan) setViewRelaxBook(b)
+                                  else setPlanBook(b)
+                                }}
+                                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                                  b.biblePlan ? 'bg-amber-500 text-white shadow-sm'
+                                  : b.relaxPlan ? 'bg-blue-500 text-white shadow-sm'
+                                  : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
+                                }`}
+                              >
+                                <CalendarDays size={13}/>
+                                {b.biblePlan ? 'Plan Bíblico' : b.relaxPlan ? 'Plan Relax' : 'Crear plan'}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={openPlan}
+                                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                                  hasRelaxPlan ? 'bg-blue-500 text-white shadow-sm'
+                                  : hasMetaPlan ? 'bg-amber-500 text-white shadow-sm'
+                                  : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
+                                }`}
+                              >
+                                <CalendarDays size={13}/>
+                                {hasPlan ? 'Ver plan' : 'Crear plan'}
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
 
-        {statusTab !== 'plan' && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <p className="text-5xl mb-4">{shelfFilter ? '📂' : empty.icon}</p>
-            <p className="font-semibold text-slate-600 mb-1">
-              {shelfFilter ? 'Este estante está vacío' : empty.text}
-            </p>
-            <p className="text-sm text-slate-400">
-              {shelfFilter ? 'Mantené presionado un libro para moverlo aquí' : empty.sub}
-            </p>
-          </div>
-        )}
+            {statusTab !== 'plan' && filtered.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <p className="text-5xl mb-4">{shelfFilter ? '📂' : empty.icon}</p>
+                <p className="font-semibold text-slate-600 mb-1">
+                  {shelfFilter ? 'Este estante está vacío' : empty.text}
+                </p>
+                <p className="text-sm text-slate-400">
+                  {shelfFilter ? 'Mantené presionado un libro para moverlo aquí' : empty.sub}
+                </p>
+              </div>
+            )}
 
-        {statusTab !== 'plan' && filtered.length > 0 && (
-          <div className="grid grid-cols-3 lg:grid-cols-8 gap-3">
-            {filtered.map(book => {
-              const hasPlan = book.status !== 'read' && (!!book.readingPlan || !!book.relaxPlan || !!book.biblePlan)
-              return (
-                <div key={book.id} className="relative group">
-                  <BookCard
-                    book={book}
-                    onStatusChange={(bookId, status) => updateStatus(user.uid, bookId, status)}
-                    onToggleFavorite={(bookId, current) => toggleFavorite(user.uid, bookId, current)}
-                    onRemove={(bookId) => removeBook(user.uid, bookId)}
-                    onReaction={(bookId, reaction) => updateReaction(user.uid, bookId, reaction)}
-                    onSelect={setSelectedBook}
-                    onOpenPlan={b => b.relaxPlan ? setViewRelaxBook(b) : setViewPlanBook(b)}
-                    onUpdateLoanedTo={(bookId, name) => updateLoanedTo(user.uid, bookId, name)}
-                  />
-                  {hasPlan && (
-                    <button onClick={e => {
-                      e.stopPropagation()
-                      if (book.biblePlan)       setViewBibleBook(book)
-                      else if (book.relaxPlan)  setViewRelaxBook(book)
-                      else                      setViewPlanBook(book)
-                    }}
-                      className={`absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md ${book.relaxPlan ? 'bg-blue-500' : 'bg-amber-500'}`}>
-                      <CalendarDays size={13} className="text-white" />
-                    </button>
-                  )}
-                  {shelves.length > 0 && (
-                    <button onClick={() => setAssignModal(book)}
-                      className={`absolute ${hasPlan ? 'top-10' : 'top-2'} left-2 w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all`}>
-                      <BookMarked size={10} className="text-slate-500" />
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+            {statusTab !== 'plan' && filtered.length > 0 && (
+              <div className="grid grid-cols-3 lg:grid-cols-8 gap-3">
+                {filtered.map(book => {
+                  const hasPlan = book.status !== 'read' && (!!book.readingPlan || !!book.relaxPlan || !!book.biblePlan)
+                  return (
+                    <div key={book.id} className="relative group">
+                      <BookCard
+                        book={book}
+                        onStatusChange={(bookId, status) => updateStatus(user.uid, bookId, status)}
+                        onToggleFavorite={(bookId, current) => toggleFavorite(user.uid, bookId, current)}
+                        onRemove={(bookId) => removeBook(user.uid, bookId)}
+                        onReaction={(bookId, reaction) => updateReaction(user.uid, bookId, reaction)}
+                        onSelect={setSelectedBook}
+                        onOpenPlan={b => b.relaxPlan ? setViewRelaxBook(b) : setViewPlanBook(b)}
+                        onUpdateLoanedTo={(bookId, name) => updateLoanedTo(user.uid, bookId, name)}
+                      />
+                      {hasPlan && (
+                        <button onClick={e => {
+                          e.stopPropagation()
+                          if (book.biblePlan)       setViewBibleBook(book)
+                          else if (book.relaxPlan)  setViewRelaxBook(book)
+                          else                      setViewPlanBook(book)
+                        }}
+                          className={`absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md ${book.relaxPlan ? 'bg-blue-500' : 'bg-amber-500'}`}>
+                          <CalendarDays size={13} className="text-white" />
+                        </button>
+                      )}
+                      {shelves.length > 0 && (
+                        <button onClick={() => setAssignModal(book)}
+                          className={`absolute ${hasPlan ? 'top-10' : 'top-2'} left-2 w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-all`}>
+                          <BookMarked size={10} className="text-slate-500" />
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 
