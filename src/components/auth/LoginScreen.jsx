@@ -166,7 +166,10 @@ export default function LoginScreen() {
   async function handleGoogle() {
     setLoading('google'); setError('')
     try { await loginWithGoogle() }
-    catch { setError('No se pudo iniciar sesión con Google.') }
+    catch (err) { 
+      console.error("Google login error:", err);
+      setError('No se pudo iniciar sesión con Google: ' + (err.message || JSON.stringify(err))); 
+    }
     setLoading(null)
   }
 
