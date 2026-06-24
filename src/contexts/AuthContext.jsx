@@ -129,8 +129,17 @@ export function AuthProvider({ children }) {
 
   async function loginWithGoogle() {
     if (Capacitor.isNativePlatform()) {
-      const result = await FirebaseAuthentication.signInWithGoogle()
-      const credential = GoogleAuthProvider.credential(result.credential?.idToken)
+      // El Web Client ID es necesario para que el plugin genere el idToken en Android
+      const result = await FirebaseAuthentication.signInWithGoogle({
+        skipNativeAuth: false,
+        customParameters: [
+          { key: 'prompt', value: 'select_account' }
+        ]
+      })
+      if (!result?.credential?.idToken) {
+        throw new Error('No se recibió el token de Google. Intentá de nuevo.')
+      }
+      const credential = GoogleAuthProvider.credential(result.credential.idToken)
       await signInWithCredential(auth, credential)
     } else {
       await signInWithPopup(auth, googleProvider)
