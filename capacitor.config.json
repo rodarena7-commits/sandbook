@@ -6,6 +6,11 @@
     "FirebaseAuthentication": {
       "providers": ["google.com"],
       "skipNativeAuth": false
+    },
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "85202851148-ptag30ivne7p8sedc9ktd7fb7t7l7smf.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
     }
   }
 }

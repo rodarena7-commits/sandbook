@@ -13,7 +13,7 @@ import {
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore'
 import { auth, db, googleProvider } from '../firebase'
 import { Capacitor } from '@capacitor/core'
-import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 
 const AuthContext = createContext(null)
 
@@ -129,17 +129,13 @@ export function AuthProvider({ children }) {
 
   async function loginWithGoogle() {
     if (Capacitor.isNativePlatform()) {
-      // El Web Client ID es necesario para que el plugin genere el idToken en Android
-      const result = await FirebaseAuthentication.signInWithGoogle({
-        skipNativeAuth: false,
-        customParameters: [
-          { key: 'prompt', value: 'select_account' }
-        ]
-      })
-      if (!result?.credential?.idToken) {
+      // Usamos GoogleAuth (SDK clásico) en lugar de One Tap para evitar el error 16
+      const googleUser = await GoogleAuth.signIn()
+      const idToken = googleUser?.authentication?.idToken
+      if (!idToken) {
         throw new Error('No se recibió el token de Google. Intentá de nuevo.')
       }
-      const credential = GoogleAuthProvider.credential(result.credential.idToken)
+      const credential = GoogleAuthProvider.credential(idToken)
       await signInWithCredential(auth, credential)
     } else {
       await signInWithPopup(auth, googleProvider)
