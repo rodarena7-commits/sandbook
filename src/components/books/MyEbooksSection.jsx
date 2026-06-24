@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Folder, FolderPlus, FileText, Plus, Trash2, Pencil, Move, 
   ArrowLeft, Upload, Image, X, ChevronRight, Search, 
-  Loader2, Maximize2, Minimize2, Sun, Moon, Eye
+  Loader2, Maximize2, Minimize2, Sun, Moon, Eye, Share2
 } from 'lucide-react';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
 import { 
   getFolders, saveFolder, deleteFolder, 
   getAllEbooks, getEbooksByFolder, saveEbook, deleteEbook 
@@ -17,6 +20,55 @@ function generateId() {
   return Math.random().toString(36).substring(2, 15) + '_' + Date.now();
 }
 
+// Generar miniatura base64 para imágenes importadas
+function generateImageThumbnail(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 150;
+        const scale = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = () => resolve(null);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Convertir Blob a Base64 para Capacitor Filesystem
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const base64String = reader.result.split(',')[1];
+      resolve(base64String);
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Obtener extensión del archivo
+function getFileExtension(type, originalName) {
+  if (originalName && originalName.includes('.')) {
+    return originalName.split('.').pop().toLowerCase();
+  }
+  if (type === 'pdf') return 'pdf';
+  if (type === 'docx') return 'docx';
+  if (type === 'image') return 'jpg';
+  return 'bin';
+}
+
+
 export default function MyEbooksSection() {
   const [folders, setFolders] = useState([]);
   const [ebooks, setEbooks] = useState([]);
@@ -27,11 +79,13 @@ export default function MyEbooksSection() {
   const [importError, setImportError] = useState('');
 
   // Modales
-  const [folderModal, setFolderModal] = useState(null); // { type: 'create'|'rename', id?: string, name?: string }
+  const [folderModal, setFolderModal] = useState(null); // { type: 'create' }
+  const [renameModal, setRenameModal] = useState(null); // { type: 'folder'|'ebook', id: string, name: string }
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'folder'|'ebook', id: string, name: string }
   const [moveModal, setMoveModal] = useState(null); // { type: 'folder'|'ebook', id: string, name: string }
   const [coverModal, setCoverModal] = useState(null); // { ebookId: string, title: string, coverUrl?: string }
   const [activeReader, setActiveReader] = useState(null); // ebook object
+  const [sharingId, setSharingId] = useState(null); // id of the ebook currently being shared
 
   const fileInputRef = useRef(null);
 
@@ -115,19 +169,38 @@ export default function MyEbooksSection() {
           createdAt: Date.now()
         };
         await saveFolder(newFolder);
-      } else {
-        const existing = folders.find(f => f.id === folderModal.id);
-        if (existing) {
-          await saveFolder({
-            ...existing,
-            name: name.trim()
-          });
-        }
       }
       setFolderModal(null);
       await refreshData();
     } catch (err) {
       alert('Error al guardar la carpeta: ' + err.message);
+    }
+  };
+
+  const handleRenameSave = async (newName) => {
+    if (!newName.trim()) return;
+    try {
+      if (renameModal.type === 'folder') {
+        const existing = folders.find(f => f.id === renameModal.id);
+        if (existing) {
+          await saveFolder({
+            ...existing,
+            name: newName.trim()
+          });
+        }
+      } else {
+        const existing = ebooks.find(e => e.id === renameModal.id);
+        if (existing) {
+          await saveEbook({
+            ...existing,
+            title: newName.trim()
+          });
+        }
+      }
+      setRenameModal(null);
+      await refreshData();
+    } catch (err) {
+      alert('Error al renombrar: ' + err.message);
     }
   };
 
@@ -173,6 +246,65 @@ export default function MyEbooksSection() {
     }
   };
 
+  const handleShareEbook = async (ebook) => {
+    if (!ebook || !ebook.fileBlob) {
+      alert('No se pudo encontrar el archivo para compartir.');
+      return;
+    }
+    setSharingId(ebook.id);
+    try {
+      const ext = getFileExtension(ebook.type, ebook.fileBlob.name);
+      const fileName = `${ebook.title}.${ext}`;
+
+      if (Capacitor.isNativePlatform()) {
+        // 1. Convertir Blob a Base64
+        const base64Data = await blobToBase64(ebook.fileBlob);
+        
+        // 2. Guardar en el directorio caché temporal del dispositivo
+        const writeResult = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+
+        // 3. Compartir nativamente
+        await Share.share({
+          title: ebook.title,
+          text: `Compartiendo ${ebook.title}`,
+          url: writeResult.uri,
+          dialogTitle: 'Compartir Archivo'
+        });
+      } else {
+        // Fallback Web: Utilizar Web Share API si está disponible, de lo contrario descarga directa
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [ebook.fileBlob] })) {
+          const fileObj = new File([ebook.fileBlob], fileName, { type: ebook.fileBlob.type });
+          await navigator.share({
+            files: [fileObj],
+            title: ebook.title,
+            text: `Compartiendo ${ebook.title}`
+          });
+        } else {
+          // Descarga directa
+          const url = URL.createObjectURL(ebook.fileBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      }
+    } catch (err) {
+      console.error('Error al compartir:', err);
+      if (err.message && !err.message.includes('Share canceled') && !err.message.includes('canceled')) {
+        alert('Error al compartir: ' + err.message);
+      }
+    } finally {
+      setSharingId(null);
+    }
+  };
+
   // ── IMPORTACIÓN DE ARCHIVOS ───────────────────────────────
   const extractPdfCover = async (file) => {
     return new Promise((resolve) => {
@@ -206,7 +338,6 @@ export default function MyEbooksSection() {
       fileReader.readAsArrayBuffer(file);
     });
   };
-
   const handleFileImport = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -219,13 +350,16 @@ export default function MyEbooksSection() {
       let type = '';
       if (ext === 'pdf') type = 'pdf';
       else if (ext === 'doc' || ext === 'docx') type = 'docx';
+      else if (['jpg', 'jpeg', 'png'].includes(ext)) type = 'image';
       else {
-        throw new Error('Formato no soportado. Debe ser PDF, DOC o DOCX.');
+        throw new Error('Formato no soportado. Debe ser PDF, Word o Imagen (JPG, PNG).');
       }
 
       let coverUrl = null;
       if (type === 'pdf') {
         coverUrl = await extractPdfCover(file);
+      } else if (type === 'image') {
+        coverUrl = await generateImageThumbnail(file);
       }
 
       const newEbook = {
@@ -247,7 +381,6 @@ export default function MyEbooksSection() {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
-
   // ── PORTADAS MANUALES ─────────────────────────────────────
   const handleUpdateCoverUrl = async (url) => {
     if (!coverModal) return;
@@ -320,7 +453,7 @@ export default function MyEbooksSection() {
             ) : (
               <Upload size={14} />
             )}
-            Importar Documento
+            Importar Archivo
           </button>
           
           <input
@@ -328,7 +461,7 @@ export default function MyEbooksSection() {
             ref={fileInputRef}
             onChange={handleFileImport}
             className="hidden"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.doc,.docx,image/*,.jpg,.jpeg,.png"
           />
         </div>
       </div>
@@ -377,7 +510,7 @@ export default function MyEbooksSection() {
               <span className="text-5xl mb-3">📁</span>
               <h3 className="font-bold text-slate-700 text-sm mb-1">Esta carpeta está vacía</h3>
               <p className="text-xs text-slate-400 max-w-xs">
-                Importá archivos PDF o Word (.docx) o creá subcarpetas para comenzar a organizarte.
+                Importá archivos PDF, Word o fotos (.jpg, .png) o creá subcarpetas para comenzar a organizarte.
               </p>
             </div>
           )}
@@ -401,7 +534,7 @@ export default function MyEbooksSection() {
                     {/* Botones de acción rápida */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                       <button 
-                        onClick={(e) => { e.stopPropagation(); setFolderModal({ type: 'rename', id: folder.id, name: folder.name }); }}
+                        onClick={(e) => { e.stopPropagation(); setRenameModal({ type: 'folder', id: folder.id, name: folder.name }); }}
                         className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
                         title="Renombrar"
                       >
@@ -451,7 +584,11 @@ export default function MyEbooksSection() {
                             </span>
                           </div>
                           <div className="flex-1 flex items-center justify-center">
-                            <FileText size={32} className="text-amber-400" />
+                            {ebook.type === 'image' ? (
+                              <Image size={32} className="text-amber-400" />
+                            ) : (
+                              <FileText size={32} className="text-amber-400" />
+                            )}
                           </div>
                           <p className="text-[10px] font-bold text-slate-800 line-clamp-3 text-center leading-tight">
                             {ebook.title}
@@ -478,12 +615,33 @@ export default function MyEbooksSection() {
                         {/* Menú de acciones */}
                         <div className="flex items-center gap-0.5">
                           <button
-                            onClick={(e) => { e.stopPropagation(); setCoverModal({ ebookId: ebook.id, title: ebook.title, coverUrl: ebook.coverUrl }); }}
-                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
-                            title="Cambiar Portada"
+                            onClick={(e) => { e.stopPropagation(); handleShareEbook(ebook); }}
+                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-amber-600 transition-all"
+                            disabled={sharingId === ebook.id}
+                            title="Compartir"
                           >
-                            <Image size={11} />
+                            {sharingId === ebook.id ? (
+                              <Loader2 size={11} className="animate-spin text-amber-500" />
+                            ) : (
+                              <Share2 size={11} />
+                            )}
                           </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setRenameModal({ type: 'ebook', id: ebook.id, name: ebook.title }); }}
+                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
+                            title="Renombrar"
+                          >
+                            <Pencil size={11} />
+                          </button>
+                          {ebook.type !== 'image' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setCoverModal({ ebookId: ebook.id, title: ebook.title, coverUrl: ebook.coverUrl }); }}
+                              className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
+                              title="Cambiar Portada"
+                            >
+                              <Image size={11} />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => { e.stopPropagation(); setMoveModal({ type: 'ebook', id: ebook.id, name: ebook.title }); }}
                             className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-amber-500"
@@ -509,18 +667,35 @@ export default function MyEbooksSection() {
         </>
       )}
 
-      {/* ── MODAL: CREAR/RENOMBRAR CARPETA ─────────────────────── */}
+      {/* ── MODAL: CREAR CARPETA ─────────────────────── */}
       {folderModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
               <FolderPlus size={16} className="text-amber-500" />
-              {folderModal.type === 'create' ? 'Nueva Carpeta' : 'Renombrar Carpeta'}
+              Nueva Carpeta
             </h3>
             <FolderForm 
-              initialName={folderModal.name || ''} 
+              initialName="" 
               onSave={handleSaveFolder} 
               onClose={() => setFolderModal(null)} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: RENOMBRAR ELEMENTO ────────────────────────── */}
+      {renameModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+              <Pencil size={16} className="text-amber-500" />
+              {renameModal.type === 'folder' ? 'Renombrar Carpeta' : 'Renombrar Archivo'}
+            </h3>
+            <FolderForm 
+              initialName={renameModal.name || ''} 
+              onSave={handleRenameSave} 
+              onClose={() => setRenameModal(null)} 
             />
           </div>
         </div>
@@ -532,7 +707,7 @@ export default function MyEbooksSection() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="font-bold text-slate-800 text-sm mb-2">Confirmar Eliminación</h3>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              ¿Estás seguro de que querés eliminar {deleteConfirm.type === 'folder' ? 'la carpeta' : 'el documento'}{' '}
+              ¿Estás seguro de que querés eliminar {deleteConfirm.type === 'folder' ? 'la carpeta' : 'el archivo'}{' '}
               <strong className="text-slate-700">"{deleteConfirm.name}"</strong>?
               {deleteConfirm.type === 'folder' && ' Los elementos contenidos se moverán a la carpeta superior.'}
             </p>
@@ -747,17 +922,16 @@ function EbookReaderModal({ ebook, onClose }) {
   // Ajustes de lectura (para Word HTML)
   const [fontSize, setFontSize] = useState(16); // px
   const [theme, setTheme] = useState('sepia'); // light, sepia, dark
-
   useEffect(() => {
     let objectUrl = '';
 
-    if (ebook.type === 'pdf') {
+    if (ebook.type === 'pdf' || ebook.type === 'image') {
       try {
         objectUrl = URL.createObjectURL(ebook.fileBlob);
         setPdfUrl(objectUrl);
         setLoading(false);
       } catch (err) {
-        setErrorMsg('No se pudo inicializar el visor de PDF');
+        setErrorMsg(ebook.type === 'image' ? 'No se pudo cargar la imagen' : 'No se pudo inicializar el visor de PDF');
         setLoading(false);
       }
     } else {
@@ -797,11 +971,11 @@ function EbookReaderModal({ ebook, onClose }) {
 
   // Estilos del tema del lector
   const readerThemeClass = useMemo(() => {
+    if (ebook.type === 'image') return 'bg-slate-950 text-slate-200';
     if (theme === 'dark') return 'bg-slate-900 text-slate-300';
     if (theme === 'sepia') return 'bg-[#f4ecd8] text-[#5b4636]';
     return 'bg-white text-slate-800';
-  }, [theme]);
-
+  }, [theme, ebook.type]);
   return (
     <div className={`fixed inset-0 z-[70] flex flex-col ${readerThemeClass} transition-colors duration-200`}>
       
@@ -863,6 +1037,8 @@ function EbookReaderModal({ ebook, onClose }) {
               </button>
             </div>
           </div>
+        ) : ebook.type === 'image' ? (
+          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Visualizador de Foto</span>
         ) : (
           /* Para PDF */
           <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Visualizador PDF</span>
@@ -899,6 +1075,14 @@ function EbookReaderModal({ ebook, onClose }) {
                 className="w-full h-full border-none" 
                 title={ebook.title}
               />
+            ) : ebook.type === 'image' ? (
+              <div className="w-full h-full flex items-center justify-center p-4 bg-slate-950">
+                <img 
+                  src={pdfUrl} 
+                  alt={ebook.title} 
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-lg select-none"
+                />
+              </div>
             ) : (
               /* Lector Word / HTML */
               <div 

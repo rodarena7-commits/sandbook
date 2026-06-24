@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "85202851148",
+    "project_id": "playmobil-2d74d",
+    "storage_bucket": "playmobil-2d74d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:85202851148:android:244871777fc880d8b4ebe9",
+        "android_client_info": {
+          "package_name": "sandbook.myapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "85202851148-htv6uqb1r1lhnqjltoo8gulvfp0mq8ep.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "sandbook.myapp",
+            "certificate_hash": "efe3c32f835bc0fe4adccb4e8653919aa53a8026"
+          }
+        },
+        {
+          "client_id": "85202851148-u4gg6f98ee2pdrbam4tqeo8l02jvk749.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "sandbook.myapp",
+            "certificate_hash": "9d2098ff82fb2990a10ddfa6a517fac0f051ed02"
+          }
+        },
+        {
+          "client_id": "85202851148-ptag30ivne7p8sedc9ktd7fb7t7l7smf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUik8VimQbs3h6oh7q04q1lmpBtJ0zoYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "85202851148-b1kennjbhqeadljdci2ffj7u66mgq02c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
