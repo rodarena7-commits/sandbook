@@ -23,6 +23,21 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [appConfig, setAppConfig] = useState(null)
 
+  // Initialize GoogleAuth on native platforms
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        GoogleAuth.initialize({
+          clientId: '85202851148-ptag30ivne7p8sedc9ktd7fb7t7l7smf.apps.googleusercontent.com',
+          scopes: ['profile', 'email'],
+          grantOfflineAccess: true,
+        })
+      } catch (err) {
+        console.error('Error initializing GoogleAuth:', err)
+      }
+    }
+  }, [])
+
   // Real-time app config listener
   useEffect(() => {
     const unsubConfig = onSnapshot(

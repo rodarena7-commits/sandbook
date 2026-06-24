@@ -5,4 +5,5 @@
     <string name="package_name">sandbook.myapp</string>
     <string name="custom_url_scheme">sandbook.myapp</string>
     <string name="default_web_client_id">85202851148-ptag30ivne7p8sedc9ktd7fb7t7l7smf.apps.googleusercontent.com</string>
+    <string name="server_client_id">85202851148-ptag30ivne7p8sedc9ktd7fb7t7l7smf.apps.googleusercontent.com</string>
 </resources>
