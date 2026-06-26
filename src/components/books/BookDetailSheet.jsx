@@ -12,6 +12,7 @@ import CreatePlanSheet from './CreatePlanSheet'
 import CoReaderPickerSheet from './CoReaderPickerSheet'
 import { getGlobalCover, saveGlobalCover, getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../../hooks/useGlobalMedia'
 import { useMercadoLibrePrice } from '../../hooks/useMercadoLibrePrice'
+import { useBuscaLibrePrice } from '../../hooks/useBuscaLibrePrice'
 import { useBookDemo } from '../../hooks/useBookDemo'
 import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
 import { useBookPosts } from '../../hooks/useBookPosts'
@@ -442,6 +443,7 @@ export default function BookDetailSheet({
   const [relatedBook, setRelatedBook]             = useState(null)
 
   const { mlPrice, mlLoading, mlUrl } = useMercadoLibrePrice(book)
+  const { blPrice, blLoading, blUrl } = useBuscaLibrePrice(book)
   const { demoUrl, saveDemo } = useBookDemo(book.bookId)
   const isAdmin = user?.email === 'rodrigo.n.arena@hotmail.com'
   const [editingDemo, setEditingDemo] = useState(false)
@@ -764,38 +766,48 @@ export default function BookDetailSheet({
                 )}
 
                 <div className="mb-5">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dónde comprar</p>
-                  <div className="flex gap-2 flex-wrap">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2.5">Dónde comprar</p>
+                  <div className="grid grid-cols-2 gap-2">
                     {book.price != null && book.buyLink && (
                       <a
                         href={book.buyLink}
                         target="_blank" rel="noopener noreferrer"
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
+                        className="flex items-center gap-2 px-3 py-2.5 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-2xl text-xs font-bold border border-sky-100/60 active:scale-95 transition-all shadow-sm"
                       >
-                        <ExternalLink size={14} />
-                        Google Play · USD {book.price.toFixed(2)}
+                        <img src="/googleplay.svg" alt="" className="w-5 h-5 object-contain" />
+                        <span>USD {book.price.toFixed(2)}</span>
                       </a>
                     )}
+                    
                     <a
                       href={amazonUrl}
                       target="_blank" rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-2xl text-xs font-bold border border-amber-100/60 active:scale-95 transition-all shadow-sm"
                     >
-                      <ShoppingCart size={14} />
-                      Amazon
+                      <img src="/amazon.svg" alt="" className="w-5 h-5 object-contain" />
+                      <span>Amazon</span>
                     </a>
+
                     <a
                       href={mlPrice?.url || mlUrl}
                       target="_blank" rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
-                      style={{ background: '#3483FA', color: 'white' }}
+                      className="flex items-center gap-2 px-3 py-2.5 bg-yellow-50 text-yellow-800 hover:bg-yellow-100 rounded-2xl text-xs font-bold border border-yellow-100 active:scale-95 transition-all shadow-sm"
                     >
-                      {mlLoading
-                        ? <><Loader2 size={13} className="animate-spin" /> Buscando…</>
-                        : mlPrice
-                          ? <><ShoppingCart size={14} /> $ {mlPrice.price.toLocaleString('es-AR')}</>
-                          : <><ShoppingCart size={14} /> MercadoLibre</>
-                      }
+                      <img src="/mercadolibre.svg" alt="" className="w-5 h-5 object-contain" />
+                      <span>
+                        {mlLoading ? 'Cargando...' : mlPrice ? `$ ${mlPrice.price.toLocaleString('es-AR')}` : 'MercadoLibre'}
+                      </span>
+                    </a>
+
+                    <a
+                      href={blPrice?.url || blUrl}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-blue-50 text-blue-800 hover:bg-blue-100 rounded-2xl text-xs font-bold border border-blue-100 active:scale-95 transition-all shadow-sm"
+                    >
+                      <img src="/buscalibre.svg" alt="" className="w-5 h-5 object-contain rounded-md" />
+                      <span>
+                        {blLoading ? 'Cargando...' : blPrice ? `$ ${blPrice.price.toLocaleString('es-AR')}` : 'Buscalibre'}
+                      </span>
                     </a>
                   </div>
                 </div>

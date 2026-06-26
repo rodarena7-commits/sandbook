@@ -61,6 +61,66 @@ app.get('/ml-price', async (req, res) => {
   }
 })
 
+// ── GET /buscalibre-price?q=TITULO ───────────────────────────────────
+app.get('/buscalibre-price', async (req, res) => {
+  const q = req.query.q?.trim()
+  if (!q) return res.status(400).json({ error: 'q requerido' })
+  try {
+    const response = await fetch(
+      `https://www.buscalibre.com.ar/libros/search?q=${encodeURIComponent(q)}`,
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      }
+    )
+    const html = await response.text()
+
+    // Intentar buscar canonical link
+    const canonicalMatch = html.match(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["']/i)
+    const canonicalUrl = canonicalMatch ? canonicalMatch[1] : null
+
+    // Caso 1: Página de detalle - precio destacado
+    const detailPriceRegex = /<strong[^>]*class=["']precio["'][^>]*>\s*\$\s*([\d\.,]+)/i
+    const detailMatch = html.match(detailPriceRegex)
+    if (detailMatch) {
+      const rawPrice = detailMatch[1].replace(/\./g, '').replace(/,/g, '.')
+      return res.json({
+        price: Math.round(parseFloat(rawPrice)),
+        url: canonicalUrl || `https://www.buscalibre.com.ar/libros/search?q=${encodeURIComponent(q)}`
+      })
+    }
+
+    // Caso 2: Página de detalle - precio en span.ped
+    const pedPriceRegex = /<span[^>]*class=["']ped["'][^>]*>\s*\$\s*([\d\.,]+)/i
+    const pedMatch = html.match(pedPriceRegex)
+    if (pedMatch) {
+      const rawPrice = pedMatch[1].replace(/\./g, '').replace(/,/g, '.')
+      return res.json({
+        price: Math.round(parseFloat(rawPrice)),
+        url: canonicalUrl || `https://www.buscalibre.com.ar/libros/search?q=${encodeURIComponent(q)}`
+      })
+    }
+
+    // Caso 3: Listado de búsqueda - extraer primer producto
+    const productRegex = /class=["']box-producto[\s\S]*?data-precio=["']([\d\.]+)["'][\s\S]*?href=["'](\/libro-[^"']+)["']/i
+    const productMatch = html.match(productRegex)
+    if (productMatch) {
+      const priceVal = Math.round(parseFloat(productMatch[1]))
+      const path = productMatch[2]
+      return res.json({
+        price: priceVal,
+        url: path.startsWith('http') ? path : `https://www.buscalibre.com.ar${path}`
+      })
+    }
+
+    res.json({ price: null, url: `https://www.buscalibre.com.ar/libros/search?q=${encodeURIComponent(q)}` })
+  } catch (e) {
+    console.error('Buscalibre error:', e.message)
+    res.status(502).json({ error: 'Error Buscalibre' })
+  }
+})
+
 // ── GET /api/app-logo.png ───────────────────────────────────────────
 app.get('/api/app-logo.png', async (req, res) => {
   try {

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { Search, X, BookOpen, Plus, Check, Loader2, Camera, Star, ThumbsUp, ThumbsDown, CalendarDays, ExternalLink, ShoppingCart } from 'lucide-react'
 import { useMercadoLibrePrice } from '../hooks/useMercadoLibrePrice'
+import { useBuscaLibrePrice } from '../hooks/useBuscaLibrePrice'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { createReadingPlan, createRelaxPlan } from '../hooks/useReadingPlan'
@@ -46,6 +47,7 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
   const [isFav, setIsFav] = useState(savedBook?.isFavorite || false)
   const [reaction, setReaction] = useState(savedBook?.myReaction || null)
   const { mlPrice, mlLoading, mlUrl } = useMercadoLibrePrice(book)
+  const { blPrice, blLoading, blUrl } = useBuscaLibrePrice(book)
 
   async function handleFav(e) {
     e.stopPropagation()
@@ -101,30 +103,42 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
                 href={book.buyLink}
                 target="_blank" rel="noopener noreferrer"
                 onClick={e => e.stopPropagation()}
-                className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-semibold border border-blue-100 active:scale-95 transition-all"
+                className="flex items-center gap-1.5 px-2 py-1 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-lg text-[10px] font-bold border border-sky-100/60 active:scale-95 transition-all shadow-sm"
               >
-                <ExternalLink size={9} />
-                USD {book.price.toFixed(2)} · Google Play
+                <img src="/googleplay.svg" alt="" className="w-3.5 h-3.5 object-contain" />
+                <span>USD {book.price.toFixed(2)}</span>
               </a>
             )}
             <a
               href={getAmazonLink(book)}
               target="_blank" rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-semibold border border-amber-100 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-[10px] font-bold border border-amber-100/60 active:scale-95 transition-all shadow-sm"
             >
-              <ShoppingCart size={9} />
-              Amazon
+              <img src="/amazon.svg" alt="" className="w-3.5 h-3.5 object-contain" />
+              <span>Amazon</span>
             </a>
             <a
               href={mlPrice?.url || mlUrl}
               target="_blank" rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border active:scale-95 transition-all"
-              style={{ background: '#e8f1ff', color: '#3483FA', borderColor: '#b8d4f5' }}
+              className="flex items-center gap-1.5 px-2 py-1 bg-yellow-50/70 text-yellow-850 hover:bg-yellow-100/80 rounded-lg text-[10px] font-bold border border-yellow-100/70 active:scale-95 transition-all shadow-sm"
             >
-              <ShoppingCart size={9} />
-              {mlLoading ? '…' : mlPrice ? `$ ${mlPrice.price.toLocaleString('es-AR')}` : 'MercadoLibre'}
+              <img src="/mercadolibre.svg" alt="" className="w-3.5 h-3.5 object-contain" />
+              <span>
+                {mlLoading ? '...' : mlPrice ? `$ ${mlPrice.price.toLocaleString('es-AR')}` : 'MercadoLibre'}
+              </span>
+            </a>
+            <a
+              href={blPrice?.url || blUrl}
+              target="_blank" rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="flex items-center gap-1.5 px-2 py-1 bg-blue-50/70 text-blue-800 hover:bg-blue-100/80 rounded-lg text-[10px] font-bold border border-blue-100/70 active:scale-95 transition-all shadow-sm"
+            >
+              <img src="/buscalibre.svg" alt="" className="w-3.5 h-3.5 object-contain rounded-md" />
+              <span>
+                {blLoading ? '...' : blPrice ? `$ ${blPrice.price.toLocaleString('es-AR')}` : 'Buscalibre'}
+              </span>
             </a>
           </div>
         </div>
