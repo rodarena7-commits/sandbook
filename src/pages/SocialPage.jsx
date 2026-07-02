@@ -3,6 +3,7 @@ import {
   Search, X, BookOpen, Users, Loader2,
   ChevronRight, RefreshCw, Plus, MessageCircle,
   Feather, ShieldCheck, User, FileText, Repeat2,
+  Trash2,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useUsers } from '../hooks/useUsers'
@@ -173,6 +174,8 @@ export default function SocialPage() {
   const [discoverTab, setDiscoverTab]       = useState('readers')
   const [readerQuery, setReaderQuery]       = useState('')
   const [adminQuery, setAdminQuery]         = useState('')
+  const [adminSubTab, setAdminSubTab]       = useState('users')
+  const [adminPostsSort, setAdminPostsSort] = useState('newest')
   const [selectedUser, setSelectedUser]     = useState(null)
   const [showCreatePost, setShowCreatePost] = useState(false)
   const [showLogoPicker, setShowLogoPicker] = useState(false)
@@ -211,6 +214,18 @@ export default function SocialPage() {
   }, [allUsers, adminQuery])
 
   const onlineCount = useMemo(() => allUsers.filter(u => u.online).length, [allUsers])
+
+  const sortedAdminPosts = useMemo(() => {
+    return [...posts].sort((a, b) => {
+      const timeA = a.createdAt?.toMillis?.() || (a.createdAt?.seconds || 0) * 1000
+      const timeB = b.createdAt?.toMillis?.() || (b.createdAt?.seconds || 0) * 1000
+      if (adminPostsSort === 'oldest') {
+        return timeA - timeB // oldest first (mayor cantidad de días publicada)
+      } else {
+        return timeB - timeA // newest first (menor cantidad de días publicada)
+      }
+    })
+  }, [posts, adminPostsSort])
 
   useEffect(() => {
     if (activeTab === 'feed' && !feedLoaded) loadFeed()
@@ -521,16 +536,136 @@ export default function SocialPage() {
             </div>
           </div>
 
-          <p className="text-xs text-slate-400 font-medium px-1 flex items-center gap-1.5">
-            <ShieldCheck size={12} className="text-indigo-400"/> Panel de administrador · {displayedAdmin.length} usuarios
-          </p>
+          {/* Sub-tabs Selector inside Admin Panel */}
+          <div className="flex gap-2 mb-3 bg-slate-100 p-1 rounded-2xl">
+            <button
+              onClick={() => setAdminSubTab('users')}
+              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                adminSubTab === 'users'
+                  ? 'bg-white text-slate-800 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              👥 Usuarios ({displayedAdmin.length})
+            </button>
+            <button
+              onClick={() => setAdminSubTab('posts')}
+              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                adminSubTab === 'posts'
+                  ? 'bg-white text-slate-800 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              📝 Publicaciones ({posts.length})
+            </button>
+          </div>
 
-          {allUsersLoading
-            ? <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-amber-400"/></div>
-            : displayedAdmin.map(u => (
-                <AdminUserRow key={u.uid} user={u} onSelect={setSelectedUser}/>
-              ))
-          }
+          {/* Tab 1: Users list */}
+          {adminSubTab === 'users' && (
+            <>
+              <p className="text-[11px] text-slate-400 font-medium px-1 flex items-center gap-1.5 mb-1.5">
+                <ShieldCheck size={12} className="text-indigo-400"/> Panel de administrador · {displayedAdmin.length} usuarios
+              </p>
+              {allUsersLoading ? (
+                <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-amber-400"/></div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {displayedAdmin.map(u => (
+                    <AdminUserRow key={u.uid} user={u} onSelect={setSelectedUser}/>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Tab 2: Publications list with date filter (mayor a menor y menor a mayor) */}
+          {adminSubTab === 'posts' && (
+            <>
+              <div className="flex items-center justify-between px-1 mb-2">
+                <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+                  <ShieldCheck size={12} className="text-indigo-400"/> Moderación · {posts.length} publicaciones
+                </p>
+                {/* Order Selector (de mayor a menor días vs de menor a mayor días) */}
+                <select
+                  value={adminPostsSort}
+                  onChange={e => setAdminPostsSort(e.target.value)}
+                  className="bg-white border border-slate-200 text-slate-700 text-[10px] font-bold rounded-xl px-2 py-1 outline-none focus:ring-2 focus:ring-amber-400"
+                >
+                  <option value="newest">Menor a mayor (Recientes primero)</option>
+                  <option value="oldest">Mayor a menor (Antiguas primero)</option>
+                </select>
+              </div>
+
+              {postsLoading ? (
+                <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-amber-400"/></div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {sortedAdminPosts.map(post => {
+                    const days = (() => {
+                      if (!post.createdAt) return 0
+                      const ms = post.createdAt.toMillis?.() || (post.createdAt.seconds || 0) * 1000
+                      const diff = Math.max(0, Date.now() - ms)
+                      return Math.floor(diff / (1000 * 60 * 60 * 24))
+                    })()
+
+                    const dateText = days === 0 
+                      ? 'Publicado hoy' 
+                      : days === 1 
+                        ? 'Publicado hace 1 día' 
+                        : `Publicado hace ${days} días`
+
+                    return (
+                      <div key={post.id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex gap-3 relative">
+                        {/* User Avatar */}
+                        {post.photoURL ? (
+                          <img src={post.photoURL} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-100 flex-shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-200">
+                            <span className="text-xs font-bold text-slate-400">{(post.displayName || 'L')[0]}</span>
+                          </div>
+                        )}
+
+                        <div className="flex-1 min-w-0 pr-6">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-800 text-xs truncate">{post.displayName}</span>
+                            <span className="text-[10px] text-slate-400 whitespace-nowrap">{dateText}</span>
+                          </div>
+                          
+                          {/* Snippet or text */}
+                          <p className="text-xs text-slate-600 mt-1 line-clamp-3 leading-relaxed break-words">
+                            {post.repostOf ? `Repost de @${post.repostOf.displayName}: "${post.repostOf.text}"` : post.text}
+                          </p>
+
+                          {/* Associated Book if any */}
+                          {(post.bookTitle || post.repostOf?.bookTitle) && (
+                            <div className="mt-2 text-[10px] text-amber-600 font-semibold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg w-fit">
+                              📖 {post.bookTitle || post.repostOf?.bookTitle}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Admin Delete Action */}
+                        <button
+                          onClick={async () => {
+                            if (window.confirm('¿Estás seguro de que querés eliminar esta publicación?')) {
+                              await deletePost(post.id)
+                            }
+                          }}
+                          className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-90"
+                          title="Eliminar publicación"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )
+                  })}
+                  {sortedAdminPosts.length === 0 && (
+                    <div className="text-center py-12 text-slate-400 text-xs">No hay publicaciones.</div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
