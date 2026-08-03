@@ -44,6 +44,7 @@ function getAmazonLink(book) {
 
 // ── Search Result Item ─────────────────────────────────────
 function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
+  const { t } = useAuth()
   const [isFav, setIsFav] = useState(savedBook?.isFavorite || false)
   const [reaction, setReaction] = useState(savedBook?.myReaction || null)
   const { mlPrice, mlLoading, mlUrl } = useMercadoLibrePrice(book)
@@ -164,16 +165,16 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
           <div className="ml-auto flex items-center gap-2">
             <button onClick={() => onView(book)}
               className="px-3 py-1.5 border border-amber-400 text-amber-500 rounded-full text-xs font-semibold active:scale-95 transition-all">
-              Ver
+              {t('search_view')}
             </button>
             {savedBook ? (
               <span className="flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium">
-                <Check size={11} /> {STATUS_LABELS[savedBook.status] || 'Guardado'}
+                <Check size={11} /> {t('lib_' + savedBook.status) || t('search_saved')}
               </span>
             ) : (
               <button onClick={() => onAddPress(book)}
                 className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 text-white rounded-full text-xs font-semibold shadow-sm active:scale-95 transition-all">
-                <Plus size={12} /> Agregar
+                <Plus size={12} /> {t('search_add')}
               </button>
             )}
           </div>
@@ -185,7 +186,7 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
 
 // ── Main Page ──────────────────────────────────────────────
 export default function SearchPage({ onGoToPlan }) {
-  const { user } = useAuth()
+  const { user, t } = useAuth()
   const { books, addBook } = useBooks(user?.uid)
   const { results, loading, error, query, setQuery, search, clear } = useGoogleBooks()
 
@@ -266,31 +267,31 @@ export default function SearchPage({ onGoToPlan }) {
       {/* Header */}
       <div className="bg-white px-4 pt-12 pb-3 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-bold text-slate-800">Buscar libros</h1>
+          <h1 className="text-xl font-bold text-slate-800">{t('search_title')}</h1>
           {onGoToPlan && (
             <button
               onClick={onGoToPlan}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-semibold active:scale-95 transition-all"
             >
               <CalendarDays size={13} className="text-amber-500" />
-              Planes
+              {t('search_plans')}
             </button>
           )}
         </div>
 
         {/* Type selector */}
         <div className="flex gap-1.5 mb-3">
-          {SEARCH_TYPES.map(t => (
+          {SEARCH_TYPES.map(st => (
             <button
-              key={t.key}
-              onClick={() => handleTypeChange(t.key)}
+              key={st.key}
+              onClick={() => handleTypeChange(st.key)}
               className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                searchType === t.key
+                searchType === st.key
                   ? 'bg-amber-500 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-500'
               }`}
             >
-              {t.label}
+              {t('search_type_' + st.key)}
             </button>
           ))}
         </div>
@@ -303,7 +304,7 @@ export default function SearchPage({ onGoToPlan }) {
               ref={inputRef}
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder={PLACEHOLDERS[searchType]}
+              placeholder={t('search_placeholder_' + searchType)}
               inputMode={searchType === 'isbn' ? 'numeric' : 'text'}
               className="w-full pl-9 pr-8 py-2.5 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400 transition-all"
             />
@@ -326,7 +327,7 @@ export default function SearchPage({ onGoToPlan }) {
             disabled={!query.trim() || loading}
             className="px-4 py-2.5 bg-amber-500 text-white rounded-2xl text-xs font-semibold disabled:opacity-40 active:scale-95 transition-all shadow-sm"
           >
-            Buscar
+            {t('nav_search')}
           </button>
         </form>
       </div>
@@ -336,7 +337,7 @@ export default function SearchPage({ onGoToPlan }) {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 size={32} className="animate-spin mb-3 text-amber-400" />
-            <p className="text-sm">Buscando…</p>
+            <p className="text-sm">{t('search_searching')}</p>
           </div>
         )}
 
@@ -347,8 +348,10 @@ export default function SearchPage({ onGoToPlan }) {
         {!loading && results.length === 0 && !error && query.trim() && (
           <div className="flex flex-col items-center justify-center py-20 text-center text-slate-400">
             <p className="text-4xl mb-3">🔍</p>
-            <p className="font-semibold text-slate-600">Sin resultados</p>
-            <p className="text-sm mt-1">Probá con otro {searchType === 'author' ? 'autor' : searchType === 'isbn' ? 'código' : 'título'}</p>
+            <p className="font-semibold text-slate-600">{t('search_no_results')}</p>
+            <p className="text-sm mt-1">
+              {t('search_try_another')} {searchType === 'author' ? t('search_type_author_lower') : searchType === 'isbn' ? t('search_type_code_lower') : t('search_type_title_lower')}
+            </p>
           </div>
         )}
 
@@ -357,26 +360,26 @@ export default function SearchPage({ onGoToPlan }) {
             {searchType === 'isbn' ? (
               <>
                 <p className="text-5xl mb-4">📷</p>
-                <p className="font-semibold text-slate-600">Buscar por ISBN</p>
-                <p className="text-sm mt-1">Escribí el código o tocá la cámara para escanearlo</p>
+                <p className="font-semibold text-slate-600">{t('search_by_isbn')}</p>
+                <p className="text-sm mt-1">{t('search_by_isbn_desc')}</p>
                 <button
                   onClick={() => setShowScanner(true)}
                   className="mt-5 flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
                 >
-                  <Camera size={16} /> Escanear código de barras
+                  <Camera size={16} /> {t('search_scan_barcode')}
                 </button>
               </>
             ) : searchType === 'author' ? (
               <>
                 <p className="text-5xl mb-4">✍️</p>
-                <p className="font-semibold text-slate-600">Buscar por autor</p>
-                <p className="text-sm mt-1">Escribí el nombre completo o parcial del autor</p>
+                <p className="font-semibold text-slate-600">{t('search_by_author')}</p>
+                <p className="text-sm mt-1">{t('search_by_author_desc')}</p>
               </>
             ) : (
               <>
                 <p className="text-5xl mb-4">📖</p>
-                <p className="font-semibold text-slate-600">Buscá tu próximo libro</p>
-                <p className="text-sm mt-1">Escribí el título del libro</p>
+                <p className="font-semibold text-slate-600">{t('search_find_next')}</p>
+                <p className="text-sm mt-1">{t('search_type_title_desc')}</p>
               </>
             )}
           </div>

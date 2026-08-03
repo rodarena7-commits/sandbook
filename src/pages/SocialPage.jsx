@@ -3,7 +3,7 @@ import {
   Search, X, BookOpen, Users, Loader2,
   ChevronRight, RefreshCw, Plus, MessageCircle,
   Feather, ShieldCheck, User, FileText, Repeat2,
-  Trash2,
+  Trash2, ArrowDown, ArrowUp,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useUsers } from '../hooks/useUsers'
@@ -82,18 +82,19 @@ function FeedItem({ item, onUserPress }) {
 
 // ── User Card ──────────────────────────────────────────────
 function UserCard({ user, isFollowing, onSelect }) {
+  const { t } = useAuth()
   return (
     <button onClick={() => onSelect(user)}
       className="w-full flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 active:bg-slate-50 text-left">
       <Avatar photoURL={user.photoURL} displayName={user.displayName} online={user.online} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="text-sm font-semibold text-slate-800 line-clamp-1">{user.displayName||'Lector'}</p>
-          {user.online && <span className="text-[9px] text-green-500 font-semibold">● En línea</span>}
+          <p className="text-sm font-semibold text-slate-800 line-clamp-1">{user.displayName||t('soc_reader_default')}</p>
+          {user.online && <span className="text-[9px] text-green-500 font-semibold">● {t('soc_online')}</span>}
         </div>
         <div className="flex gap-2 text-[10px] text-slate-400 mt-0.5">
-          <span>{(user.followers||[]).length} seguidores</span>
-          {isFollowing && <span className="text-amber-500 font-medium">· Siguiendo</span>}
+          <span>{(user.followers||[]).length} {t('soc_followers')}</span>
+          {isFollowing && <span className="text-amber-500 font-medium">· {t('soc_following')}</span>}
         </div>
         {user.bio && <p className="text-[10px] text-slate-400 italic line-clamp-1 mt-0.5">"{user.bio}"</p>}
       </div>
@@ -103,24 +104,41 @@ function UserCard({ user, isFollowing, onSelect }) {
 }
 
 // ── Admin User Row ─────────────────────────────────────────
+function getLastSeenMs(u) {
+  if (u.online) return Date.now()
+  if (u.lastSeen?.toMillis) return u.lastSeen.toMillis()
+  if (u.lastSeen?.seconds) return u.lastSeen.seconds * 1000
+  return 0
+}
+
 function AdminUserRow({ user, onSelect }) {
+  const { t } = useAuth()
   const createdAt = user.createdAt?.toDate
     ? user.createdAt.toDate().toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'2-digit' })
     : '—'
+  const lastSeenMs = getLastSeenMs(user)
+  const lastSeenLabel = user.online
+    ? 'En línea ahora'
+    : lastSeenMs
+      ? new Date(lastSeenMs).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
+      : 'Sin registro'
   return (
     <button onClick={() => onSelect(user)}
       className="w-full flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 active:bg-slate-50 text-left">
       <Avatar photoURL={user.photoURL} displayName={user.displayName} size="sm" online={user.online} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="text-xs font-semibold text-slate-800 line-clamp-1">{user.displayName||'(sin nombre)'}</p>
+          <p className="text-xs font-semibold text-slate-800 line-clamp-1">{user.displayName||t('soc_no_name')}</p>
           {user.online && <span className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0" style={{boxShadow:'0 0 5px #4ade80'}}/>}
         </div>
         <p className="text-[10px] text-slate-400 line-clamp-1">{user.bio || ''}</p>
+        <p className={`text-[9px] mt-0.5 font-medium ${user.online ? 'text-green-500' : 'text-slate-400'}`}>
+          Última conexión: {lastSeenLabel}
+        </p>
       </div>
       <div className="text-right flex-shrink-0">
-        <p className="text-[9px] text-slate-300">{createdAt}</p>
-        <p className="text-[9px] text-slate-400">{(user.followers||[]).length} seg.</p>
+        <p className="text-[9px] text-slate-300">Alta {createdAt}</p>
+        <p className="text-[9px] text-slate-400">{(user.followers||[]).length} {t('soc_followers_abbrev')}</p>
       </div>
     </button>
   )
@@ -128,18 +146,19 @@ function AdminUserRow({ user, onSelect }) {
 
 // ── Following Card ─────────────────────────────────────────
 function FollowingCard({ user, onSelect }) {
+  const { t } = useAuth()
   return (
     <button onClick={() => onSelect(user)}
       className="w-full flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 active:bg-slate-50 text-left">
       <Avatar photoURL={user.photoURL} displayName={user.displayName} online={user.online} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="text-sm font-semibold text-slate-800 line-clamp-1">{user.displayName||'Lector'}</p>
-          {user.online && <span className="text-[9px] text-green-500 font-semibold">● En línea</span>}
+          <p className="text-sm font-semibold text-slate-800 line-clamp-1">{user.displayName||t('soc_reader_default')}</p>
+          {user.online && <span className="text-[9px] text-green-500 font-semibold">● {t('soc_online')}</span>}
         </div>
         {user.currentBook
           ? <div className="flex items-center gap-1 mt-0.5"><BookOpen size={9} className="text-amber-400 flex-shrink-0"/><p className="text-[10px] text-slate-400 line-clamp-1">{user.currentBook.title}</p></div>
-          : <p className="text-[10px] text-slate-300 mt-0.5">Sin lectura activa</p>
+          : <p className="text-[10px] text-slate-300 mt-0.5">{t('soc_no_active_reading')}</p>
         }
       </div>
       <ChevronRight size={14} className="text-slate-300 flex-shrink-0" />
@@ -149,7 +168,7 @@ function FollowingCard({ user, onSelect }) {
 
 // ── Main Page ──────────────────────────────────────────────
 export default function SocialPage() {
-  const { user, profile, setProfile, appConfig } = useAuth()
+  const { user, profile, setProfile, appConfig, t } = useAuth()
   const isAdmin = user?.email === ADMIN_EMAIL
 
   const { searchResults, searchLoading, searchUsers,
@@ -175,6 +194,7 @@ export default function SocialPage() {
   const [readerQuery, setReaderQuery]       = useState('')
   const [adminQuery, setAdminQuery]         = useState('')
   const [adminSubTab, setAdminSubTab]       = useState('users')
+  const [adminUsersSort, setAdminUsersSort] = useState('recent') // 'recent' = más reciente primero, 'oldest' = más antiguo primero
   const [adminPostsSort, setAdminPostsSort] = useState('newest')
   const [selectedUser, setSelectedUser]     = useState(null)
   const [showCreatePost, setShowCreatePost] = useState(false)
@@ -203,15 +223,20 @@ export default function SocialPage() {
     )
   }, [allUsers, readerQuery])
 
-  // Admin: todos los usuarios filtrados
+  // Admin: todos los usuarios filtrados, ordenados por última conexión
   const displayedAdmin = useMemo(() => {
-    if (!adminQuery.trim()) return allUsers
-    const q = adminQuery.toLowerCase()
-    return allUsers.filter(u =>
-      (u.displayName||'').toLowerCase().includes(q) ||
-      (u.email||'').toLowerCase().includes(q)
-    )
-  }, [allUsers, adminQuery])
+    const filtered = !adminQuery.trim()
+      ? allUsers
+      : allUsers.filter(u => {
+          const q = adminQuery.toLowerCase()
+          return (u.displayName||'').toLowerCase().includes(q) ||
+                 (u.email||'').toLowerCase().includes(q)
+        })
+    return [...filtered].sort((a, b) => {
+      const diff = getLastSeenMs(a) - getLastSeenMs(b)
+      return adminUsersSort === 'recent' ? -diff : diff
+    })
+  }, [allUsers, adminQuery, adminUsersSort])
 
   const onlineCount = useMemo(() => allUsers.filter(u => u.online).length, [allUsers])
 
@@ -248,11 +273,11 @@ export default function SocialPage() {
       {/* Header */}
       <div className="bg-white px-4 pt-12 pb-3 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-bold text-slate-800">Red Social</h1>
+          <h1 className="text-xl font-bold text-slate-800">{t('soc_social_network')}</h1>
           {activeTab === 'feed' && (
             <button onClick={() => setShowCreatePost(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-full text-xs font-semibold shadow-sm active:scale-95">
-              <Plus size={13}/> Publicar
+              <Plus size={13}/> {t('soc_publish')}
             </button>
           )}
         </div>
@@ -262,7 +287,7 @@ export default function SocialPage() {
           {tabs.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={`flex-shrink-0 flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${activeTab===tab.key?'bg-amber-500 text-white shadow-sm':'bg-slate-100 text-slate-500'}`}>
-              {tab.label}
+              {t('soc_' + tab.key) || tab.label}
               {tab.key==='following' && followingSet.size>0 && (
                 <span className={`ml-1 text-[10px] ${activeTab===tab.key?'text-white/70':'text-amber-400'}`}>({followingSet.size})</span>
               )}
@@ -275,11 +300,11 @@ export default function SocialPage() {
           <div className="flex gap-1.5 mt-2">
             <button onClick={() => setDiscoverTab('readers')}
               className={`flex items-center gap-1.5 flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${discoverTab==='readers'?'bg-slate-800 text-white':'bg-slate-100 text-slate-500'}`}>
-              <Users size={11}/> Lectores
+              <Users size={11}/> {t('soc_readers')}
             </button>
             <button onClick={() => setDiscoverTab('authors')}
               className={`flex items-center gap-1.5 flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${discoverTab==='authors'?'bg-slate-800 text-white':'bg-slate-100 text-slate-500'}`}>
-              <Feather size={11}/> Escritores
+              <Feather size={11}/> {t('soc_writers')}
             </button>
           </div>
         )}
@@ -290,7 +315,7 @@ export default function SocialPage() {
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
               <input ref={readerInputRef} value={readerQuery} onChange={e=>setReaderQuery(e.target.value)}
-                placeholder="Buscá un lector por nombre…"
+                placeholder={t('soc_search_reader_placeholder')}
                 className="w-full pl-9 pr-8 py-2.5 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"/>
               {readerQuery && (
                 <button type="button" onClick={()=>setReaderQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><X size={13}/></button>
@@ -304,7 +329,7 @@ export default function SocialPage() {
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
               <input ref={authorInputRef} value={authorQuery} onChange={e=>setAuthorQuery(e.target.value)}
-                placeholder="Buscar escritor/a…"
+                placeholder={t('soc_search_writer_placeholder')}
                 className="w-full pl-9 pr-8 py-2.5 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"/>
               {authorQuery && (
                 <button type="button" onClick={clearAuthor} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><X size={13}/></button>
@@ -312,7 +337,7 @@ export default function SocialPage() {
             </div>
             <button type="submit" disabled={!authorQuery.trim()||authorsLoading}
               className="px-4 py-2.5 bg-slate-800 text-white rounded-2xl text-xs font-semibold disabled:opacity-40 active:scale-95">
-              Buscar
+              {t('nav_search')}
             </button>
           </form>
         )}
@@ -322,7 +347,7 @@ export default function SocialPage() {
           <div className="relative mt-2">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
             <input value={adminQuery} onChange={e=>setAdminQuery(e.target.value)}
-              placeholder="Filtrar por nombre o email…"
+              placeholder={t('soc_filter_placeholder')}
               className="w-full pl-9 pr-8 py-2.5 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"/>
             {adminQuery && (
               <button onClick={()=>setAdminQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><X size={13}/></button>
@@ -339,11 +364,11 @@ export default function SocialPage() {
           {!postsLoading && posts.length===0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
               <p className="text-5xl mb-4">✍️</p>
-              <p className="font-semibold text-slate-500">Todavía no hay publicaciones</p>
-              <p className="text-xs mt-1">¡Sé el primero en compartir una frase!</p>
+              <p className="font-semibold text-slate-500">{t('soc_no_posts')}</p>
+              <p className="text-xs mt-1">{t('soc_first_post')}</p>
               <button onClick={()=>setShowCreatePost(true)}
                 className="mt-4 px-5 py-2.5 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm">
-                Publicar ahora
+                {t('soc_publish_now')}
               </button>
             </div>
           )}
@@ -351,7 +376,7 @@ export default function SocialPage() {
           {!postsLoading && posts.length>0 && (
             <>
               <div className="flex items-center justify-between">
-                <p className="text-xs text-slate-400 font-medium">Publicaciones recientes</p>
+                <p className="text-xs text-slate-400 font-medium">{t('soc_recent_posts')}</p>
               </div>
               {posts.map(post => (
                 <PostCard key={post.id} post={post} myUid={user?.uid}
@@ -370,7 +395,7 @@ export default function SocialPage() {
           {feedLoaded && feedItems.length>0 && (
             <>
               <div className="flex items-center justify-between mt-2">
-                <p className="text-xs text-slate-400 font-medium">Actividad de lectores que seguís</p>
+                <p className="text-xs text-slate-400 font-medium">{t('soc_following_activity')}</p>
                 <button onClick={loadFeed} className="text-slate-300 hover:text-amber-500 transition-colors"><RefreshCw size={13}/></button>
               </div>
               {feedItems.slice(0,10).map(item => (
@@ -391,19 +416,19 @@ export default function SocialPage() {
               {!readerQuery.trim() ? (
                 <div className="flex flex-col items-center justify-center py-24 text-center text-slate-400">
                   <Users size={44} className="mb-4 text-slate-200"/>
-                  <p className="font-semibold text-slate-500">Buscá un lector</p>
-                  <p className="text-xs mt-1">Escribí el nombre y encontrá otros lectores</p>
+                  <p className="font-semibold text-slate-500">{t('soc_find_reader')}</p>
+                  <p className="text-xs mt-1">{t('soc_find_reader_desc')}</p>
                 </div>
               ) : allUsersLoading ? (
                 <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-amber-400"/></div>
               ) : displayedReaders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                   <p className="text-3xl mb-3">🔍</p>
-                  <p className="text-sm font-semibold text-slate-500">Sin resultados para "{readerQuery}"</p>
+                  <p className="text-sm font-semibold text-slate-500">{t('soc_no_results_for')} "{readerQuery}"</p>
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-slate-400 font-medium px-1">{displayedReaders.length} resultado{displayedReaders.length !== 1 ? 's' : ''}</p>
+                  <p className="text-xs text-slate-400 font-medium px-1">{displayedReaders.length} {t('soc_results')}</p>
                   {displayedReaders.map(u => (
                     <UserCard key={u.uid} user={u} isFollowing={followingSet.has(u.uid)} onSelect={setSelectedUser}/>
                   ))}
@@ -420,15 +445,15 @@ export default function SocialPage() {
               {!authorsLoading && authors.length===0 && !authorQuery && (
                 <div className="flex flex-col items-center justify-center py-24 text-center text-slate-400">
                   <Feather size={44} className="mb-4 text-slate-200"/>
-                  <p className="font-semibold text-slate-500">Buscá un escritor/a</p>
-                  <p className="text-xs mt-1">Escribí el nombre y encontrá sus libros</p>
+                  <p className="font-semibold text-slate-500">{t('soc_find_writer')}</p>
+                  <p className="text-xs mt-1">{t('soc_find_writer_desc')}</p>
                 </div>
               )}
 
               {!authorsLoading && authors.length===0 && authorQuery && (
                 <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                   <p className="text-3xl mb-3">🔍</p>
-                  <p className="text-sm font-semibold text-slate-500">Sin resultados</p>
+                  <p className="text-sm font-semibold text-slate-500">{t('search_no_results')}</p>
                 </div>
               )}
 
@@ -453,8 +478,8 @@ export default function SocialPage() {
           {!followingLoading && followingUsers.length===0 && (
             <div className="flex flex-col items-center justify-center py-24 text-center text-slate-400">
               <Users size={44} className="mb-4 text-slate-200"/>
-              <p className="font-semibold text-slate-500">Todavía no seguís a nadie</p>
-              <p className="text-xs mt-1">Buscá lectores en Descubrir</p>
+              <p className="font-semibold text-slate-500">{t('soc_no_following')}</p>
+              <p className="text-xs mt-1">{t('soc_no_following_desc')}</p>
             </div>
           )}
           {!followingLoading && followingUsers.map(u => (
@@ -480,11 +505,11 @@ export default function SocialPage() {
           <div className="grid grid-cols-3 gap-2 mb-2">
             <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
               <p className="text-2xl font-bold text-slate-800">{allUsers.length}</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Usuarios</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">{t('soc_users_count')}</p>
             </div>
             <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
               <p className="text-2xl font-bold text-green-500">{onlineCount}</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">En línea</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">{t('soc_online')}</p>
             </div>
             <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
               <p className="text-2xl font-bold text-amber-500">
@@ -493,14 +518,14 @@ export default function SocialPage() {
                   return Date.now() - ms < 7*24*60*60*1000
                 }).length}
               </p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Esta semana</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">{t('soc_this_week')}</p>
             </div>
           </div>
 
           {/* Configuración de logotipo */}
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-2">
             <h3 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-2 uppercase tracking-wide">
-              ⚙️ Logotipo de la App
+              ⚙️ {t('soc_app_logo')}
             </h3>
             <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-100">
               <img 
@@ -510,16 +535,16 @@ export default function SocialPage() {
                 onError={(e) => { e.target.src = '/logosandbook.png' }}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-slate-700">Imagen del Logotipo</p>
+                <p className="text-xs font-semibold text-slate-700">{t('soc_logo_image')}</p>
                 <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                  {appConfig?.logoUrl ? 'Personalizado (Base64)' : 'Predeterminado (/logosandbook.png)'}
+                  {appConfig?.logoUrl ? t('soc_logo_custom') : t('soc_logo_default')}
                 </p>
                 <div className="flex gap-2 mt-2">
                   <button 
                     onClick={() => setShowLogoPicker(true)}
                     className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-bold active:scale-95 transition-all shadow-sm"
                   >
-                    Subir nuevo
+                    {t('soc_upload_new')}
                   </button>
                   {appConfig?.logoUrl && (
                     <button 
@@ -528,7 +553,7 @@ export default function SocialPage() {
                       }}
                       className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl text-[10px] font-semibold active:scale-95 transition-all"
                     >
-                      Restablecer
+                      {t('soc_reset')}
                     </button>
                   )}
                 </div>
@@ -546,7 +571,7 @@ export default function SocialPage() {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              👥 Usuarios ({displayedAdmin.length})
+              👥 {t('soc_users_count')} ({displayedAdmin.length})
             </button>
             <button
               onClick={() => setAdminSubTab('posts')}
@@ -556,16 +581,37 @@ export default function SocialPage() {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              📝 Publicaciones ({posts.length})
+              📝 {t('soc_posts_count')} ({posts.length})
             </button>
           </div>
 
           {/* Tab 1: Users list */}
           {adminSubTab === 'users' && (
             <>
-              <p className="text-[11px] text-slate-400 font-medium px-1 flex items-center gap-1.5 mb-1.5">
-                <ShieldCheck size={12} className="text-indigo-400"/> Panel de administrador · {displayedAdmin.length} usuarios
-              </p>
+              <div className="flex items-center justify-between px-1 mb-1.5 gap-2">
+                <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5 min-w-0">
+                  <ShieldCheck size={12} className="text-indigo-400 flex-shrink-0"/>
+                  <span className="truncate">{t('soc_admin_panel')} · {displayedAdmin.length} {t('soc_users_count').toLowerCase()}</span>
+                </p>
+                {/* Orden por última conexión */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <span className="text-[9px] text-slate-400 font-medium mr-0.5 hidden sm:inline">Últ. conexión</span>
+                  <button
+                    onClick={() => setAdminUsersSort('recent')}
+                    title="Más reciente primero"
+                    className={`p-1 rounded-lg transition-all ${adminUsersSort === 'recent' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}
+                  >
+                    <ArrowDown size={12} />
+                  </button>
+                  <button
+                    onClick={() => setAdminUsersSort('oldest')}
+                    title="Más antiguo primero"
+                    className={`p-1 rounded-lg transition-all ${adminUsersSort === 'oldest' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}
+                  >
+                    <ArrowUp size={12} />
+                  </button>
+                </div>
+              </div>
               {allUsersLoading ? (
                 <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-amber-400"/></div>
               ) : (
@@ -583,7 +629,7 @@ export default function SocialPage() {
             <>
               <div className="flex items-center justify-between px-1 mb-2">
                 <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
-                  <ShieldCheck size={12} className="text-indigo-400"/> Moderación · {posts.length} publicaciones
+                  <ShieldCheck size={12} className="text-indigo-400"/> {t('soc_moderation')} · {posts.length} {t('soc_posts_count').toLowerCase()}
                 </p>
                 {/* Order Selector (de mayor a menor días vs de menor a mayor días) */}
                 <select
@@ -591,8 +637,8 @@ export default function SocialPage() {
                   onChange={e => setAdminPostsSort(e.target.value)}
                   className="bg-white border border-slate-200 text-slate-700 text-[10px] font-bold rounded-xl px-2 py-1 outline-none focus:ring-2 focus:ring-amber-400"
                 >
-                  <option value="newest">Menor a mayor (Recientes primero)</option>
-                  <option value="oldest">Mayor a menor (Antiguas primero)</option>
+                  <option value="newest">{t('soc_sort_newest')}</option>
+                  <option value="oldest">{t('soc_sort_oldest')}</option>
                 </select>
               </div>
 
@@ -609,10 +655,10 @@ export default function SocialPage() {
                     })()
 
                     const dateText = days === 0 
-                      ? 'Publicado hoy' 
+                      ? t('soc_published_today') 
                       : days === 1 
-                        ? 'Publicado hace 1 día' 
-                        : `Publicado hace ${days} días`
+                        ? t('soc_published_yesterday') 
+                        : t('soc_published_days_ago').replace('{days}', days)
 
                     return (
                       <div key={post.id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex gap-3 relative">
@@ -633,7 +679,7 @@ export default function SocialPage() {
                           
                           {/* Snippet or text */}
                           <p className="text-xs text-slate-600 mt-1 line-clamp-3 leading-relaxed break-words">
-                            {post.repostOf ? `Repost de @${post.repostOf.displayName}: "${post.repostOf.text}"` : post.text}
+                            {post.repostOf ? `${t('soc_repost_of')} @${post.repostOf.displayName}: "${post.repostOf.text}"` : post.text}
                           </p>
 
                           {/* Associated Book if any */}
@@ -647,7 +693,7 @@ export default function SocialPage() {
                         {/* Admin Delete Action */}
                         <button
                           onClick={async () => {
-                            if (window.confirm('¿Estás seguro de que querés eliminar esta publicación?')) {
+                            if (window.confirm(t('soc_delete_confirm'))) {
                               await deletePost(post.id)
                             }
                           }}
@@ -660,7 +706,7 @@ export default function SocialPage() {
                     )
                   })}
                   {sortedAdminPosts.length === 0 && (
-                    <div className="text-center py-12 text-slate-400 text-xs">No hay publicaciones.</div>
+                    <div className="text-center py-12 text-slate-400 text-xs">{t('soc_no_posts_yet')}</div>
                   )}
                 </div>
               )}
@@ -747,7 +793,7 @@ export default function SocialPage() {
         <>
           <div className="fixed inset-0 bg-black/40 z-[65]" onClick={() => setShowLogoPicker(false)} />
           <ImagePickerSheet
-            title="Logotipo de la aplicación"
+            title={t('soc_app_logo')}
             onSave={async (url) => {
               await setDoc(doc(db, 'appConfig', 'settings'), { logoUrl: url }, { merge: true })
             }}
@@ -761,6 +807,7 @@ export default function SocialPage() {
 
 // ── Sheet: enviar post a un usuario ─────────────────────────
 function SendPostToUserSheet({ post, followingUsers, allUsers, myUid, myProfile, sendMessage, canMessage, onClose }) {
+  const { t } = useAuth()
   const [query, setQuery]       = useState('')
   const [sending, setSending]   = useState(null) // uid del que se está enviando
 
@@ -791,7 +838,7 @@ function SendPostToUserSheet({ post, followingUsers, allUsers, myUid, myProfile,
       <div className="fixed inset-0 z-50 flex items-end">
         <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col">
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
-            <h3 className="font-bold text-slate-800">Enviar a un usuario</h3>
+            <h3 className="font-bold text-slate-800">{t('soc_send_to_user')}</h3>
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
               <X size={15} />
             </button>
@@ -800,13 +847,13 @@ function SendPostToUserSheet({ post, followingUsers, allUsers, myUid, myProfile,
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input value={query} onChange={e => setQuery(e.target.value)}
-                placeholder="Buscar usuario…"
+                placeholder={t('soc_search_user_placeholder')}
                 className="w-full pl-9 pr-3 py-2 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400" />
             </div>
           </div>
           <div className="overflow-y-auto flex-1 px-5 py-2">
             {candidates.length === 0 && (
-              <p className="text-xs text-slate-400 text-center py-8">Sin usuarios para mostrar</p>
+              <p className="text-xs text-slate-400 text-center py-8">{t('soc_no_users_to_show')}</p>
             )}
             {candidates.map(u => (
               <button key={u.uid} onClick={() => handleSend(u)}
@@ -819,7 +866,7 @@ function SendPostToUserSheet({ post, followingUsers, allUsers, myUid, myProfile,
                     </div>
                 }
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 line-clamp-1">{u.displayName || 'Lector'}</p>
+                  <p className="text-sm font-semibold text-slate-800 line-clamp-1">{u.displayName || t('soc_reader_default')}</p>
                 </div>
                 {sending === u.uid
                   ? <Loader2 size={14} className="animate-spin text-amber-400 flex-shrink-0" />
@@ -836,6 +883,7 @@ function SendPostToUserSheet({ post, followingUsers, allUsers, myUid, myProfile,
 
 // ── Sheet: publicaciones sobre un autor ──────────────────────
 function AuthorPostsSheet({ authorName, posts, myUid, onLike, onUserPress, onClose }) {
+  const { t } = useAuth()
   const filtered = useMemo(() =>
     posts.filter(p => p.authorName && p.authorName.toLowerCase() === authorName.toLowerCase()),
     [posts, authorName]
@@ -849,7 +897,7 @@ function AuthorPostsSheet({ authorName, posts, myUid, onLike, onUserPress, onClo
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
             <div className="flex items-center gap-2">
               <FileText size={15} className="text-amber-500" />
-              <h3 className="font-bold text-slate-800 line-clamp-1">Publicaciones sobre {authorName}</h3>
+              <h3 className="font-bold text-slate-800 line-clamp-1">{t('soc_posts_about')} {authorName}</h3>
             </div>
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
               <X size={15} />
@@ -859,12 +907,12 @@ function AuthorPostsSheet({ authorName, posts, myUid, onLike, onUserPress, onClo
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                 <FileText size={36} className="mb-3 text-slate-200" />
-                <p className="text-sm font-semibold text-slate-500">Sin publicaciones aún</p>
-                <p className="text-xs mt-1">Nadie etiquetó a {authorName} todavía</p>
+                <p className="text-sm font-semibold text-slate-500">{t('soc_no_posts_yet')}</p>
+                <p className="text-xs mt-1">{t('soc_nobody_tagged_prefix')} {authorName} {t('soc_nobody_tagged_suffix')}</p>
               </div>
             ) : (
               <>
-                <p className="text-xs text-slate-400 font-medium px-1">{filtered.length} publicacion{filtered.length !== 1 ? 'es' : ''}</p>
+                <p className="text-xs text-slate-400 font-medium px-1">{filtered.length} {t('soc_posts_count')}</p>
                 {filtered.map(post => (
                   <PostCard
                     key={post.id}

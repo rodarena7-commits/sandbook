@@ -11,13 +11,17 @@ import SocialPage from './pages/SocialPage'
 import MessagesPage from './pages/MessagesPage'
 import ProfilePage from './pages/ProfilePage'
 import InstallPrompt from './components/ui/InstallPrompt'
-import TutorialOverlay from './components/ui/TutorialOverlay'
+import TutorialOverlay, { useTutorial } from './components/ui/TutorialOverlay'
 import OnboardingFlow from './components/ui/OnboardingFlow'
 
 function AppContent() {
   const { user, loading } = useAuth()
+  const { hasSeenTutorial } = useTutorial()
   const [activeTab, setActiveTab]   = useState('library')
   const [goToPlan, setGoToPlan]     = useState(false)
+  // El onboarding (autor/libro favorito) sólo se muestra una vez que el tutorial general terminó,
+  // para que nunca se abran las dos ventanas al mismo tiempo.
+  const [tutorialDone, setTutorialDone] = useState(hasSeenTutorial)
   const { unreadCount: unreadNotifs } = useNotifications(user?.uid)
   const { totalUnread: unreadMsgs }   = useConversations(user?.uid)
   const [updateAvailable, setUpdateAvailable] = useState(false)
@@ -84,10 +88,13 @@ function AppContent() {
         onChange={setActiveTab}
         badges={{ profile: unreadNotifs, messages: unreadMsgs }}
       />
-      {/* Tutorial única vez para todos los usuarios */}
-      <TutorialOverlay />
-      {/* Onboarding interactivo: escritor + libro favorito */}
-      <OnboardingFlow />
+      {/* Tutorial única vez para todos los usuarios. El onboarding (paso 2) sólo
+          se monta cuando este termina, para que no aparezcan las dos ventanas juntas. */}
+      {!tutorialDone ? (
+        <TutorialOverlay onDone={() => setTutorialDone(true)} />
+      ) : (
+        <OnboardingFlow />
+      )}
       {/* Prompt de instalación PWA (opcional) */}
       <InstallPrompt />
     </div>

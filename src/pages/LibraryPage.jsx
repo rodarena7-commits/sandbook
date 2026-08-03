@@ -32,6 +32,7 @@ const EMPTY_MESSAGES = {
 
 // ── Create/Rename Shelf Modal ──────────────────────────────
 function ShelfModal({ initial = '', onSave, onClose }) {
+  const { t } = useAuth()
   const [name, setName] = useState(initial)
   const inputRef = useRef(null)
 
@@ -46,7 +47,7 @@ function ShelfModal({ initial = '', onSave, onClose }) {
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-2 mb-4">
           <BookMarked size={18} className="text-amber-500" />
-          <h3 className="font-bold text-slate-800">{initial ? 'Renombrar estante' : 'Nuevo estante'}</h3>
+          <h3 className="font-bold text-slate-800">{initial ? t('lib_rename_shelf') : t('lib_new_shelf')}</h3>
         </div>
         <form onSubmit={handleSubmit}>
           <input
@@ -54,18 +55,18 @@ function ShelfModal({ initial = '', onSave, onClose }) {
             autoFocus
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="Ej: Novelas, Ciencia, Por leer…"
+            placeholder={t('lib_shelf_placeholder')}
             maxLength={30}
             className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400 mb-4"
           />
           <div className="flex gap-2">
             <button type="button" onClick={onClose}
               className="flex-1 py-3 rounded-2xl bg-slate-100 text-slate-600 text-sm font-medium">
-              Cancelar
+              {t('lib_cancel')}
             </button>
             <button type="submit" disabled={!name.trim()}
               className="flex-1 py-3 rounded-2xl bg-amber-500 text-white text-sm font-semibold disabled:opacity-40">
-              {initial ? 'Guardar' : 'Crear'}
+              {initial ? t('lib_save') : t('lib_create')}
             </button>
           </div>
         </form>
@@ -76,6 +77,7 @@ function ShelfModal({ initial = '', onSave, onClose }) {
 
 // ── Shelf Context Menu ─────────────────────────────────────
 function ShelfMenu({ shelf, onRename, onDelete, onClose }) {
+  const { t } = useAuth()
   return (
     <div className="fixed inset-0 z-[55] flex items-end" onClick={onClose}>
       <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl p-5 pb-8" onClick={e => e.stopPropagation()}>
@@ -83,14 +85,14 @@ function ShelfMenu({ shelf, onRename, onDelete, onClose }) {
         <div className="flex flex-col gap-2">
           <button onClick={onRename}
             className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-2xl text-sm text-slate-700 font-medium">
-            <Pencil size={15} className="text-slate-400" /> Renombrar
+            <Pencil size={15} className="text-slate-400" /> {t('lib_rename')}
           </button>
           <button onClick={onDelete}
             className="flex items-center gap-3 px-4 py-3 bg-red-50 rounded-2xl text-sm text-red-500 font-medium">
-            <Trash2 size={15} /> Eliminar estante
+            <Trash2 size={15} /> {t('lib_delete_shelf')}
           </button>
         </div>
-        <button onClick={onClose} className="w-full mt-3 py-2.5 text-sm text-slate-400">Cancelar</button>
+        <button onClick={onClose} className="w-full mt-3 py-2.5 text-sm text-slate-400">{t('lib_cancel')}</button>
       </div>
     </div>
   )
@@ -125,7 +127,7 @@ function AssignShelfModal({ book, shelves, currentShelfId, onAssign, onClose }) 
 
 // ── Main Page ──────────────────────────────────────────────
 export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
-  const { user } = useAuth()
+  const { user, t } = useAuth()
   const { books, loading, updateStatus, toggleFavorite, removeBook, saveReview, updateReaction, assignShelf, savePrivateNotes, setCoReader, removeCoReader, updateLoanedTo } = useBooks(user?.uid)
   const { shelves, createShelf, renameShelf, deleteShelf } = useShelves(user?.uid)
 
@@ -212,12 +214,12 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
       {/* Header */}
       <div className="bg-white px-4 pt-12 pb-3 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-bold text-slate-800">Mi Biblioteca</h1>
+          <h1 className="text-xl font-bold text-slate-800">{t('lib_my_library')}</h1>
           {libraryType === 'sync' && stats.total > 0 && (
             <div className="flex gap-3 text-xs text-slate-400">
-              <span><span className="font-semibold text-slate-600">{stats.total}</span> libros</span>
-              {stats.reading > 0 && <span><span className="font-semibold text-amber-500">{stats.reading}</span> leyendo</span>}
-              {stats.read > 0 && <span><span className="font-semibold text-green-500">{stats.read}</span> leídos</span>}
+              <span><span className="font-semibold text-slate-600">{stats.total}</span> {t('lib_books_count')}</span>
+              {stats.reading > 0 && <span><span className="font-semibold text-amber-500">{stats.reading}</span> {t('lib_reading_count')}</span>}
+              {stats.read > 0 && <span><span className="font-semibold text-green-500">{stats.read}</span> {t('lib_read_count')}</span>}
             </div>
           )}
         </div>
@@ -230,7 +232,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
               libraryType === 'sync' ? 'bg-white text-amber-500 shadow-sm' : 'text-slate-500'
             }`}
           >
-            Sincronizada (Nube)
+            {t('lib_sync')}
           </button>
           <button
             onClick={() => setLibraryType('local')}
@@ -238,7 +240,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
               libraryType === 'local' ? 'bg-white text-amber-500 shadow-sm' : 'text-slate-500'
             }`}
           >
-            Mis Ebooks (Local)
+            {t('lib_local')}
           </button>
         </div>
 
@@ -252,7 +254,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                   className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                     statusTab === tab.key ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500'
                   }`}>
-                  {tab.label}
+                  {t('lib_' + tab.key)}
                 </button>
               ))}
             </div>
@@ -266,7 +268,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                     ? 'bg-slate-800 text-white border-slate-800'
                     : 'bg-white text-slate-500 border-slate-200'
                 }`}>
-                <BookOpen size={10} /> Todos
+                <BookOpen size={10} /> {t('lib_all')}
               </button>
 
               {shelves.map(shelf => (
@@ -293,7 +295,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
               {/* Create shelf button */}
               <button onClick={() => setShelfModal(true)}
                 className="flex-shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all">
-                <Plus size={11} /> Nuevo
+                <Plus size={11} /> {t('lib_create')}
               </button>
             </div>
           </>
@@ -326,7 +328,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                   <input
                     value={planSearch}
                     onChange={e => setPlanSearch(e.target.value)}
-                    placeholder="Buscar libro por título o autor…"
+                    placeholder={t('lib_search_books_placeholder')}
                     className="w-full pl-9 pr-8 py-2.5 bg-white rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400 shadow-sm"
                   />
                   {planSearch && (
@@ -350,7 +352,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                   if (!list.length) {
                     return (
                       <p className="text-xs text-slate-400 text-center py-6">
-                        {q ? 'Sin resultados en tu biblioteca' : 'Tu biblioteca está vacía'}
+                        {q ? t('lib_no_results') : t('lib_empty_title')}
                       </p>
                     )
                   }
@@ -398,7 +400,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                                     <span className="text-[10px] text-amber-500 font-medium flex-shrink-0">{metaPct}%</span>
                                   </div>
                                   <p className="text-[10px] text-slate-400">
-                                    {b.readingPlan.dailyPages} págs/día · {b.readingPlan.totalDays} días
+                                    {b.readingPlan.dailyPages} {t('lib_pages_day')} · {b.readingPlan.totalDays} {t('lib_days')}
                                   </p>
                                 </div>
                               )}
@@ -414,7 +416,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                                     </div>
                                   )}
                                   <p className="text-[10px] text-slate-400">
-                                    {relaxPct >= 100 ? '✅ Completado' : `☕ Plan Relax${b.currentPage > 0 ? ` · Pág. ${b.currentPage}` : ''}`}
+                                    {relaxPct >= 100 ? t('lib_completed') : `${t('lib_relax_plan')}${b.currentPage > 0 ? ` · ${t('lib_page_abbrev')} ${b.currentPage}` : ''}`}
                                   </p>
                                 </div>
                               )}
@@ -434,7 +436,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                                 }`}
                               >
                                 <CalendarDays size={13}/>
-                                {b.biblePlan ? 'Plan Bíblico' : b.relaxPlan ? 'Plan Relax' : 'Crear plan'}
+                                {b.biblePlan ? t('lib_bible_plan') : b.relaxPlan ? t('lib_relax_plan') : t('lib_create_plan')}
                               </button>
                             ) : (
                               <button
@@ -446,7 +448,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                                 }`}
                               >
                                 <CalendarDays size={13}/>
-                                {hasPlan ? 'Ver plan' : 'Crear plan'}
+                                {hasPlan ? t('lib_view_plan') : t('lib_create_plan')}
                               </button>
                             )}
                           </div>
@@ -462,10 +464,10 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
               <div className="flex flex-col items-center justify-center py-24 text-center">
                 <p className="text-5xl mb-4">{shelfFilter ? '📂' : empty.icon}</p>
                 <p className="font-semibold text-slate-600 mb-1">
-                  {shelfFilter ? 'Este estante está vacío' : empty.text}
+                  {shelfFilter ? t('lib_empty_shelf') : (statusTab === 'all' ? t('lib_empty_title') : t('lib_empty_' + statusTab))}
                 </p>
                 <p className="text-sm text-slate-400">
-                  {shelfFilter ? 'Mantené presionado un libro para moverlo aquí' : empty.sub}
+                  {shelfFilter ? t('lib_empty_shelf_sub') : (statusTab === 'all' ? t('lib_empty_sub') : t('lib_empty_' + statusTab + '_sub'))}
                 </p>
               </div>
             )}

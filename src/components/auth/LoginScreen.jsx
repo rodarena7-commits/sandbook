@@ -19,6 +19,7 @@ function friendlyError(code) {
 
 // ── Vista principal (botones de método) ───────────────────
 function MethodScreen({ onGoogle, onEmail, onAnon, loading }) {
+  const { t } = useAuth()
   return (
     <div className="w-full max-w-xs space-y-3">
       {/* Google */}
@@ -32,14 +33,14 @@ function MethodScreen({ onGoogle, onEmail, onAnon, loading }) {
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
         )}
-        Continuar con Google
+        {t('login_google')}
       </button>
 
       {/* Email */}
       <button onClick={onEmail} disabled={!!loading}
         className="w-full flex items-center justify-center gap-3 bg-amber-500 rounded-2xl px-5 py-3.5 font-semibold text-white shadow-sm hover:bg-amber-600 transition-all disabled:opacity-50">
         <Mail size={18} />
-        Continuar con email
+        {t('login_continue_email')}
       </button>
 
       <div className="flex items-center gap-3 my-1">
@@ -50,7 +51,7 @@ function MethodScreen({ onGoogle, onEmail, onAnon, loading }) {
 
       <button onClick={onAnon} disabled={!!loading}
         className="w-full py-3 rounded-2xl text-slate-500 text-sm hover:bg-slate-100 transition-all disabled:opacity-50">
-        {loading === 'anon' ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Entrar como invitado'}
+        {loading === 'anon' ? <Loader2 size={16} className="animate-spin mx-auto" /> : t('login_guest')}
       </button>
     </div>
   )
@@ -58,6 +59,7 @@ function MethodScreen({ onGoogle, onEmail, onAnon, loading }) {
 
 // ── Formulario email/contraseña ────────────────────────────
 function EmailForm({ onBack, onRegister, onLogin }) {
+  const { t } = useAuth()
   const [mode,      setMode]      = useState('login')  // 'login' | 'register'
   const [name,      setName]      = useState('')
   const [email,     setEmail]     = useState('')
@@ -82,7 +84,7 @@ function EmailForm({ onBack, onRegister, onLogin }) {
   return (
     <div className="w-full max-w-xs">
       <button onClick={onBack} className="flex items-center gap-1 text-slate-400 text-sm mb-5 hover:text-slate-600 transition-colors">
-        <ChevronLeft size={16} /> Volver
+        <ChevronLeft size={16} /> {t('login_back')}
       </button>
 
       {/* Toggle */}
@@ -90,7 +92,7 @@ function EmailForm({ onBack, onRegister, onLogin }) {
         {['login', 'register'].map(m => (
           <button key={m} onClick={() => { setMode(m); setError('') }}
             className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${mode === m ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'}`}>
-            {m === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+            {m === 'login' ? t('login_btn') : t('login_register_btn')}
           </button>
         ))}
       </div>
@@ -102,7 +104,7 @@ function EmailForm({ onBack, onRegister, onLogin }) {
             <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text" value={name} onChange={e => setName(e.target.value)}
-              placeholder="Tu nombre" required minLength={2}
+              placeholder={t('login_name')} required minLength={2}
               className="w-full pl-10 pr-4 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
@@ -113,7 +115,7 @@ function EmailForm({ onBack, onRegister, onLogin }) {
           <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="email" value={email} onChange={e => setEmail(e.target.value)}
-            placeholder="Email" required
+            placeholder={t('login_email')} required
             className="w-full pl-10 pr-4 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
           />
         </div>
@@ -124,7 +126,7 @@ function EmailForm({ onBack, onRegister, onLogin }) {
           <input
             type={showPass ? 'text' : 'password'}
             value={password} onChange={e => setPassword(e.target.value)}
-            placeholder="Contraseña" required minLength={6}
+            placeholder={t('login_password')} required minLength={6}
             className="w-full pl-10 pr-10 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
           />
           <button type="button" onClick={() => setShowPass(v => !v)}
@@ -138,16 +140,16 @@ function EmailForm({ onBack, onRegister, onLogin }) {
         <button type="submit" disabled={loading}
           className="w-full py-3.5 bg-amber-500 text-white rounded-2xl font-semibold text-sm shadow-sm hover:bg-amber-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
           {loading
-            ? <><Loader2 size={16} className="animate-spin" /> Cargando…</>
-            : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'
+            ? <><Loader2 size={16} className="animate-spin" /> {t('login_loading')}</>
+            : mode === 'login' ? t('login_btn') : t('login_register_btn')
           }
         </button>
       </form>
 
       <p className="text-center text-xs text-slate-400 mt-4">
         {mode === 'login'
-          ? <>¿No tenés cuenta? <button onClick={() => { setMode('register'); setError('') }} className="text-amber-500 font-semibold">Registrate</button></>
-          : <>¿Ya tenés cuenta? <button onClick={() => { setMode('login'); setError('') }} className="text-amber-500 font-semibold">Iniciá sesión</button></>
+          ? <>{t('login_no_account').split('?')[0]}? <button onClick={() => { setMode('register'); setError('') }} className="text-amber-500 font-semibold">{t('login_no_account').split('?')[1] || t('login_register_btn')}</button></>
+          : <>{t('login_have_account').split('?')[0]}? <button onClick={() => { setMode('login'); setError('') }} className="text-amber-500 font-semibold">{t('login_have_account').split('?')[1] || t('login_btn')}</button></>
         }
       </p>
     </div>
@@ -156,7 +158,7 @@ function EmailForm({ onBack, onRegister, onLogin }) {
 
 // ── Pantalla principal ─────────────────────────────────────
 export default function LoginScreen() {
-  const { loginWithGoogle, loginAnonymously, registerWithEmail, loginWithEmail, appConfig } = useAuth()
+  const { loginWithGoogle, loginAnonymously, registerWithEmail, loginWithEmail, appConfig, t } = useAuth()
   const [screen,  setScreen]  = useState('methods') // 'methods' | 'email'
   const [loading, setLoading] = useState(null)
   const [error,   setError]   = useState('')
@@ -195,7 +197,7 @@ export default function LoginScreen() {
           />
         </div>
         <h1 className="text-4xl font-bold text-slate-800 tracking-tight">Sandbook</h1>
-        <p className="text-slate-500 mt-2 text-center text-sm">Tu biblioteca personal y red de lectores</p>
+        <p className="text-slate-500 mt-2 text-center text-sm">{t('login_desc')}</p>
       </div>
 
       {screen === 'methods' ? (
@@ -216,7 +218,7 @@ export default function LoginScreen() {
       {error && <p className="text-red-500 text-xs text-center mt-3 max-w-xs">{error}</p>}
 
       <p className="text-xs text-slate-400 mt-8 text-center max-w-xs">
-        Al continuar aceptás los <a href="/terminos.html" className="text-amber-500">términos de uso</a> de Sandbook
+        {t('login_terms_prefix')}<a href="/terminos.html" className="text-amber-500">{t('login_terms_link')}</a>{t('login_terms_suffix')}
       </p>
     </div>
   )

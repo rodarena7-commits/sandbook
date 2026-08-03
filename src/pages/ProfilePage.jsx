@@ -619,7 +619,7 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
 
 // ── Main Page ──────────────────────────────────────────────
 export default function ProfilePage({ onGoToPlan }) {
-  const { user, profile, setProfile, logout } = useAuth()
+  const { user, profile, setProfile, logout, t } = useAuth()
   const { books, updateStatus } = useBooks(user?.uid)
   const { authors: favAuthors, updateAuthorPhoto } = useFavoriteAuthors(user?.uid)
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(user?.uid)
@@ -719,28 +719,28 @@ export default function ProfilePage({ onGoToPlan }) {
               </button>
               <button onClick={logout}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-full text-xs font-medium">
-                <LogOut size={12} /> Salir
+                <LogOut size={12} /> {t('prof_logout')}
               </button>
             </div>
           </div>
 
           {/* Name + info */}
-          <h2 className="text-lg font-bold text-slate-800">{profile?.displayName || 'Lector'}</h2>
-          {memberSince && <p className="text-[10px] text-slate-300 mt-0.5">Miembro desde {memberSince}</p>}
+          <h2 className="text-lg font-bold text-slate-800">{profile?.displayName || t('soc_reader_default')}</h2>
+          {memberSince && <p className="text-[10px] text-slate-300 mt-0.5">{t('prof_member_since')} {memberSince}</p>}
 
           {/* Followers / Following — clickeables */}
           <div className="flex gap-4 mt-2 mb-3">
             <button onClick={() => setUserListMode('following')} className="text-xs text-slate-500 hover:text-amber-600 transition-colors">
-              <span className="font-bold text-slate-800">{followingCount}</span> siguiendo
+              <span className="font-bold text-slate-800">{followingCount}</span> {t('prof_following').toLowerCase()}
             </button>
             <button onClick={() => setUserListMode('followers')} className="text-xs text-slate-500 hover:text-amber-600 transition-colors">
-              <span className="font-bold text-slate-800">{followersCount}</span> seguidores
+              <span className="font-bold text-slate-800">{followersCount}</span> {t('prof_followers').toLowerCase()}
             </button>
             {followingCount > 0 && followersCount > 0 && (
               <button onClick={() => setUserListMode('mutual')} className="text-xs text-slate-500 hover:text-amber-600 transition-colors">
                 <span className="font-bold text-slate-800">
                   {(profile?.following||[]).filter(uid => (profile?.followers||[]).includes(uid)).length}
-                </span> mutuos
+                </span> {t('prof_mutual')}
               </button>
             )}
           </div>
@@ -753,20 +753,20 @@ export default function ProfilePage({ onGoToPlan }) {
       {showNotifs && (
         <div className="mx-4 mt-4 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-            <p className="text-sm font-semibold text-slate-700">Notificaciones</p>
+            <p className="text-sm font-semibold text-slate-700">{t('prof_notifications')}</p>
             <div className="flex items-center gap-2">
               <button onClick={toggleNotifications}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium transition-all ${notifsEnabled ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
-                {notifsEnabled ? <><Bell size={10} /> Activas</> : <><BellOff size={10} /> Desactivadas</>}
+                {notifsEnabled ? <><Bell size={10} /> {t('prof_active')}</> : <><BellOff size={10} /> {t('prof_disabled')}</>}
               </button>
               {unreadCount > 0 && (
-                <button onClick={markAllRead} className="text-[10px] text-amber-500 font-medium">Marcar leídas</button>
+                <button onClick={markAllRead} className="text-[10px] text-amber-500 font-medium">{t('prof_mark_read')}</button>
               )}
             </div>
           </div>
           <div className="flex flex-col gap-1 p-2">
             {notifications.length === 0 && (
-              <p className="text-xs text-slate-400 text-center py-6">No tenés notificaciones</p>
+              <p className="text-xs text-slate-400 text-center py-6">{t('prof_no_notifications')}</p>
             )}
             {notifications.map(n => <NotificationItem key={n.id} notif={n} uid={user?.uid} onRead={markRead} />)}
           </div>
@@ -784,13 +784,13 @@ export default function ProfilePage({ onGoToPlan }) {
           }}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-green-500 text-white text-sm font-semibold shadow-sm active:scale-95 transition-all"
         >
-          <Share2 size={16}/> Invitar
+          <Share2 size={16}/> {t('prof_invite')}
         </button>
         <button
           onClick={() => setShowPlanScreen(true)}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-amber-500 text-white text-sm font-semibold shadow-sm active:scale-95 transition-all"
         >
-          <CalendarDays size={16}/> En plan
+          <CalendarDays size={16}/> {t('search_plans')}
         </button>
       </div>
 
@@ -800,14 +800,16 @@ export default function ProfilePage({ onGoToPlan }) {
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">🔥</span>
             <div>
-              <p className="text-sm font-bold text-orange-600">{profile.currentStreak} {profile.currentStreak === 1 ? 'día' : 'días'} seguidos</p>
-              <p className="text-[10px] text-orange-400">Seguí leyendo para no perder la racha</p>
+              <p className="text-sm font-bold text-orange-600">
+                {profile.currentStreak} {profile.currentStreak === 1 ? t('prof_streak_day') : t('prof_streak_days')}
+              </p>
+              <p className="text-[10px] text-orange-400">{t('prof_streak_keep_reading')}</p>
             </div>
           </div>
           {profile?.longestStreak > 1 && (
             <div className="text-right">
-              <p className="text-[10px] text-slate-400">Récord</p>
-              <p className="text-sm font-bold text-slate-600">{profile.longestStreak} días</p>
+              <p className="text-[10px] text-slate-400">{t('prof_record')}</p>
+              <p className="text-sm font-bold text-slate-600">{profile.longestStreak} {t('lib_days')}</p>
             </div>
           )}
         </div>
@@ -818,33 +820,33 @@ export default function ProfilePage({ onGoToPlan }) {
         <div className="flex divide-x divide-slate-100">
           <div className="flex flex-col items-center gap-0.5 flex-1">
             <span className="text-2xl font-bold text-slate-800">{stats.total}</span>
-            <span className="text-[10px] text-slate-400">Total</span>
+            <span className="text-[10px] text-slate-400">{t('lib_all')}</span>
           </div>
           <div className="flex flex-col items-center gap-0.5 flex-1">
             <span className="text-2xl font-bold text-amber-500">{stats.reading}</span>
-            <span className="text-[10px] text-slate-400">Leyendo</span>
+            <span className="text-[10px] text-slate-400">{t('lib_reading')}</span>
           </div>
           <div className="flex flex-col items-center gap-0.5 flex-1">
             <span className="text-2xl font-bold text-green-500">{stats.read}</span>
-            <span className="text-[10px] text-slate-400">Leídos</span>
+            <span className="text-[10px] text-slate-400">{t('lib_read')}</span>
           </div>
           <div className="flex flex-col items-center gap-0.5 flex-1">
             <span className="text-2xl font-bold text-pink-400">{stats.fav}</span>
-            <span className="text-[10px] text-slate-400">Favoritos</span>
+            <span className="text-[10px] text-slate-400">{t('lib_fav')}</span>
           </div>
         </div>
       </div>
 
       {reading.length > 0 && (
         <div id="reading-plan-section" className="mx-4 mt-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Leyendo ahora</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">{t('prof_reading_now')}</p>
           <div className="flex flex-col gap-2">{reading.map(b => <BookRow key={b.id} book={b} />)}</div>
         </div>
       )}
 
       {recents.length > 0 && (
         <div className="mx-4 mt-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Últimos leídos</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">{t('prof_last_read')}</p>
           <div className="flex flex-col gap-2">{recents.map(b => <BookRow key={b.id} book={b} />)}</div>
         </div>
       )}
@@ -852,7 +854,7 @@ export default function ProfilePage({ onGoToPlan }) {
       {/* Favorite authors */}
       {favAuthors.length > 0 && (
         <div className="mx-4 mt-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Escritores favoritos</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">{t('prof_favorite_authors')}</p>
           <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1">
             {favAuthors.map(a => (
               <div key={a.id} className="flex-shrink-0">
@@ -870,8 +872,8 @@ export default function ProfilePage({ onGoToPlan }) {
       {books.length === 0 && !showNotifs && (
         <div className="flex flex-col items-center justify-center py-16 text-slate-400 px-4 text-center">
           <BookOpen size={36} className="mb-3 text-slate-200" />
-          <p className="font-semibold text-slate-500">Tu biblioteca está vacía</p>
-          <p className="text-xs mt-1">Buscá libros en la pestaña Buscar para empezar</p>
+          <p className="font-semibold text-slate-500">{t('lib_empty_title')}</p>
+          <p className="text-xs mt-1">{t('prof_empty_library_desc')}</p>
         </div>
       )}
 
@@ -893,9 +895,9 @@ export default function ProfilePage({ onGoToPlan }) {
         const uids = userListMode === 'following' ? following
           : userListMode === 'followers' ? followers
           : mutual
-        const title = userListMode === 'following' ? 'Siguiendo'
-          : userListMode === 'followers' ? 'Seguidores'
-          : 'Seguidores mutuos'
+        const title = userListMode === 'following' ? t('soc_following')
+          : userListMode === 'followers' ? t('prof_followers')
+          : t('prof_mutual_followers')
         return (
           <>
             <UserListScreen
@@ -929,7 +931,7 @@ export default function ProfilePage({ onGoToPlan }) {
         <>
           <div className="fixed inset-0 bg-black/40 z-[65]" onClick={() => setPickerTarget(null)} />
           <ImagePickerSheet
-            title={pickerTarget === 'avatar' ? 'Foto de perfil' : 'Imagen de portada'}
+            title={pickerTarget === 'avatar' ? t('prof_avatar_picker') : t('prof_cover_picker')}
             storagePath={`users/${user.uid}/${pickerTarget}`}
             onSave={pickerTarget === 'avatar' ? saveAvatar : saveCover}
             onClose={() => setPickerTarget(null)}

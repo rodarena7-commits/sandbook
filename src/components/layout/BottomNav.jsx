@@ -1,18 +1,21 @@
 import { BookOpen, Search, Users, MessageCircle, User } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 const TABS = [
-  { id: 'library',  label: 'Biblioteca', icon: BookOpen       },
-  { id: 'search',   label: 'Buscar',     icon: Search         },
-  { id: 'social',   label: 'Social',     icon: Users          },
-  { id: 'messages', label: 'Mensajes',   icon: MessageCircle  },
-  { id: 'profile',  label: 'Yo',         icon: User           },
+  { id: 'library',  translationKey: 'nav_library',  icon: BookOpen       },
+  { id: 'search',   translationKey: 'nav_search',   icon: Search         },
+  { id: 'social',   translationKey: 'nav_social',   icon: Users          },
+  { id: 'messages', translationKey: 'nav_messages', icon: MessageCircle  },
+  { id: 'profile',  translationKey: 'nav_profile',  icon: User           },
 ]
 
 export default function BottomNav({ active, onChange, badges = {} }) {
+  const { t } = useAuth()
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-50">
       <div className="flex items-center justify-around w-full max-w-4xl mx-auto">
-        {TABS.map(({ id, label, icon: Icon }) => {
+        {TABS.map(({ id, translationKey, icon: Icon }) => {
           const isActive = active === id
           const badge = badges[id] || 0
           return (
@@ -28,7 +31,7 @@ export default function BottomNav({ active, onChange, badges = {} }) {
                 )}
               </div>
               <span className={`text-[9px] font-semibold tracking-wide ${isActive ? 'text-amber-500' : 'text-slate-400'}`}>
-                {label}
+                {t(translationKey)}
               </span>
             </button>
           )

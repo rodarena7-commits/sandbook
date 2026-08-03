@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, ChevronRight, BookOpen, Search, Users, MessageCircle, User, CalendarDays, ShoppingBag } from 'lucide-react'
+import { X, ChevronRight, BookOpen, Search, Users, MessageCircle, User, CalendarDays, ShoppingBag, Camera, Plus, Star } from 'lucide-react'
 
 const SEEN_KEY = 'sandbook_tutorial_v1'
 
@@ -8,49 +8,70 @@ const STEPS = [
     icon: BookOpen,
     color: 'bg-amber-500',
     title: '¡Bienvenido a Sandbook!',
-    desc: 'Tu compañero de lectura. Organizá tus libros, seguí tu progreso y conectá con otros lectores.',
+    desc: 'Tu compañero de lectura. Te mostramos rápido dónde tocar para buscar libros y autores, guardarlos y usar todas las herramientas de la app.',
     img: '📚',
   },
   {
     icon: Search,
     color: 'bg-blue-500',
     title: 'Buscá libros',
-    desc: 'Buscá por título, autor o escaneá el código de barras de un libro con la cámara. También podés ver el precio en MercadoLibre y Amazon.',
+    desc: 'Tocá el ícono 🔍 "Buscar" en el menú de abajo. Arriba elegí Título, Autor o ISBN para filtrar tu búsqueda.',
     img: '🔍',
+  },
+  {
+    icon: Camera,
+    color: 'bg-sky-500',
+    title: 'Escaneá el código de barras',
+    desc: 'En Buscar, elegí la pestaña "ISBN" y tocá el ícono de cámara 📷 (a la derecha del buscador) para escanear el código de barras del libro con tu cámara.',
+    img: '📷',
+  },
+  {
+    icon: Plus,
+    color: 'bg-orange-500',
+    title: 'Guardá un libro',
+    desc: 'En cada resultado de búsqueda tocá "+ Agregar" para guardarlo en tu biblioteca, o "Ver" para ver el detalle y elegir su estado. También podés comparar precio en Google Play, Amazon, MercadoLibre y Buscalibre.',
+    img: '➕',
+  },
+  {
+    icon: User,
+    color: 'bg-pink-500',
+    title: 'Autores favoritos',
+    desc: 'Desde tu Perfil (ícono 👤 abajo a la derecha) podés buscar escritores, ver su biografía y foto, y tocar "Agregar a favoritos" para seguirlos.',
+    img: '✍️',
   },
   {
     icon: BookOpen,
     color: 'bg-green-500',
     title: 'Tu Biblioteca',
-    desc: 'Guardá libros como "Leyendo", "Leído" o "Pendiente". Creá planes de lectura diarios o relajados con historial y notas.',
+    desc: 'En "Biblioteca" (primer ícono del menú) guardá libros como "Leyendo", "Leído" o "Pendiente". Tocá la ⭐ para marcarlo como favorito.',
     img: '📖',
   },
   {
     icon: CalendarDays,
     color: 'bg-purple-500',
     title: 'Planes de lectura',
-    desc: 'Elegí entre Plan Relax (marcá tu página y anotá) o Plan con Meta (páginas por día con seguimiento). También disponible para la Biblia.',
+    desc: 'Al agregar un libro elegí Plan Relax (marcá tu página y anotá) o Plan con Meta (páginas por día con seguimiento). También disponible para la Biblia.',
     img: '🗓️',
   },
   {
     icon: Users,
     color: 'bg-rose-500',
     title: 'Comunidad',
-    desc: 'Seguí lectores, publicá reseñas en el Feed, descubrí autores favoritos y explorá el Marketplace para comprar y vender libros.',
+    desc: 'Tocá el ícono 👥 "Social" para seguir lectores, publicar reseñas en el Feed y explorar el Marketplace para comprar y vender libros.',
     img: '👥',
   },
   {
     icon: MessageCircle,
     color: 'bg-indigo-500',
     title: 'Mensajes',
-    desc: 'Chateá en privado con otros lectores. También podés contactar vendedores del Marketplace directamente.',
+    desc: 'Tocá el ícono 💬 "Mensajes" para chatear en privado con otros lectores o contactar vendedores del Marketplace.',
     img: '💬',
   },
   {
     icon: ShoppingBag,
     color: 'bg-teal-500',
     title: 'Marketplace',
-    desc: 'Publicá libros que ya no usás con precio, imagen y descripción. Compradores pueden comentar y contactarte por mensaje.',
+    desc: 'Dentro de Social encontrás el Marketplace: publicá libros que ya no usás con precio, imagen y descripción, y los compradores te contactan por mensaje.',
     img: '🛒',
   },
 ]

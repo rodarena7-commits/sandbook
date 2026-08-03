@@ -14,6 +14,8 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'fir
 import { auth, db, googleProvider } from '../firebase'
 import { Capacitor } from '@capacitor/core'
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
+import { detectUserLocation } from '../utils/translationService'
+import { translations } from '../utils/translations'
 
 const AuthContext = createContext(null)
 
@@ -22,6 +24,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [appConfig, setAppConfig] = useState(null)
+  const [language, setLanguageState] = useState('es')
 
   // Initialize GoogleAuth on native platforms
   useEffect(() => {
@@ -104,9 +107,14 @@ export function AuthProvider({ children }) {
         const ref = doc(db, 'users', firebaseUser.uid)
         const snap = await getDoc(ref)
         if (snap.exists()) {
-          setProfile(snap.data())
+          const profileData = snap.data()
+          setProfile(profileData)
+          if (profileData.language) {
+            setLanguageState(profileData.language)
+          }
           setOnline(firebaseUser.uid, true)
         } else {
+          const { countryCode, language: detectedLang } = await detectUserLocation()
           const newProfile = {
             uid: firebaseUser.uid,
             displayName: firebaseUser.displayName || 'Lector',
@@ -120,9 +128,12 @@ export function AuthProvider({ children }) {
             isOnline: true,
             lastSeen: serverTimestamp(),
             createdAt: serverTimestamp(),
+            countryCode,
+            language: detectedLang,
           }
           await setDoc(ref, newProfile)
           setProfile(newProfile)
+          setLanguageState(detectedLang)
         }
         startHeartbeat(firebaseUser.uid)
       } else {
@@ -166,6 +177,7 @@ export function AuthProvider({ children }) {
     await updateProfile(cred.user, { displayName: name })
     // Forzar que onAuthStateChanged recrea el perfil con el displayName correcto
     const ref = doc(db, 'users', cred.user.uid)
+    const { countryCode, language: detectedLang } = await detectUserLocation()
     const newProfile = {
       uid:         cred.user.uid,
       displayName: name,
@@ -177,9 +189,12 @@ export function AuthProvider({ children }) {
       followers:   [],
       following:   [],
       createdAt:   serverTimestamp(),
+      countryCode,
+      language:    detectedLang,
     }
     await setDoc(ref, newProfile)
     setProfile(newProfile)
+    setLanguageState(detectedLang)
   }
 
   async function loginWithEmail(email, password) {
@@ -195,8 +210,36 @@ export function AuthProvider({ children }) {
     await signOut(auth)
   }
 
+  // Detect language on startup for guest/unlogged users
+  useEffect(() => {
+    async function initLanguage() {
+      const { language: detectedLang } = await detectUserLocation()
+      setLanguageState(detectedLang)
+    }
+    if (!user) {
+      initLanguage()
+    }
+  }, [user])
+
+  async function changeLanguage(newLang) {
+    setLanguageState(newLang)
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), { language: newLang })
+        setProfile(prev => prev ? { ...prev, language: newLang } : prev)
+      } catch (err) {
+        console.error('Error saving language preference to Firestore:', err)
+      }
+    }
+  }
+
+  function t(key) {
+    const currentLang = language || 'es'
+    return translations[currentLang]?.[key] || translations['es']?.[key] || key
+  }
+
   return (
-    <AuthContext.Provider value={{ user, profile, setProfile, loading, loginWithGoogle, loginAnonymously, registerWithEmail, loginWithEmail, logout, appConfig }}>
+    <AuthContext.Provider value={{ user, profile, setProfile, loading, loginWithGoogle, loginAnonymously, registerWithEmail, loginWithEmail, logout, appConfig, language, changeLanguage, t }}>
       {children}
     </AuthContext.Provider>
   )

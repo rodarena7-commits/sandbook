@@ -4,11 +4,11 @@ import { useAuth } from '../contexts/AuthContext'
 import { useConversations } from '../hooks/useConversations'
 import ChatWindow from '../components/chat/ChatWindow'
 
-function timeAgo(ts) {
+function timeAgo(ts, t) {
   if (!ts?.seconds) return ''
   const diff = Date.now() - ts.seconds * 1000
   const m = Math.floor(diff / 60000)
-  if (m < 1) return 'ahora'
+  if (m < 1) return t ? t('msg_now') : 'ahora'
   if (m < 60) return `${m}m`
   const h = Math.floor(m / 60)
   if (h < 24) return `${h}h`
@@ -26,7 +26,7 @@ function Avatar({ photoURL, displayName }) {
 }
 
 export default function MessagesPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, t } = useAuth()
   const { convs, loading, canMessage, sendMessage, markRead } = useConversations(user?.uid)
   const [openChat, setOpenChat] = useState(null)
   const [canSendCache, setCanSendCache] = useState({})
@@ -35,7 +35,7 @@ export default function MessagesPage() {
     const otherId = conv.participants.find(p => p !== user.uid)
     const otherUser = {
       uid:         otherId,
-      displayName: conv.names?.[otherId] || 'Lector',
+      displayName: conv.names?.[otherId] || t('soc_reader_default'),
       photoURL:    conv.photos?.[otherId] || null,
     }
 
@@ -70,7 +70,7 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="bg-white px-4 pt-12 pb-4 sticky top-0 z-10 shadow-sm">
-        <h1 className="text-xl font-bold text-slate-800">Mensajes</h1>
+        <h1 className="text-xl font-bold text-slate-800">{t('nav_messages')}</h1>
       </div>
 
       <div className="px-4 py-4 flex flex-col gap-2">
@@ -81,14 +81,14 @@ export default function MessagesPage() {
         {!loading && convs.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center text-slate-400">
             <MessageCircle size={44} className="mb-4 text-slate-200" />
-            <p className="font-semibold text-slate-500">Sin mensajes aún</p>
-            <p className="text-xs mt-1">Enviá un mensaje desde el perfil de otro lector</p>
+            <p className="font-semibold text-slate-500">{t('msg_no_messages')}</p>
+            <p className="text-xs mt-1">{t('msg_no_messages_desc')}</p>
           </div>
         )}
 
         {convs.map(conv => {
           const otherId   = conv.participants.find(p => p !== user.uid)
-          const otherName = conv.names?.[otherId]  || 'Lector'
+          const otherName = conv.names?.[otherId]  || t('soc_reader_default')
           const otherPhoto = conv.photos?.[otherId] || null
           const unread    = conv.unread?.[user.uid] || 0
 
@@ -101,7 +101,7 @@ export default function MessagesPage() {
                   <p className={`text-sm ${unread > 0 ? 'font-bold text-slate-800' : 'font-semibold text-slate-700'}`}>
                     {otherName}
                   </p>
-                  <span className="text-[10px] text-slate-400">{timeAgo(conv.lastAt)}</span>
+                  <span className="text-[10px] text-slate-400">{timeAgo(conv.lastAt, t)}</span>
                 </div>
                 <p className={`text-xs line-clamp-1 ${unread > 0 ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
                   {conv.lastMessage || '…'}
