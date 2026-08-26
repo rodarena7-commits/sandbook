@@ -1,10 +1,13 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, BookOpen, BookMarked, Pencil, Trash2, X, Check, CalendarDays, Search } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect, Suspense, lazy } from 'react'
+import { Plus, BookOpen, BookMarked, Pencil, Trash2, X, Check, CalendarDays, Search, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
 import { useShelves } from '../hooks/useShelves'
 import BookCard from '../components/books/BookCard'
 import BookDetailSheet from '../components/books/BookDetailSheet'
+import { resolveArchivePdfUrl } from '../utils/freeBookFile'
+
+const PdfViewerSheet = lazy(() => import('../components/ui/PdfViewerSheet'))
 import CreatePlanSheet from '../components/books/CreatePlanSheet'
 import ReadingPlanView from '../components/books/ReadingPlanView'
 import RelaxPlanView from '../components/books/RelaxPlanView'
@@ -145,6 +148,22 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   const [viewBibleBook, setViewBibleBook] = useState(null)
   const [planSearch, setPlanSearch]       = useState('')
   const [pendingPlan, setPendingPlan]     = useState(null) // book awaiting plan creation
+  const [freeBookViewer, setFreeBookViewer] = useState(null) // { pdfUrl, title } | null
+  const [resolvingFreeBook, setResolvingFreeBook] = useState(false)
+
+  // Los libros guardados desde Bookfree (freeSource) se abren en el lector de
+  // PDF in-app en vez de la ficha normal de detalle.
+  async function handleSelectBook(book) {
+    if (!book.freeSource) { setSelectedBook(book); return }
+    if (book.freePdfUrl) { setFreeBookViewer({ pdfUrl: book.freePdfUrl, title: book.title }); return }
+    if (book.freeSource === 'archive' && book.freeIdentifier) {
+      setResolvingFreeBook(true)
+      const pdfUrl = await resolveArchivePdfUrl(book.freeIdentifier)
+      setResolvingFreeBook(false)
+      if (pdfUrl) { setFreeBookViewer({ pdfUrl, title: book.title }); return }
+    }
+    if (book.freeReadUrl) window.open(book.freeReadUrl, '_blank', 'noopener,noreferrer')
+  }
 
   // Navigate from Search page to plan tab
   useEffect(() => {
@@ -484,7 +503,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                         onToggleFavorite={(bookId, current) => toggleFavorite(user.uid, bookId, current)}
                         onRemove={(bookId) => removeBook(user.uid, bookId)}
                         onReaction={(bookId, reaction) => updateReaction(user.uid, bookId, reaction)}
-                        onSelect={setSelectedBook}
+                        onSelect={handleSelectBook}
                         onOpenPlan={b => b.relaxPlan ? setViewRelaxBook(b) : setViewPlanBook(b)}
                         onUpdateLoanedTo={(bookId, name) => updateLoanedTo(user.uid, bookId, name)}
                       />
@@ -535,6 +554,26 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
             onUpdateLoanedTo={(bookId, name) => updateLoanedTo(user.uid, bookId, name)}
           />
         </>
+      )}
+
+      {/* Libro gratis (Bookfree) guardado: lector de PDF in-app */}
+      {resolvingFreeBook && (
+        <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center">
+          <Loader2 size={32} className="animate-spin text-white" />
+        </div>
+      )}
+      {freeBookViewer && (
+        <Suspense fallback={
+          <div className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center">
+            <Loader2 size={32} className="animate-spin text-white" />
+          </div>
+        }>
+          <PdfViewerSheet
+            url={freeBookViewer.pdfUrl}
+            title={freeBookViewer.title}
+            onClose={() => setFreeBookViewer(null)}
+          />
+        </Suspense>
       )}
 
       {/* Bible plan view */}

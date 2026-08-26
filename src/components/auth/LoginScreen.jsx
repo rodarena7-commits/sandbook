@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BookOpen, Loader2, Mail, Lock, User, Eye, EyeOff, ChevronLeft } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import InstallAppBanner from '../ui/InstallAppBanner'
 
 const ERROR_MESSAGES = {
   'auth/email-already-in-use':   'Ese email ya está registrado. Iniciá sesión.',
@@ -199,6 +200,8 @@ export default function LoginScreen() {
         <h1 className="text-4xl font-bold text-slate-800 tracking-tight">Sandbook</h1>
         <p className="text-slate-500 mt-2 text-center text-sm">{t('login_desc')}</p>
       </div>
+
+      <InstallAppBanner />
 
       {screen === 'methods' ? (
         <MethodScreen

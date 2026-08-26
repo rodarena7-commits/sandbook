@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, Suspense, lazy } from 'react'
-import { Search, X, BookOpen, Loader2, Gift, ExternalLink, Download, BookOpenText } from 'lucide-react'
+import { useState, useRef, useEffect, useMemo, Suspense, lazy } from 'react'
+import { Search, X, BookOpen, Loader2, Gift, ExternalLink, Download, BookOpenText, BookmarkPlus, BookmarkCheck } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useFreeBooks } from '../hooks/useFreeBooks'
+import { useBooks } from '../hooks/useBooks'
 import { resolveArchivePdfUrl, downloadPdf } from '../utils/freeBookFile'
 
 const PdfViewerSheet = lazy(() => import('../components/ui/PdfViewerSheet'))
@@ -25,7 +26,7 @@ async function resolvePdfUrl(book) {
   return null
 }
 
-function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId }) {
+function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId, onSave, isSaved }) {
   const badge = SOURCE_BADGE[book.source]
   const canPdf = book.source !== 'google'
   const isResolving   = resolvingId === book.id
@@ -65,6 +66,14 @@ function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId }) 
           )}
 
           <div className="ml-auto flex items-center gap-1.5">
+            <button
+              onClick={() => onSave(book)}
+              disabled={isSaved}
+              className={`p-1.5 rounded-full ${isSaved ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}
+              title={isSaved ? 'Guardado en tu biblioteca' : 'Guardar en tu biblioteca'}
+            >
+              {isSaved ? <BookmarkCheck size={13} /> : <BookmarkPlus size={13} />}
+            </button>
             {canPdf && (
               <button
                 onClick={() => onDownload(book)}
@@ -92,11 +101,11 @@ function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId }) 
   )
 }
 
-function FeaturedTile({ book, onRead, resolvingId }) {
+function FeaturedTile({ book, onRead, resolvingId, onSave, isSaved }) {
   const isResolving = resolvingId === book.id
   return (
-    <button onClick={() => onRead(book)} className="flex flex-col items-start text-left">
-      <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden shadow-sm bg-slate-100">
+    <div className="flex flex-col items-start text-left">
+      <button onClick={() => onRead(book)} className="relative w-full aspect-[2/3] rounded-xl overflow-hidden shadow-sm bg-slate-100">
         {book.thumbnail ? (
           <img src={book.thumbnail} alt="" className="w-full h-full object-cover" />
         ) : (
@@ -109,20 +118,33 @@ function FeaturedTile({ book, onRead, resolvingId }) {
             <Loader2 size={18} className="animate-spin text-white" />
           </div>
         )}
-      </div>
+        <span
+          role="button"
+          onClick={e => { e.stopPropagation(); if (!isSaved) onSave(book) }}
+          className={`absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${isSaved ? 'bg-green-500 text-white' : 'bg-white/90 text-slate-500'}`}
+        >
+          {isSaved ? <BookmarkCheck size={12} /> : <BookmarkPlus size={12} />}
+        </span>
+      </button>
       <p className="text-[10px] font-semibold text-slate-700 mt-1 line-clamp-2 leading-tight">{book.title}</p>
-    </button>
+    </div>
   )
 }
 
 export default function BookfreePage() {
-  const { t } = useAuth()
+  const { user, t } = useAuth()
   const { results, loading, error, query, setQuery, search, clear, featured, featuredLoading, loadFeatured } = useFreeBooks()
+  const { books, addBook } = useBooks(user?.uid)
   const [activeSources, setActiveSources] = useState(SOURCES.map(s => s.key))
   const [viewerBook, setViewerBook]     = useState(null)
   const [resolvingId, setResolvingId]   = useState(null)
   const [downloadingId, setDownloadingId] = useState(null)
   const inputRef = useRef(null)
+
+  const savedIds = useMemo(
+    () => new Set(books.filter(b => b.freeSource).map(b => b.bookId)),
+    [books]
+  )
 
   useEffect(() => { loadFeatured() }, [loadFeatured])
 
@@ -159,6 +181,23 @@ export default function BookfreePage() {
     } else {
       window.open(book.readUrl, '_blank', 'noopener,noreferrer')
     }
+  }
+
+  async function handleSave(book) {
+    if (!user?.uid || savedIds.has(book.id)) return
+    await addBook(user.uid, book.id, {
+      title: book.title,
+      authors: book.authors || [],
+      thumbnail: book.thumbnail || null,
+      status: 'library',
+      isFavorite: false,
+      inLibrary: true,
+      // Metadata para reabrir el PDF in-app desde la Biblioteca (ver LibraryPage).
+      freeSource: book.source,
+      freeIdentifier: book.identifier || null,
+      freeReadUrl: book.readUrl || null,
+      freePdfUrl: book.pdfUrl || null,
+    })
   }
 
   async function handleDownload(book) {
@@ -267,6 +306,8 @@ export default function BookfreePage() {
             onDownload={handleDownload}
             resolvingId={resolvingId}
             downloadingId={downloadingId}
+            onSave={handleSave}
+            isSaved={savedIds.has(book.id)}
           />
         ))}
 
@@ -283,7 +324,14 @@ export default function BookfreePage() {
             ) : (
               <div className="grid grid-cols-3 gap-3">
                 {featured.map(book => (
-                  <FeaturedTile key={book.id} book={book} onRead={handleRead} resolvingId={resolvingId} />
+                  <FeaturedTile
+                    key={book.id}
+                    book={book}
+                    onRead={handleRead}
+                    resolvingId={resolvingId}
+                    onSave={handleSave}
+                    isSaved={savedIds.has(book.id)}
+                  />
                 ))}
               </div>
             )}
