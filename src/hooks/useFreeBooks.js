@@ -1,10 +1,74 @@
 import { useState, useCallback } from 'react'
 
-// Bookfree: busca libros gratis y de dominio público en tres catálogos legales
-// (Internet Archive, Project Gutenberg y Google Books "free-ebooks"). Nunca
-// se agregan fuentes que puedan devolver contenido pirata.
+// Bookfree: busca y sugiere libros gratis y de dominio público en tres
+// catálogos legales (Internet Archive, Project Gutenberg y Google Books
+// "free-ebooks"). Nunca se agregan fuentes que puedan devolver contenido
+// pirata.
 
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY || ''
+
+function mapArchiveDoc(d) {
+  const formats = Array.isArray(d.format) ? d.format : (d.format ? [d.format] : [])
+  const hasPdf = formats.some(f => /pdf/i.test(f))
+  return {
+    id: `ia_${d.identifier}`,
+    source: 'archive',
+    identifier: d.identifier,
+    title: d.title || 'Sin título',
+    authors: Array.isArray(d.creator) ? d.creator : (d.creator ? [d.creator] : []),
+    year: d.year ? String(d.year) : '',
+    thumbnail: `https://archive.org/services/img/${d.identifier}`,
+    readUrl: `https://archive.org/details/${d.identifier}`,
+    // Internet Archive no da el nombre exacto del archivo PDF en la búsqueda:
+    // se resuelve al vuelo (resolveArchivePdfUrl) recién cuando el usuario
+    // toca "Leer" o "Descargar".
+    pdfUrl: null,
+    hasPdf,
+    formatLabel: hasPdf ? 'PDF' : null,
+  }
+}
+
+function mapGutenbergBook(b) {
+  const formats = b.formats || {}
+  const pdfUrl  = formats['application/pdf'] || null
+  const epubUrl = formats['application/epub+zip'] || null
+  const htmlUrl = formats['text/html'] || formats['text/html; charset=utf-8'] || null
+  const cover   = Object.entries(formats).find(([k]) => k.startsWith('image/'))?.[1] || null
+  return {
+    id: `gb_${b.id}`,
+    source: 'gutenberg',
+    identifier: String(b.id),
+    title: b.title || 'Sin título',
+    authors: (b.authors || []).map(a => a.name),
+    year: '',
+    thumbnail: cover,
+    readUrl: pdfUrl || htmlUrl || `https://www.gutenberg.org/ebooks/${b.id}`,
+    pdfUrl,
+    hasPdf: !!pdfUrl,
+    formatLabel: pdfUrl ? 'PDF' : (epubUrl ? 'EPUB' : 'HTML'),
+  }
+}
+
+function mapGoogleFreeItem(item) {
+  const info   = item.volumeInfo || {}
+  const access = item.accessInfo || {}
+  const pdfAvailable = !!access.pdf?.isAvailable
+  return {
+    id: `gg_${item.id}`,
+    source: 'google',
+    identifier: item.id,
+    title: info.title || 'Sin título',
+    authors: info.authors || [],
+    year: info.publishedDate?.slice(0, 4) || '',
+    thumbnail: info.imageLinks?.thumbnail?.replace('http://', 'https://') || null,
+    readUrl: access.webReaderLink || info.previewLink || info.infoLink,
+    // Google Books no permite descargar el PDF real sin autorización OAuth
+    // del usuario: sólo se ofrece "Ver" (lector propio de Google), nunca descarga.
+    pdfUrl: null,
+    hasPdf: false,
+    formatLabel: pdfAvailable ? 'Vista con PDF' : 'Vista previa',
+  }
+}
 
 async function searchArchive(q) {
   // Restringido a título/autor (no texto completo) para evitar resultados
@@ -18,22 +82,7 @@ async function searchArchive(q) {
   if (!res.ok) throw new Error('archive')
   const data = await res.json()
   const docs = data?.response?.docs || []
-  return docs
-    .filter(d => d.identifier)
-    .map(d => {
-      const formats = Array.isArray(d.format) ? d.format : (d.format ? [d.format] : [])
-      const hasPdf = formats.some(f => /pdf/i.test(f))
-      return {
-        id: `ia_${d.identifier}`,
-        source: 'archive',
-        title: d.title || 'Sin título',
-        authors: Array.isArray(d.creator) ? d.creator : (d.creator ? [d.creator] : []),
-        year: d.year ? String(d.year) : '',
-        thumbnail: `https://archive.org/services/img/${d.identifier}`,
-        readUrl: `https://archive.org/details/${d.identifier}`,
-        formatLabel: hasPdf ? 'PDF' : null,
-      }
-    })
+  return docs.filter(d => d.identifier).map(mapArchiveDoc)
 }
 
 async function searchGutenberg(q) {
@@ -41,24 +90,7 @@ async function searchGutenberg(q) {
   const res = await fetch(url)
   if (!res.ok) throw new Error('gutenberg')
   const data = await res.json()
-  const results = data?.results || []
-  return results.slice(0, 15).map(b => {
-    const formats = b.formats || {}
-    const pdfUrl  = formats['application/pdf'] || null
-    const epubUrl = formats['application/epub+zip'] || null
-    const htmlUrl = formats['text/html'] || formats['text/html; charset=utf-8'] || null
-    const cover   = Object.entries(formats).find(([k]) => k.startsWith('image/'))?.[1] || null
-    return {
-      id: `gb_${b.id}`,
-      source: 'gutenberg',
-      title: b.title || 'Sin título',
-      authors: (b.authors || []).map(a => a.name),
-      year: '',
-      thumbnail: cover,
-      readUrl: pdfUrl || htmlUrl || `https://www.gutenberg.org/ebooks/${b.id}`,
-      formatLabel: pdfUrl ? 'PDF' : (epubUrl ? 'EPUB' : 'HTML'),
-    }
-  })
+  return (data?.results || []).slice(0, 15).map(mapGutenbergBook)
 }
 
 async function searchGoogleFree(q) {
@@ -68,22 +100,7 @@ async function searchGoogleFree(q) {
   const res = await fetch(url)
   if (!res.ok) throw new Error('google')
   const data = await res.json()
-  const items = data?.items || []
-  return items.map(item => {
-    const info   = item.volumeInfo  || {}
-    const access = item.accessInfo  || {}
-    const pdfAvailable = !!access.pdf?.isAvailable
-    return {
-      id: `gg_${item.id}`,
-      source: 'google',
-      title: info.title || 'Sin título',
-      authors: info.authors || [],
-      year: info.publishedDate?.slice(0, 4) || '',
-      thumbnail: info.imageLinks?.thumbnail?.replace('http://', 'https://') || null,
-      readUrl: access.webReaderLink || info.previewLink || info.infoLink,
-      formatLabel: pdfAvailable ? 'PDF' : 'Vista previa',
-    }
-  })
+  return (data?.items || []).map(mapGoogleFreeItem)
 }
 
 const SEARCHERS = {
@@ -92,11 +109,51 @@ const SEARCHERS = {
   google:    searchGoogleFree,
 }
 
+// ── Destacados / más descargados (para no dejar la pantalla en blanco) ────
+async function loadFeaturedBooks() {
+  const [gutPage1, gutPage2, iaRes] = await Promise.allSettled([
+    fetch('https://gutendex.com/books/').then(r => r.json()),
+    fetch('https://gutendex.com/books/?page=2').then(r => r.json()),
+    fetch(
+      // collection:(internetarchivebooks) + creator:* restringe a los escaneos
+      // catalogados de bibliotecas/universidades, evitando tanto subidas sueltas
+      // sin catalogar como resultados irrelevantes del texto completo.
+      'https://archive.org/advancedsearch.php?q=mediatype:(texts)+AND+collection:(internetarchivebooks)+AND+creator:*' +
+      '&fl[]=identifier&fl[]=title&fl[]=creator&fl[]=format' +
+      '&sort[]=downloads+desc&rows=30&page=1&output=json'
+    ).then(r => r.json()),
+  ])
+
+  const gutItems = [
+    ...(gutPage1.status === 'fulfilled' ? gutPage1.value?.results || [] : []),
+    ...(gutPage2.status === 'fulfilled' ? gutPage2.value?.results || [] : []),
+  ].map(mapGutenbergBook)
+
+  const iaItems = iaRes.status === 'fulfilled'
+    ? (iaRes.value?.response?.docs || [])
+        .filter(d => d.identifier && d.title && d.title.length > 3)
+        .map(mapArchiveDoc)
+    : []
+
+  // Intercala las dos fuentes para que el catálogo no sea todo de una sola
+  const merged = []
+  const max = Math.max(gutItems.length, iaItems.length)
+  for (let i = 0; i < max; i++) {
+    if (gutItems[i]) merged.push(gutItems[i])
+    if (iaItems[i]) merged.push(iaItems[i])
+  }
+  return merged
+}
+
 export function useFreeBooks() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
   const [query, setQuery]     = useState('')
+
+  const [featured, setFeatured]               = useState([])
+  const [featuredLoading, setFeaturedLoading] = useState(false)
+  const [featuredLoaded, setFeaturedLoaded]   = useState(false)
 
   const search = useCallback(async (q, sources = Object.keys(SEARCHERS)) => {
     const trimmed = q.trim()
@@ -121,11 +178,25 @@ export function useFreeBooks() {
     }
   }, [])
 
+  const loadFeatured = useCallback(async () => {
+    if (featuredLoaded || featuredLoading) return
+    setFeaturedLoading(true)
+    try {
+      const items = await loadFeaturedBooks()
+      setFeatured(items)
+    } catch { /* si falla, simplemente no se muestra el catálogo */ }
+    setFeaturedLoaded(true)
+    setFeaturedLoading(false)
+  }, [featuredLoaded, featuredLoading])
+
   function clear() {
     setResults([])
     setQuery('')
     setError(null)
   }
 
-  return { results, loading, error, query, setQuery, search, clear }
+  return {
+    results, loading, error, query, setQuery, search, clear,
+    featured, featuredLoading, loadFeatured,
+  }
 }

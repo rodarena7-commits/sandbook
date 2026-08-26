@@ -1,6 +1,7 @@
 import express from 'express'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { Readable } from 'stream'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -215,6 +216,59 @@ app.get('/api/buscalibre-price', async (req, res) => {
   } catch (e) {
     console.error('Buscalibre error:', e.message)
     res.status(502).json({ error: 'Error Buscalibre' })
+  }
+})
+
+// ── Proxy de archivos de Bookfree (PDF/EPUB de Internet Archive y Gutenberg) ──
+// Los CDNs de estas fuentes no mandan Access-Control-Allow-Origin en el archivo
+// en sí (sólo en sus APIs de búsqueda), así que el navegador bloquea fetch()
+// directo. Este proxy re-transmite el archivo agregando CORS, y permite forzar
+// la descarga con Content-Disposition. Sólo reenvía a hosts de estas dos fuentes.
+function isAllowedFileHost(hostname) {
+  return /(^|\.)archive\.org$/i.test(hostname) || /(^|\.)gutenberg\.org$/i.test(hostname)
+}
+
+app.get('/api/free-book-file', async (req, res) => {
+  const target = req.query.url
+  if (!target) return res.status(400).json({ error: 'url requerida' })
+
+  let parsed
+  try { parsed = new URL(target) } catch { return res.status(400).json({ error: 'url inválida' }) }
+  if (!['http:', 'https:'].includes(parsed.protocol) || !isAllowedFileHost(parsed.hostname)) {
+    return res.status(403).json({ error: 'host no permitido' })
+  }
+
+  try {
+    const rangeHeader = req.headers.range
+    const upstream = await fetch(parsed.toString(), {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; SandbookBookfree/1.0)',
+        ...(rangeHeader ? { Range: rangeHeader } : {}),
+      },
+    })
+    if (!upstream.ok || !upstream.body) {
+      return res.status(502).json({ error: 'No se pudo obtener el archivo' })
+    }
+
+    res.status(upstream.status)
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/octet-stream')
+    const len = upstream.headers.get('content-length')
+    if (len) res.setHeader('Content-Length', len)
+    const acceptRanges = upstream.headers.get('accept-ranges')
+    if (acceptRanges) res.setHeader('Accept-Ranges', acceptRanges)
+    const contentRange = upstream.headers.get('content-range')
+    if (contentRange) res.setHeader('Content-Range', contentRange)
+    res.setHeader('Cache-Control', 'public, max-age=3600')
+    if (req.query.download === '1') {
+      const filename = String(req.query.filename || 'libro.pdf').replace(/["\r\n]/g, '')
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    }
+
+    Readable.fromWeb(upstream.body).pipe(res)
+  } catch (e) {
+    console.error('free-book-file proxy error:', e.message)
+    res.status(502).json({ error: 'Error al descargar el archivo' })
   }
 })
 

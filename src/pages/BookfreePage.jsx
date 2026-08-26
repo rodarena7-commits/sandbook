@@ -1,7 +1,10 @@
-import { useState, useRef } from 'react'
-import { Search, X, BookOpen, Loader2, Gift, ExternalLink } from 'lucide-react'
+import { useState, useRef, useEffect, Suspense, lazy } from 'react'
+import { Search, X, BookOpen, Loader2, Gift, ExternalLink, Download, BookOpenText } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useFreeBooks } from '../hooks/useFreeBooks'
+import { resolveArchivePdfUrl, downloadPdf } from '../utils/freeBookFile'
+
+const PdfViewerSheet = lazy(() => import('../components/ui/PdfViewerSheet'))
 
 const SOURCES = [
   { key: 'archive',   labelKey: 'bookfree_source_archive' },
@@ -15,16 +18,22 @@ const SOURCE_BADGE = {
   google:    { label: 'Google Books',     className: 'bg-amber-50 text-amber-700 border-amber-100' },
 }
 
-function FreeBookItem({ book }) {
+// Resuelve (si hace falta) la URL real del PDF de un libro antes de leerlo/descargarlo.
+async function resolvePdfUrl(book) {
+  if (book.pdfUrl) return book.pdfUrl
+  if (book.source === 'archive' && book.hasPdf) return resolveArchivePdfUrl(book.identifier)
+  return null
+}
+
+function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId }) {
   const badge = SOURCE_BADGE[book.source]
+  const canPdf = book.source !== 'google'
+  const isResolving   = resolvingId === book.id
+  const isDownloading = downloadingId === book.id
+
   return (
-    <a
-      href={book.readUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 active:bg-slate-50"
-    >
-      <div className="flex-shrink-0">
+    <div className="flex gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
+      <button onClick={() => onRead(book)} className="flex-shrink-0">
         {book.thumbnail ? (
           <img src={book.thumbnail} alt="" className="w-14 h-20 object-cover rounded-xl shadow-sm" />
         ) : (
@@ -32,16 +41,16 @@ function FreeBookItem({ book }) {
             <BookOpen size={20} className="text-slate-300" />
           </div>
         )}
-      </div>
+      </button>
 
       <div className="flex flex-col justify-between flex-1 min-w-0 py-0.5">
-        <div>
+        <button onClick={() => onRead(book)} className="text-left">
           <p className="font-semibold text-slate-800 text-sm leading-tight line-clamp-2">{book.title}</p>
           {book.authors?.length > 0 && (
             <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{book.authors.join(', ')}</p>
           )}
           {book.year && <p className="text-[10px] text-slate-300 mt-0.5">{book.year}</p>}
-        </div>
+        </button>
 
         <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
           {badge && (
@@ -54,20 +63,68 @@ function FreeBookItem({ book }) {
               {book.formatLabel}
             </span>
           )}
-          <span className="ml-auto flex items-center gap-1 text-[10px] text-rose-500 font-semibold">
-            <ExternalLink size={11} />
-          </span>
+
+          <div className="ml-auto flex items-center gap-1.5">
+            {canPdf && (
+              <button
+                onClick={() => onDownload(book)}
+                disabled={isDownloading}
+                className="p-1.5 rounded-full bg-slate-100 text-slate-500 disabled:opacity-40"
+                title="Descargar PDF"
+              >
+                {isDownloading ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+              </button>
+            )}
+            <button
+              onClick={() => onRead(book)}
+              disabled={isResolving}
+              className="flex items-center gap-1 px-3 py-1.5 bg-rose-500 text-white rounded-full text-xs font-semibold active:scale-95 transition-all disabled:opacity-60"
+            >
+              {isResolving
+                ? <Loader2 size={12} className="animate-spin" />
+                : book.source === 'google' ? <ExternalLink size={12} /> : <BookOpenText size={12} />}
+              {book.source === 'google' ? 'Ver' : 'Leer'}
+            </button>
+          </div>
         </div>
       </div>
-    </a>
+    </div>
+  )
+}
+
+function FeaturedTile({ book, onRead, resolvingId }) {
+  const isResolving = resolvingId === book.id
+  return (
+    <button onClick={() => onRead(book)} className="flex flex-col items-start text-left">
+      <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden shadow-sm bg-slate-100">
+        {book.thumbnail ? (
+          <img src={book.thumbnail} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <BookOpen size={20} className="text-slate-300" />
+          </div>
+        )}
+        {isResolving && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <Loader2 size={18} className="animate-spin text-white" />
+          </div>
+        )}
+      </div>
+      <p className="text-[10px] font-semibold text-slate-700 mt-1 line-clamp-2 leading-tight">{book.title}</p>
+    </button>
   )
 }
 
 export default function BookfreePage() {
   const { t } = useAuth()
-  const { results, loading, error, query, setQuery, search, clear } = useFreeBooks()
+  const { results, loading, error, query, setQuery, search, clear, featured, featuredLoading, loadFeatured } = useFreeBooks()
   const [activeSources, setActiveSources] = useState(SOURCES.map(s => s.key))
+  const [viewerBook, setViewerBook]     = useState(null)
+  const [resolvingId, setResolvingId]   = useState(null)
+  const [downloadingId, setDownloadingId] = useState(null)
   const inputRef = useRef(null)
+
+  useEffect(() => { loadFeatured() }, [loadFeatured])
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -88,6 +145,40 @@ export default function BookfreePage() {
       return finalSources
     })
   }
+
+  async function handleRead(book) {
+    if (book.source === 'google') {
+      window.open(book.readUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+    setResolvingId(book.id)
+    const pdfUrl = await resolvePdfUrl(book)
+    setResolvingId(null)
+    if (pdfUrl) {
+      setViewerBook({ ...book, pdfUrl })
+    } else {
+      window.open(book.readUrl, '_blank', 'noopener,noreferrer')
+    }
+  }
+
+  async function handleDownload(book) {
+    setDownloadingId(book.id)
+    try {
+      const pdfUrl = await resolvePdfUrl(book)
+      if (!pdfUrl) {
+        window.open(book.readUrl, '_blank', 'noopener,noreferrer')
+        return
+      }
+      const filename = `${(book.title || 'libro').replace(/[^\w\s.-]/g, '').slice(0, 60)}.pdf`
+      await downloadPdf(pdfUrl, filename)
+    } catch (e) {
+      console.error('Download error:', e)
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  const showFeatured = !loading && !query.trim() && results.length === 0
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -147,7 +238,7 @@ export default function BookfreePage() {
         </form>
       </div>
 
-      {/* Results */}
+      {/* Contenido */}
       <div className="px-4 py-4 flex flex-col gap-3">
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -168,18 +259,51 @@ export default function BookfreePage() {
           </div>
         )}
 
-        {!loading && results.length === 0 && !query.trim() && (
-          <div className="flex flex-col items-center justify-center py-24 text-center text-slate-400">
-            <p className="text-5xl mb-4">🎁</p>
-            <p className="font-semibold text-slate-600">{t('bookfree_empty_title')}</p>
-            <p className="text-sm mt-1 px-6">{t('bookfree_empty_sub')}</p>
+        {!loading && results.map(book => (
+          <FreeBookItem
+            key={book.id}
+            book={book}
+            onRead={handleRead}
+            onDownload={handleDownload}
+            resolvingId={resolvingId}
+            downloadingId={downloadingId}
+          />
+        ))}
+
+        {/* Catálogo de destacados/más descargados: se ve siempre que no hay búsqueda activa */}
+        {showFeatured && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-sm font-bold text-slate-700">{t('bookfree_featured_title')}</p>
+            </div>
+            {featuredLoading && featured.length === 0 ? (
+              <div className="flex justify-center py-16">
+                <Loader2 size={28} className="animate-spin text-rose-400" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3">
+                {featured.map(book => (
+                  <FeaturedTile key={book.id} book={book} onRead={handleRead} resolvingId={resolvingId} />
+                ))}
+              </div>
+            )}
           </div>
         )}
-
-        {!loading && results.map(book => (
-          <FreeBookItem key={book.id} book={book} />
-        ))}
       </div>
+
+      {viewerBook && (
+        <Suspense fallback={
+          <div className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center">
+            <Loader2 size={32} className="animate-spin text-white" />
+          </div>
+        }>
+          <PdfViewerSheet
+            url={viewerBook.pdfUrl}
+            title={viewerBook.title}
+            onClose={() => setViewerBook(null)}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

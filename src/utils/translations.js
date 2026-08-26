@@ -119,6 +119,7 @@ export const translations = {
     bookfree_empty_title: 'Miles de libros gratis y legales',
     bookfree_empty_sub: 'Clásicos y dominio público de Internet Archive, Project Gutenberg y Google Books',
     bookfree_view: 'Ver / Descargar',
+    bookfree_featured_title: '🔥 Los más leídos',
 
     // Social Page
     soc_feed: 'Mi Feed',
@@ -333,6 +334,7 @@ export const translations = {
     bookfree_empty_title: 'Thousands of free, legal books',
     bookfree_empty_sub: 'Classics and public domain from Internet Archive, Project Gutenberg and Google Books',
     bookfree_view: 'View / Download',
+    bookfree_featured_title: '🔥 Most read',
 
     // Social Page
     soc_feed: 'My Feed',
@@ -547,6 +549,7 @@ export const translations = {
     bookfree_empty_title: 'Milhares de livros gratuitos e legais',
     bookfree_empty_sub: 'Clássicos e domínio público de Internet Archive, Project Gutenberg e Google Books',
     bookfree_view: 'Ver / Baixar',
+    bookfree_featured_title: '🔥 Os mais lidos',
 
     // Social Page
     soc_feed: 'Meu Feed',
