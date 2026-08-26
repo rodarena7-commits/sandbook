@@ -70,7 +70,12 @@ function mapGoogleFreeItem(item) {
   }
 }
 
-async function searchArchive(q) {
+async function searchArchive(q, { kidsOnly } = {}) {
+  // Internet Archive queda afuera del modo "Kids": incluso filtrando por
+  // subject:(Juvenile Fiction) devuelve contenido no apto (terror, romance
+  // adulto mal catalogado) — no es confiable para una etiqueta de seguridad
+  // infantil, así que directamente no se consulta.
+  if (kidsOnly) return []
   // Restringido a título/autor (no texto completo) para evitar resultados
   // irrelevantes o inapropiados que aparecen al buscar en todo el OCR.
   const query = `(title:(${q}) OR creator:(${q})) AND mediatype:(texts)`
@@ -85,17 +90,20 @@ async function searchArchive(q) {
   return docs.filter(d => d.identifier).map(mapArchiveDoc)
 }
 
-async function searchGutenberg(q) {
-  const url = `https://gutendex.com/books/?search=${encodeURIComponent(q)}`
+async function searchGutenberg(q, { kidsOnly } = {}) {
+  const url =
+    `https://gutendex.com/books/?search=${encodeURIComponent(q)}` +
+    (kidsOnly ? '&topic=children' : '')
   const res = await fetch(url)
   if (!res.ok) throw new Error('gutenberg')
   const data = await res.json()
   return (data?.results || []).slice(0, 15).map(mapGutenbergBook)
 }
 
-async function searchGoogleFree(q) {
+async function searchGoogleFree(q, { kidsOnly } = {}) {
+  const query = kidsOnly ? `${q} subject:Juvenile` : q
   const url =
-    `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}` +
+    `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}` +
     `&filter=free-ebooks&maxResults=15${GOOGLE_API_KEY ? `&key=${GOOGLE_API_KEY}` : ''}`
   const res = await fetch(url)
   if (!res.ok) throw new Error('google')
@@ -110,11 +118,15 @@ const SEARCHERS = {
 }
 
 // ── Destacados / más descargados (para no dejar la pantalla en blanco) ────
-async function loadFeaturedBooks() {
+async function loadFeaturedBooks(kidsOnly) {
+  const gutUrl1 = 'https://gutendex.com/books/' + (kidsOnly ? '?topic=children' : '')
+  const gutUrl2 = 'https://gutendex.com/books/' + (kidsOnly ? '?topic=children&page=2' : '?page=2')
+
   const [gutPage1, gutPage2, iaRes] = await Promise.allSettled([
-    fetch('https://gutendex.com/books/').then(r => r.json()),
-    fetch('https://gutendex.com/books/?page=2').then(r => r.json()),
-    fetch(
+    fetch(gutUrl1).then(r => r.json()),
+    fetch(gutUrl2).then(r => r.json()),
+    // Internet Archive no participa del modo Kids: ver nota de seguridad en searchArchive.
+    kidsOnly ? Promise.resolve(null) : fetch(
       // collection:(internetarchivebooks) + creator:* restringe a los escaneos
       // catalogados de bibliotecas/universidades, evitando tanto subidas sueltas
       // sin catalogar como resultados irrelevantes del texto completo.
@@ -129,7 +141,7 @@ async function loadFeaturedBooks() {
     ...(gutPage2.status === 'fulfilled' ? gutPage2.value?.results || [] : []),
   ].map(mapGutenbergBook)
 
-  const iaItems = iaRes.status === 'fulfilled'
+  const iaItems = iaRes.status === 'fulfilled' && iaRes.value
     ? (iaRes.value?.response?.docs || [])
         .filter(d => d.identifier && d.title && d.title.length > 3)
         .map(mapArchiveDoc)
@@ -153,9 +165,9 @@ export function useFreeBooks() {
 
   const [featured, setFeatured]               = useState([])
   const [featuredLoading, setFeaturedLoading] = useState(false)
-  const [featuredLoaded, setFeaturedLoaded]   = useState(false)
+  const [featuredLoadedFor, setFeaturedLoadedFor] = useState(null) // null | false | true (valor de kidsOnly ya cargado)
 
-  const search = useCallback(async (q, sources = Object.keys(SEARCHERS)) => {
+  const search = useCallback(async (q, sources = Object.keys(SEARCHERS), kidsOnly = false) => {
     const trimmed = q.trim()
     if (!trimmed) { setResults([]); return }
 
@@ -163,7 +175,7 @@ export function useFreeBooks() {
     setError(null)
     try {
       const settled = await Promise.allSettled(
-        sources.map(s => SEARCHERS[s]?.(trimmed) ?? Promise.resolve([]))
+        sources.map(s => SEARCHERS[s]?.(trimmed, { kidsOnly }) ?? Promise.resolve([]))
       )
       const merged = settled.flatMap(r => r.status === 'fulfilled' ? r.value : [])
       setResults(merged)
@@ -178,16 +190,16 @@ export function useFreeBooks() {
     }
   }, [])
 
-  const loadFeatured = useCallback(async () => {
-    if (featuredLoaded || featuredLoading) return
+  const loadFeatured = useCallback(async (kidsOnly = false) => {
+    if (featuredLoadedFor === kidsOnly || featuredLoading) return
     setFeaturedLoading(true)
     try {
-      const items = await loadFeaturedBooks()
+      const items = await loadFeaturedBooks(kidsOnly)
       setFeatured(items)
     } catch { /* si falla, simplemente no se muestra el catálogo */ }
-    setFeaturedLoaded(true)
+    setFeaturedLoadedFor(kidsOnly)
     setFeaturedLoading(false)
-  }, [featuredLoaded, featuredLoading])
+  }, [featuredLoadedFor, featuredLoading])
 
   function clear() {
     setResults([])

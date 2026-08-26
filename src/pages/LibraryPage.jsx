@@ -505,6 +505,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                         onReaction={(bookId, reaction) => updateReaction(user.uid, bookId, reaction)}
                         onSelect={handleSelectBook}
                         onOpenPlan={b => b.relaxPlan ? setViewRelaxBook(b) : setViewPlanBook(b)}
+                        onStartPlan={b => setPendingPlan(b)}
                         onUpdateLoanedTo={(bookId, name) => updateLoanedTo(user.uid, bookId, name)}
                       />
                       {hasPlan && (

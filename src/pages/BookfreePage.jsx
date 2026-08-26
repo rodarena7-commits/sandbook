@@ -68,9 +68,8 @@ function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId, on
           <div className="ml-auto flex items-center gap-1.5">
             <button
               onClick={() => onSave(book)}
-              disabled={isSaved}
-              className={`p-1.5 rounded-full ${isSaved ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}
-              title={isSaved ? 'Guardado en tu biblioteca' : 'Guardar en tu biblioteca'}
+              className={`p-1.5 rounded-full active:scale-90 transition-all ${isSaved ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}
+              title={isSaved ? 'Quitar de tu biblioteca' : 'Guardar en tu biblioteca'}
             >
               {isSaved ? <BookmarkCheck size={13} /> : <BookmarkPlus size={13} />}
             </button>
@@ -120,7 +119,7 @@ function FeaturedTile({ book, onRead, resolvingId, onSave, isSaved }) {
         )}
         <span
           role="button"
-          onClick={e => { e.stopPropagation(); if (!isSaved) onSave(book) }}
+          onClick={e => { e.stopPropagation(); onSave(book) }}
           className={`absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${isSaved ? 'bg-green-500 text-white' : 'bg-white/90 text-slate-500'}`}
         >
           {isSaved ? <BookmarkCheck size={12} /> : <BookmarkPlus size={12} />}
@@ -134,8 +133,9 @@ function FeaturedTile({ book, onRead, resolvingId, onSave, isSaved }) {
 export default function BookfreePage() {
   const { user, t } = useAuth()
   const { results, loading, error, query, setQuery, search, clear, featured, featuredLoading, loadFeatured } = useFreeBooks()
-  const { books, addBook } = useBooks(user?.uid)
+  const { books, addBook, removeBook } = useBooks(user?.uid)
   const [activeSources, setActiveSources] = useState(SOURCES.map(s => s.key))
+  const [kidsOnly, setKidsOnly]         = useState(false)
   const [viewerBook, setViewerBook]     = useState(null)
   const [resolvingId, setResolvingId]   = useState(null)
   const [downloadingId, setDownloadingId] = useState(null)
@@ -146,11 +146,11 @@ export default function BookfreePage() {
     [books]
   )
 
-  useEffect(() => { loadFeatured() }, [loadFeatured])
+  useEffect(() => { loadFeatured(kidsOnly) }, [loadFeatured, kidsOnly])
 
   function handleSubmit(e) {
     e.preventDefault()
-    search(query, activeSources)
+    search(query, activeSources, kidsOnly)
     inputRef.current?.blur()
   }
 
@@ -160,11 +160,24 @@ export default function BookfreePage() {
   }
 
   function toggleSource(key) {
+    if (kidsOnly && key === 'archive') return // Internet Archive no participa del modo Kids
     setActiveSources(prev => {
       const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
       const finalSources = next.length ? next : [key]
-      if (query.trim()) search(query, finalSources)
+      if (query.trim()) search(query, finalSources, kidsOnly)
       return finalSources
+    })
+  }
+
+  function toggleKids() {
+    setKidsOnly(prev => {
+      const next = !prev
+      // Al activar Kids, Internet Archive se saca de los resultados (ver useFreeBooks).
+      const sources = next ? activeSources.filter(s => s !== 'archive') : activeSources
+      if (next && sources.length === 0) sources.push('gutenberg')
+      setActiveSources(sources)
+      if (query.trim()) search(query, sources, next)
+      return next
     })
   }
 
@@ -184,7 +197,11 @@ export default function BookfreePage() {
   }
 
   async function handleSave(book) {
-    if (!user?.uid || savedIds.has(book.id)) return
+    if (!user?.uid) return
+    if (savedIds.has(book.id)) {
+      await removeBook(user.uid, book.id)
+      return
+    }
     await addBook(user.uid, book.id, {
       title: book.title,
       authors: book.authors || [],
@@ -234,20 +251,38 @@ export default function BookfreePage() {
         </div>
 
         {/* Source filter chips */}
-        <div className="flex gap-1.5 mb-3">
-          {SOURCES.map(s => (
-            <button
-              key={s.key}
-              onClick={() => toggleSource(s.key)}
-              className={`flex-1 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
-                activeSources.includes(s.key)
-                  ? 'bg-rose-500 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              {t(s.labelKey)}
-            </button>
-          ))}
+        <div className="flex gap-1.5 mb-2">
+          {SOURCES.map(s => {
+            const disabledByKids = kidsOnly && s.key === 'archive'
+            return (
+              <button
+                key={s.key}
+                onClick={() => toggleSource(s.key)}
+                disabled={disabledByKids}
+                className={`flex-1 py-1.5 rounded-full text-[11px] font-semibold transition-all disabled:opacity-30 ${
+                  activeSources.includes(s.key) && !disabledByKids
+                    ? 'bg-rose-500 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {t(s.labelKey)}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Filtro Kids */}
+        <div className="flex mb-3">
+          <button
+            onClick={toggleKids}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all ${
+              kidsOnly
+                ? 'bg-emerald-500 text-white shadow-sm'
+                : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+            }`}
+          >
+            🧒 {t('bookfree_kids')}
+          </button>
         </div>
 
         {/* Search bar */}

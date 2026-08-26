@@ -1,6 +1,23 @@
 import { useState } from 'react'
-import { BookOpen, Star, Trash2, ChevronDown, ThumbsUp, ThumbsDown, User, Pencil } from 'lucide-react'
+import { BookOpen, Star, Trash2, ChevronDown, ThumbsUp, ThumbsDown, User, Pencil, Bookmark, Share2, Heart, Users } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
+import { Share } from '@capacitor/share'
 import BookCoverUpload from './BookCoverUpload'
+import PeopleListSheet from './PeopleListSheet'
+import { useBookStats } from '../../hooks/useBookStats'
+
+async function shareBook(book) {
+  const text = `📚 "${book.title}"${book.authors?.[0] ? ` de ${book.authors[0]}` : ''} — lo tengo en mi biblioteca de Sandbook`
+  try {
+    if (Capacitor.isNativePlatform()) {
+      await Share.share({ title: 'Sandbook', text, dialogTitle: 'Compartir libro' })
+    } else if (navigator.share) {
+      await navigator.share({ title: 'Sandbook', text })
+    } else {
+      await navigator.clipboard?.writeText(text)
+    }
+  } catch { /* usuario canceló el share, ignorar */ }
+}
 
 const STATUS_LABELS = {
   reading: 'Leyendo',
@@ -20,9 +37,14 @@ const STATUS_COLORS = {
   loaned:  'bg-rose-100 text-rose-700',
 }
 
-export default function BookCard({ book, onStatusChange, onToggleFavorite, onRemove, onReaction, onSelect, onOpenPlan, onUpdateLoanedTo }) {
+export default function BookCard({ book, onStatusChange, onToggleFavorite, onRemove, onReaction, onSelect, onOpenPlan, onStartPlan, onUpdateLoanedTo }) {
   const [showMenu, setShowMenu] = useState(false)
   const [showLoanedName, setShowLoanedName] = useState(false)
+  const [showLikes, setShowLikes]     = useState(false)
+  const [showReaders, setShowReaders] = useState(false)
+  const stats = useBookStats(book.bookId)
+  const likedBy   = stats?.likedBy   || []
+  const readingBy = stats?.readingBy || []
 
   function handleStatusChange(status) {
     setShowMenu(false)
@@ -111,6 +133,15 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
             ))}
           </div>
         )}
+
+        {/* Guardado: tocar de nuevo lo quita de la biblioteca */}
+        <button
+          onClick={e => { e.stopPropagation(); onRemove(book.bookId) }}
+          className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-sm active:scale-90 transition-all"
+          title="Quitar de la biblioteca"
+        >
+          <Bookmark size={12} className="fill-amber-400 text-amber-400" />
+        </button>
       </div>
 
       {/* Info */}
@@ -179,9 +210,57 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
             </div>
           )}
         </div>
+
+        {/* Compartir · Me gusta (izq.) · Lectores actuales (der.) */}
+        <div className="flex items-center gap-1 pt-1 border-t border-slate-50 mt-0.5">
+          <button
+            onClick={e => { e.stopPropagation(); shareBook(book) }}
+            className="p-1 rounded-full text-slate-400 hover:text-slate-600"
+            title="Compartir"
+          >
+            <Share2 size={10} />
+          </button>
+
+          <button
+            onClick={e => { e.stopPropagation(); setShowLikes(true) }}
+            className="flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[9px] text-slate-400 hover:text-rose-500"
+            title="Ver quién le gustó"
+          >
+            <Heart size={9} className={likedBy.length > 0 ? 'fill-rose-400 text-rose-400' : ''} />
+            {likedBy.length > 0 && <span className="font-semibold">{likedBy.length}</span>}
+          </button>
+
+          <button
+            onClick={e => { e.stopPropagation(); setShowReaders(true) }}
+            className="ml-auto flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[9px] text-slate-400 hover:text-green-600"
+            title="Ver quién lo está leyendo"
+          >
+            {readingBy.length > 0 && <span className="font-semibold">{readingBy.length}</span>}
+            <Users size={9} className={readingBy.length > 0 ? 'text-green-500' : ''} />
+          </button>
+        </div>
       </div>
 
       {showMenu && <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />}
+
+      {showLikes && (
+        <PeopleListSheet
+          title="Les gusta este libro"
+          uids={likedBy}
+          emptyText="Todavía nadie le puso me gusta"
+          onClose={() => setShowLikes(false)}
+        />
+      )}
+
+      {showReaders && (
+        <PeopleListSheet
+          title="Lo están leyendo"
+          uids={readingBy}
+          emptyText="Nadie lo está leyendo por ahora"
+          onClose={() => setShowReaders(false)}
+          onStartPlan={onStartPlan ? () => { setShowReaders(false); onStartPlan(book) } : undefined}
+        />
+      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
-import { incrementBookStat } from './useBookStats'
+import { incrementBookStat, setBookRoster } from './useBookStats'
 import { logReadingActivity } from './useStreak'
 
 export function useBooks(uid) {
@@ -38,6 +38,7 @@ export function useBooks(uid) {
       shelfId: null,
     })
     if (data.status === 'read') await incrementBookStat(bookId, 'readers', 1)
+    if (data.status === 'reading') await setBookRoster(bookId, 'readingBy', uid, true)
   }
 
   async function updateStatus(uid, bookId, newStatus) {
@@ -46,6 +47,8 @@ export function useBooks(uid) {
     if (old?.status !== newStatus) {
       if (newStatus === 'read') { await incrementBookStat(bookId, 'readers', 1); logReadingActivity(uid) }
       if (old?.status === 'read') await incrementBookStat(bookId, 'readers', -1)
+      if (newStatus === 'reading') await setBookRoster(bookId, 'readingBy', uid, true)
+      if (old?.status === 'reading') await setBookRoster(bookId, 'readingBy', uid, false)
     }
   }
 
@@ -61,7 +64,11 @@ export function useBooks(uid) {
     const old = booksRef.current.find(b => b.bookId === bookId)
     await deleteDoc(doc(db, 'users', uid, 'myBooks', bookId))
     if (old?.status === 'read') await incrementBookStat(bookId, 'readers', -1)
-    if (old?.myReaction === 'like') await incrementBookStat(bookId, 'likes', -1)
+    if (old?.status === 'reading') await setBookRoster(bookId, 'readingBy', uid, false)
+    if (old?.myReaction === 'like') {
+      await incrementBookStat(bookId, 'likes', -1)
+      await setBookRoster(bookId, 'likedBy', uid, false)
+    }
   }
 
   async function updateReaction(uid, bookId, newReaction) {
@@ -69,8 +76,8 @@ export function useBooks(uid) {
     const prev = old?.myReaction || null
     await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), { myReaction: newReaction })
     if (prev === newReaction) return
-    if (newReaction === 'like') await incrementBookStat(bookId, 'likes', 1)
-    if (prev === 'like')       await incrementBookStat(bookId, 'likes', -1)
+    if (newReaction === 'like') { await incrementBookStat(bookId, 'likes', 1); await setBookRoster(bookId, 'likedBy', uid, true) }
+    if (prev === 'like')       { await incrementBookStat(bookId, 'likes', -1); await setBookRoster(bookId, 'likedBy', uid, false) }
   }
 
   async function assignShelf(uid, bookId, shelfId) {
