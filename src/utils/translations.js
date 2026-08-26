@@ -4,6 +4,7 @@ export const translations = {
     nav_library: 'Biblioteca',
     nav_search: 'Buscar',
     nav_social: 'Comunidad',
+    nav_bookfree: 'Bookfree',
     nav_messages: 'Mensajes',
     nav_profile: 'Perfil',
 
@@ -104,6 +105,21 @@ export const translations = {
     search_find_next: 'Buscá tu próximo libro',
     search_type_title_desc: 'Escribí el título del libro',
 
+    // Bookfree Page
+    bookfree_title: 'Bookfree',
+    bookfree_subtitle: 'Libros gratis y de dominio público',
+    bookfree_placeholder: 'Buscá título o autor…',
+    bookfree_source_all: 'Todos',
+    bookfree_source_archive: 'Internet Archive',
+    bookfree_source_gutenberg: 'Gutenberg',
+    bookfree_source_google: 'Google Books',
+    bookfree_searching: 'Buscando libros gratis…',
+    bookfree_no_results: 'Sin resultados',
+    bookfree_try_another: 'Probá con otro título o autor',
+    bookfree_empty_title: 'Miles de libros gratis y legales',
+    bookfree_empty_sub: 'Clásicos y dominio público de Internet Archive, Project Gutenberg y Google Books',
+    bookfree_view: 'Ver / Descargar',
+
     // Social Page
     soc_feed: 'Mi Feed',
     soc_readers: 'Lectores',
@@ -202,6 +218,7 @@ export const translations = {
     nav_library: 'Library',
     nav_search: 'Search',
     nav_social: 'Community',
+    nav_bookfree: 'Bookfree',
     nav_messages: 'Messages',
     nav_profile: 'Profile',
 
@@ -302,6 +319,21 @@ export const translations = {
     search_find_next: 'Find your next book',
     search_type_title_desc: "Type the book's title",
 
+    // Bookfree Page
+    bookfree_title: 'Bookfree',
+    bookfree_subtitle: 'Free & public domain books',
+    bookfree_placeholder: 'Search title or author…',
+    bookfree_source_all: 'All',
+    bookfree_source_archive: 'Internet Archive',
+    bookfree_source_gutenberg: 'Gutenberg',
+    bookfree_source_google: 'Google Books',
+    bookfree_searching: 'Searching free books…',
+    bookfree_no_results: 'No results',
+    bookfree_try_another: 'Try another title or author',
+    bookfree_empty_title: 'Thousands of free, legal books',
+    bookfree_empty_sub: 'Classics and public domain from Internet Archive, Project Gutenberg and Google Books',
+    bookfree_view: 'View / Download',
+
     // Social Page
     soc_feed: 'My Feed',
     soc_readers: 'Readers',
@@ -400,6 +432,7 @@ export const translations = {
     nav_library: 'Biblioteca',
     nav_search: 'Buscar',
     nav_social: 'Comunidade',
+    nav_bookfree: 'Bookfree',
     nav_messages: 'Mensagens',
     nav_profile: 'Perfil',
 
@@ -499,6 +532,21 @@ export const translations = {
     search_by_author_desc: 'Digite o nome completo ou parcial do autor',
     search_find_next: 'Busque seu próximo livro',
     search_type_title_desc: 'Digite o título do livro',
+
+    // Bookfree Page
+    bookfree_title: 'Bookfree',
+    bookfree_subtitle: 'Livros gratuitos e de domínio público',
+    bookfree_placeholder: 'Buscar título ou autor…',
+    bookfree_source_all: 'Todos',
+    bookfree_source_archive: 'Internet Archive',
+    bookfree_source_gutenberg: 'Gutenberg',
+    bookfree_source_google: 'Google Books',
+    bookfree_searching: 'Buscando livros gratuitos…',
+    bookfree_no_results: 'Sem resultados',
+    bookfree_try_another: 'Tente outro título ou autor',
+    bookfree_empty_title: 'Milhares de livros gratuitos e legais',
+    bookfree_empty_sub: 'Clássicos e domínio público de Internet Archive, Project Gutenberg e Google Books',
+    bookfree_view: 'Ver / Baixar',
 
     // Social Page
     soc_feed: 'Meu Feed',

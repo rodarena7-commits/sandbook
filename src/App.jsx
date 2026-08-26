@@ -8,15 +8,18 @@ import Loader from './components/ui/Loader'
 import LibraryPage from './pages/LibraryPage'
 import SearchPage from './pages/SearchPage'
 import SocialPage from './pages/SocialPage'
+import BookfreePage from './pages/BookfreePage'
 import MessagesPage from './pages/MessagesPage'
 import ProfilePage from './pages/ProfilePage'
 import InstallPrompt from './components/ui/InstallPrompt'
 import TutorialOverlay, { useTutorial } from './components/ui/TutorialOverlay'
 import OnboardingFlow from './components/ui/OnboardingFlow'
+import { useWidgetAction } from './hooks/useWidgetAction'
 
 function AppContent() {
   const { user, loading } = useAuth()
   const { hasSeenTutorial } = useTutorial()
+  const { widgetAction, clearWidgetAction } = useWidgetAction()
   const [activeTab, setActiveTab]   = useState('library')
   const [goToPlan, setGoToPlan]     = useState(false)
   // El onboarding (autor/libro favorito) sólo se muestra una vez que el tutorial general terminó,
@@ -45,6 +48,11 @@ function AppContent() {
     }
   }
 
+  // Botón del widget de pantalla de inicio tocado: lleva directo a Buscar
+  useEffect(() => {
+    if (widgetAction) setActiveTab('search')
+  }, [widgetAction])
+
   if (loading) return <Loader />
   if (!user)   return <LoginScreen />
 
@@ -55,8 +63,9 @@ function AppContent() {
 
   const pages = {
     library:  <LibraryPage  startOnPlan={goToPlan} onPlanConsumed={() => setGoToPlan(false)} />,
-    search:   <SearchPage   onGoToPlan={navigateToPlan} />,
+    search:   <SearchPage   onGoToPlan={navigateToPlan} widgetAction={widgetAction} onWidgetActionConsumed={clearWidgetAction} />,
     social:   <SocialPage />,
+    bookfree: <BookfreePage />,
     messages: <MessagesPage />,
     profile:  <ProfilePage onGoToPlan={navigateToPlan} />,
   }

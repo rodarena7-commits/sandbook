@@ -1,10 +1,11 @@
-import { BookOpen, Search, Users, MessageCircle, User } from 'lucide-react'
+import { BookOpen, Search, Users, Gift, MessageCircle, User } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const TABS = [
   { id: 'library',  translationKey: 'nav_library',  icon: BookOpen       },
   { id: 'search',   translationKey: 'nav_search',   icon: Search         },
   { id: 'social',   translationKey: 'nav_social',   icon: Users          },
+  { id: 'bookfree', translationKey: 'nav_bookfree', icon: Gift           },
   { id: 'messages', translationKey: 'nav_messages', icon: MessageCircle  },
   { id: 'profile',  translationKey: 'nav_profile',  icon: User           },
 ]

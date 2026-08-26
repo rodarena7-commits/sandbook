@@ -10,7 +10,7 @@ import {
   signInWithCredential,
   GoogleAuthProvider,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot, increment } from 'firebase/firestore'
 import { auth, db, googleProvider } from '../firebase'
 import { Capacitor } from '@capacitor/core'
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
@@ -83,8 +83,24 @@ export function AuthProvider({ children }) {
       } catch {}
     }
 
+    const HEARTBEAT_MINUTES = 2
+
+    // Cada tick suma HEARTBEAT_MINUTES al tiempo activo total del usuario,
+    // pero sólo si la app está en primer plano (no cuenta tiempo en background).
+    async function pingActiveTime(uid) {
+      try {
+        await updateDoc(doc(db, 'users', uid), {
+          isOnline: true,
+          lastSeen: serverTimestamp(),
+          totalActiveMinutes: increment(HEARTBEAT_MINUTES),
+        })
+      } catch {}
+    }
+
     function startHeartbeat(uid) {
-      heartbeat = setInterval(() => setOnline(uid, true), 2 * 60 * 1000)
+      heartbeat = setInterval(() => {
+        if (!document.hidden) pingActiveTime(uid)
+      }, HEARTBEAT_MINUTES * 60 * 1000)
     }
 
     const handleUnload = () => {

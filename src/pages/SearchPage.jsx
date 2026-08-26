@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Search, X, BookOpen, Plus, Check, Loader2, Camera, Star, ThumbsUp, ThumbsDown, CalendarDays, ExternalLink, ShoppingCart } from 'lucide-react'
 import { useMercadoLibrePrice } from '../hooks/useMercadoLibrePrice'
 import { useBuscaLibrePrice } from '../hooks/useBuscaLibrePrice'
@@ -185,7 +185,7 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
 }
 
 // ── Main Page ──────────────────────────────────────────────
-export default function SearchPage({ onGoToPlan }) {
+export default function SearchPage({ onGoToPlan, widgetAction, onWidgetActionConsumed }) {
   const { user, t } = useAuth()
   const { books, addBook } = useBooks(user?.uid)
   const { results, loading, error, query, setQuery, search, clear } = useGoogleBooks()
@@ -195,6 +195,21 @@ export default function SearchPage({ onGoToPlan }) {
   const [viewBook, setViewBook] = useState(null)
   const [showScanner, setShowScanner] = useState(false)
   const inputRef = useRef(null)
+
+  // Botón del widget de pantalla de inicio: "Escanear ISBN" abre la cámara directo,
+  // "Buscar libro" deja el buscador enfocado en título.
+  useEffect(() => {
+    if (!widgetAction) return
+    clear()
+    if (widgetAction === 'scan_isbn') {
+      setSearchType('isbn')
+      setShowScanner(true)
+    } else if (widgetAction === 'search_book') {
+      setSearchType('title')
+      setTimeout(() => inputRef.current?.focus(), 150)
+    }
+    onWidgetActionConsumed?.()
+  }, [widgetAction])
 
   const savedMap = Object.fromEntries(books.map(b => [b.bookId, b]))
 

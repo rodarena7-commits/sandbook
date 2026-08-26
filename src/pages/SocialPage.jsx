@@ -111,6 +111,14 @@ function getLastSeenMs(u) {
   return 0
 }
 
+function formatActiveTime(totalMinutes) {
+  if (!totalMinutes) return 'Sin datos'
+  if (totalMinutes < 60) return `${totalMinutes} min`
+  const hours = Math.floor(totalMinutes / 60)
+  const mins = totalMinutes % 60
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
+}
+
 function AdminUserRow({ user, onSelect }) {
   const { t } = useAuth()
   const createdAt = user.createdAt?.toDate
@@ -134,6 +142,9 @@ function AdminUserRow({ user, onSelect }) {
         <p className="text-[10px] text-slate-400 line-clamp-1">{user.bio || ''}</p>
         <p className={`text-[9px] mt-0.5 font-medium ${user.online ? 'text-green-500' : 'text-slate-400'}`}>
           Última conexión: {lastSeenLabel}
+        </p>
+        <p className="text-[9px] mt-0.5 text-indigo-400 font-medium">
+          Tiempo activo: {formatActiveTime(user.totalActiveMinutes)}
         </p>
       </div>
       <div className="text-right flex-shrink-0">
