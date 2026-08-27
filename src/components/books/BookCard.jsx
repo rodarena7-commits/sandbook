@@ -126,7 +126,7 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
           <div className="absolute bottom-1.5 left-1.5 flex -space-x-1.5">
             {book.coReaders.slice(0, 2).map(r => (
               r.photoURL
-                ? <img key={r.uid} src={r.photoURL} alt={r.displayName} className="w-5 h-5 rounded-full border-2 border-white object-cover shadow-sm" />
+                ? <img key={r.uid} src={r.photoURL} alt={r.displayName} referrerPolicy="no-referrer" className="w-5 h-5 rounded-full border-2 border-white object-cover shadow-sm" />
                 : <div key={r.uid} className="w-5 h-5 rounded-full border-2 border-white bg-blue-400 flex items-center justify-center shadow-sm">
                     <span className="text-[7px] text-white font-bold">{(r.displayName || '?')[0].toUpperCase()}</span>
                   </div>

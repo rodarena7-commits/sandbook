@@ -234,7 +234,7 @@ function UserListScreen({ title, uids, myFollowing = [], myUid, myProfile, setMy
 
   function Av({ photoURL, displayName, size = 11 }) {
     const init = (displayName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
-    if (photoURL) return <img src={photoURL} alt="" className={`w-${size} h-${size} rounded-full object-cover border-2 border-amber-200 flex-shrink-0`} />
+    if (photoURL) return <img src={photoURL} alt="" referrerPolicy="no-referrer" className={`w-${size} h-${size} rounded-full object-cover border-2 border-amber-200 flex-shrink-0`} />
     return <div className={`w-${size} h-${size} rounded-full bg-amber-100 border-2 border-amber-200 flex items-center justify-center font-bold text-amber-600 text-sm flex-shrink-0`}>{init}</div>
   }
 
@@ -689,7 +689,7 @@ export default function ProfilePage({ onGoToPlan }) {
             {/* Avatar */}
             <div className="relative">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
+                <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
               ) : (
                 <div className="w-20 h-20 rounded-full bg-amber-100 border-4 border-white shadow-md flex items-center justify-center text-amber-600 font-bold text-2xl">
                   {avatarInitials}

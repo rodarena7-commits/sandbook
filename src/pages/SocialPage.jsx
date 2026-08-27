@@ -35,13 +35,14 @@ const TABS = [
 
 // ── Avatar con punto online ─────────────────────────────────
 function Avatar({ photoURL, displayName, size = 'md', online = false }) {
+  const [imgError, setImgError] = useState(false)
   const init = (displayName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
   const sz = { sm:'w-8 h-8 text-xs', md:'w-10 h-10 text-sm', lg:'w-14 h-14 text-lg' }[size] || 'w-10 h-10 text-sm'
   const dotSize = size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3'
   return (
     <div className="relative flex-shrink-0">
-      {photoURL
-        ? <img src={photoURL} alt="" className={`${sz} rounded-full object-cover border-2 border-amber-200`} />
+      {photoURL && !imgError
+        ? <img src={photoURL} alt="" referrerPolicy="no-referrer" onError={() => setImgError(true)} className={`${sz} rounded-full object-cover border-2 border-amber-200`} />
         : <div className={`${sz} rounded-full bg-amber-100 border-2 border-amber-200 flex items-center justify-center font-bold text-amber-600`}>{init}</div>
       }
       {online && (
@@ -210,6 +211,8 @@ export default function SocialPage() {
   const [selectedUser, setSelectedUser]     = useState(null)
   const [showCreatePost, setShowCreatePost] = useState(false)
   const [showLogoPicker, setShowLogoPicker] = useState(false)
+  const [versionInput, setVersionInput]     = useState('')
+  const [savingVersion, setSavingVersion]   = useState(false)
   const [editingPost, setEditingPost]       = useState(null)
   const [chatTarget, setChatTarget]         = useState(null)
   const [sendPostTarget, setSendPostTarget] = useState(null) // { post, users }
@@ -572,6 +575,41 @@ export default function SocialPage() {
             </div>
           </div>
 
+          {/* Aviso de actualización de la app (Android) */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-2">
+            <h3 className="text-xs font-bold text-slate-800 mb-1 flex items-center gap-2 uppercase tracking-wide">
+              📱 Versión de la app (Android)
+            </h3>
+            <p className="text-[10px] text-slate-400 mb-3">
+              Cada vez que publiques un nuevo AAB en Play Store, poné acá su <strong>versionCode</strong> (el número, ej. 18). Los usuarios con una versión más vieja instalada van a ver un aviso para actualizar.
+            </p>
+            <div className="flex items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-400">Última versión avisada</p>
+                <p className="text-sm font-bold text-slate-700">{appConfig?.latestVersionCode || '—'}</p>
+              </div>
+              <input
+                type="number"
+                value={versionInput}
+                onChange={e => setVersionInput(e.target.value)}
+                placeholder="Ej: 18"
+                className="w-20 px-2 py-1.5 bg-white border border-slate-200 rounded-xl text-sm text-center outline-none focus:ring-2 focus:ring-amber-400"
+              />
+              <button
+                disabled={!versionInput.trim() || savingVersion}
+                onClick={async () => {
+                  setSavingVersion(true)
+                  await setDoc(doc(db, 'appConfig', 'settings'), { latestVersionCode: Number(versionInput) }, { merge: true })
+                  setSavingVersion(false)
+                  setVersionInput('')
+                }}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-bold active:scale-95 transition-all shadow-sm disabled:opacity-40"
+              >
+                {savingVersion ? '...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+
           {/* Sub-tabs Selector inside Admin Panel */}
           <div className="flex gap-2 mb-3 bg-slate-100 p-1 rounded-2xl">
             <button
@@ -675,7 +713,7 @@ export default function SocialPage() {
                       <div key={post.id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex gap-3 relative">
                         {/* User Avatar */}
                         {post.photoURL ? (
-                          <img src={post.photoURL} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-100 flex-shrink-0" />
+                          <img src={post.photoURL} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover border border-slate-100 flex-shrink-0" />
                         ) : (
                           <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-200">
                             <span className="text-xs font-bold text-slate-400">{(post.displayName || 'L')[0]}</span>
@@ -871,7 +909,7 @@ function SendPostToUserSheet({ post, followingUsers, allUsers, myUid, myProfile,
                 disabled={sending === u.uid}
                 className="flex items-center gap-3 w-full py-3 border-b border-slate-50 last:border-0 active:bg-slate-50 text-left">
                 {u.photoURL
-                  ? <img src={u.photoURL} alt="" className="w-9 h-9 rounded-full object-cover border border-amber-200 flex-shrink-0" />
+                  ? <img src={u.photoURL} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover border border-amber-200 flex-shrink-0" />
                   : <div className="w-9 h-9 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0 text-amber-600 font-bold text-xs">
                       {(u.displayName || '?')[0].toUpperCase()}
                     </div>
