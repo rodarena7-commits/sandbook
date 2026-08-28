@@ -15,15 +15,11 @@ import InstallPrompt from './components/ui/InstallPrompt'
 import TutorialOverlay, { useTutorial } from './components/ui/TutorialOverlay'
 import OnboardingFlow from './components/ui/OnboardingFlow'
 import { useWidgetAction } from './hooks/useWidgetAction'
-import { useAppUpdateCheck } from './hooks/useAppUpdateCheck'
-
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=sandbook.myapp'
 
 function AppContent() {
-  const { user, loading, appConfig } = useAuth()
+  const { user, loading } = useAuth()
   const { hasSeenTutorial } = useTutorial()
   const { widgetAction, clearWidgetAction } = useWidgetAction()
-  const { available: nativeUpdateAvailable, dismiss: dismissNativeUpdate } = useAppUpdateCheck(appConfig)
   const [activeTab, setActiveTab]   = useState('library')
   const [goToPlan, setGoToPlan]     = useState(false)
   // El onboarding (autor/libro favorito) sólo se muestra una vez que el tutorial general terminó,
@@ -75,7 +71,7 @@ function AppContent() {
   }
 
   return (
-    <div className={`min-h-screen bg-slate-50 pb-16 ${(updateAvailable || nativeUpdateAvailable) ? 'pt-14' : ''}`}>
+    <div className={`min-h-screen bg-slate-50 pb-16 ${updateAvailable ? 'pt-14' : ''}`}>
       {updateAvailable && (
         <div className="fixed top-0 left-0 right-0 z-[100] bg-slate-900/95 backdrop-blur-md text-white py-3 px-4 flex items-center justify-between border-b border-slate-800 animate-slide-down shadow-md">
           <div className="flex items-center gap-2.5">
@@ -91,29 +87,6 @@ function AppContent() {
           >
             Actualizar ahora
           </button>
-        </div>
-      )}
-      {!updateAvailable && nativeUpdateAvailable && (
-        <div className="fixed top-0 left-0 right-0 z-[100] bg-slate-900/95 backdrop-blur-md text-white py-3 px-4 flex items-center justify-between border-b border-slate-800 animate-slide-down shadow-md">
-          <div className="flex items-center gap-2.5">
-            <span className="text-base flex-shrink-0 animate-bounce">✨</span>
-            <div className="text-left min-w-0">
-              <p className="text-xs font-bold text-white leading-tight">¡Nueva versión disponible!</p>
-              <p className="text-[10px] text-slate-300 truncate">Actualizá desde Play Store para ver las últimas mejoras.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-            <a
-              href={PLAY_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={dismissNativeUpdate}
-              className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-[11px] font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 whitespace-nowrap shadow-sm"
-            >
-              Actualizar
-            </a>
-            <button onClick={dismissNativeUpdate} className="text-slate-400 p-1">✕</button>
-          </div>
         </div>
       )}
       <main className="w-full">

@@ -211,8 +211,6 @@ export default function SocialPage() {
   const [selectedUser, setSelectedUser]     = useState(null)
   const [showCreatePost, setShowCreatePost] = useState(false)
   const [showLogoPicker, setShowLogoPicker] = useState(false)
-  const [versionInput, setVersionInput]     = useState('')
-  const [savingVersion, setSavingVersion]   = useState(false)
   const [editingPost, setEditingPost]       = useState(null)
   const [chatTarget, setChatTarget]         = useState(null)
   const [sendPostTarget, setSendPostTarget] = useState(null) // { post, users }
@@ -572,41 +570,6 @@ export default function SocialPage() {
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Aviso de actualización de la app (Android) */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-2">
-            <h3 className="text-xs font-bold text-slate-800 mb-1 flex items-center gap-2 uppercase tracking-wide">
-              📱 Versión de la app (Android)
-            </h3>
-            <p className="text-[10px] text-slate-400 mb-3">
-              Cada vez que publiques un nuevo AAB en Play Store, poné acá su <strong>versionCode</strong> (el número, ej. 18). Los usuarios con una versión más vieja instalada van a ver un aviso para actualizar.
-            </p>
-            <div className="flex items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-slate-400">Última versión avisada</p>
-                <p className="text-sm font-bold text-slate-700">{appConfig?.latestVersionCode || '—'}</p>
-              </div>
-              <input
-                type="number"
-                value={versionInput}
-                onChange={e => setVersionInput(e.target.value)}
-                placeholder="Ej: 18"
-                className="w-20 px-2 py-1.5 bg-white border border-slate-200 rounded-xl text-sm text-center outline-none focus:ring-2 focus:ring-amber-400"
-              />
-              <button
-                disabled={!versionInput.trim() || savingVersion}
-                onClick={async () => {
-                  setSavingVersion(true)
-                  await setDoc(doc(db, 'appConfig', 'settings'), { latestVersionCode: Number(versionInput) }, { merge: true })
-                  setSavingVersion(false)
-                  setVersionInput('')
-                }}
-                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-bold active:scale-95 transition-all shadow-sm disabled:opacity-40"
-              >
-                {savingVersion ? '...' : 'Guardar'}
-              </button>
             </div>
           </div>
 
