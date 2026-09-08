@@ -6,6 +6,7 @@ import { useShelves } from '../hooks/useShelves'
 import BookCard from '../components/books/BookCard'
 import BookDetailSheet from '../components/books/BookDetailSheet'
 import { resolveArchivePdfUrl } from '../utils/freeBookFile'
+import { getEbook } from '../utils/ebooksDb'
 
 const PdfViewerSheet = lazy(() => import('../components/ui/PdfViewerSheet'))
 import CreatePlanSheet from '../components/books/CreatePlanSheet'
@@ -151,18 +152,40 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   const [freeBookViewer, setFreeBookViewer] = useState(null) // { pdfUrl, title } | null
   const [resolvingFreeBook, setResolvingFreeBook] = useState(false)
 
-  // Los libros guardados desde Bookfree (freeSource) se abren en el lector de
-  // PDF in-app en vez de la ficha normal de detalle.
+  // Los libros guardados desde Bookfree (freeSource) o desde Mis Ebooks (Local)
+  // se abren en el lector de PDF in-app en vez de la ficha normal de detalle.
   async function handleSelectBook(book) {
     if (!book.freeSource) { setSelectedBook(book); return }
-    if (book.freePdfUrl) { setFreeBookViewer({ pdfUrl: book.freePdfUrl, title: book.title }); return }
+    if (book.freeSource === 'local' && book.localEbookId) {
+      setResolvingFreeBook(true)
+      const ebook = await getEbook(book.localEbookId)
+      setResolvingFreeBook(false)
+      if (ebook?.fileBlob) {
+        setFreeBookViewer({ pdfUrl: URL.createObjectURL(ebook.fileBlob), title: book.title, book })
+      } else {
+        alert('No se encontró el archivo en este dispositivo (¿lo importaste desde otro celular?).')
+      }
+      return
+    }
+    if (book.freePdfUrl) { setFreeBookViewer({ pdfUrl: book.freePdfUrl, title: book.title, book }); return }
     if (book.freeSource === 'archive' && book.freeIdentifier) {
       setResolvingFreeBook(true)
       const pdfUrl = await resolveArchivePdfUrl(book.freeIdentifier)
       setResolvingFreeBook(false)
-      if (pdfUrl) { setFreeBookViewer({ pdfUrl, title: book.title }); return }
+      if (pdfUrl) { setFreeBookViewer({ pdfUrl, title: book.title, book }); return }
     }
     if (book.freeReadUrl) window.open(book.freeReadUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  // Permite iniciar/ver un plan de lectura para libros que no pasan por
+  // BookDetailSheet (Bookfree y Mis Ebooks locales) — ver botón de calendario
+  // en PdfViewerSheet.
+  function handleStartPlanForFreeBook(book) {
+    setFreeBookViewer(null)
+    if (book.biblePlan)      setViewBibleBook(book)
+    else if (book.readingPlan) setViewPlanBook(book)
+    else if (book.relaxPlan)   setViewRelaxBook(book)
+    else setPlanBook(book)
   }
 
   // Navigate from Search page to plan tab
@@ -572,7 +595,11 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
           <PdfViewerSheet
             url={freeBookViewer.pdfUrl}
             title={freeBookViewer.title}
-            onClose={() => setFreeBookViewer(null)}
+            onClose={() => {
+              if (freeBookViewer.pdfUrl.startsWith('blob:')) URL.revokeObjectURL(freeBookViewer.pdfUrl)
+              setFreeBookViewer(null)
+            }}
+            onStartPlan={freeBookViewer.book ? () => handleStartPlanForFreeBook(freeBookViewer.book) : undefined}
           />
         </Suspense>
       )}

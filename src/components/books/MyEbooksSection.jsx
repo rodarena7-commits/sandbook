@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
-  Folder, FolderPlus, FileText, Plus, Trash2, Pencil, Move, 
-  ArrowLeft, Upload, Image, X, ChevronRight, Search, 
-  Loader2, Maximize2, Minimize2, Sun, Moon, Eye, Share2
+import {
+  Folder, FolderPlus, FileText, Plus, Trash2, Pencil, Move,
+  ArrowLeft, Upload, Image, X, ChevronRight, Search,
+  Loader2, Maximize2, Minimize2, Sun, Moon, Eye, Share2, Send, BookmarkPlus, BookmarkCheck
 } from 'lucide-react';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
-import { 
-  getFolders, saveFolder, deleteFolder, 
-  getAllEbooks, getEbooksByFolder, saveEbook, deleteEbook 
+import {
+  getFolders, saveFolder, deleteFolder,
+  getAllEbooks, getEbooksByFolder, saveEbook, deleteEbook
 } from '../../utils/ebooksDb';
+import { useAuth } from '../../contexts/AuthContext';
+import { useBooks } from '../../hooks/useBooks';
+import { useUsers } from '../../hooks/useUsers';
+import { useConversations } from '../../hooks/useConversations';
+import ShareEbookSheet from './ShareEbookSheet';
 
 // Generar IDs aleatorios si crypto.randomUUID no está disponible
 function generateId() {
@@ -70,6 +75,11 @@ function getFileExtension(type, originalName) {
 
 
 export default function MyEbooksSection() {
+  const { user, profile, setProfile } = useAuth();
+  const { books, addBook } = useBooks(user?.uid);
+  const { followerUsers, followerLoading, loadFollowers } = useUsers(user?.uid, profile, setProfile);
+  const { sendMessage, canMessage } = useConversations(user?.uid);
+
   const [folders, setFolders] = useState([]);
   const [ebooks, setEbooks] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null);
@@ -86,6 +96,17 @@ export default function MyEbooksSection() {
   const [coverModal, setCoverModal] = useState(null); // { ebookId: string, title: string, coverUrl?: string }
   const [activeReader, setActiveReader] = useState(null); // ebook object
   const [sharingId, setSharingId] = useState(null); // id of the ebook currently being shared
+  const [shareToFollowerEbook, setShareToFollowerEbook] = useState(null); // ebook a enviar a un seguidor
+  const [addingToLibraryId, setAddingToLibraryId] = useState(null);
+
+  // bookId de biblioteca para cada ebook local que ya fue agregado (ver handleAddToLibrary)
+  const libraryBookIdByEbook = useMemo(() => {
+    const map = new Map();
+    for (const b of books) {
+      if (b.freeSource === 'local' && b.localEbookId) map.set(b.localEbookId, b.bookId);
+    }
+    return map;
+  }, [books]);
 
   const fileInputRef = useRef(null);
 
@@ -302,6 +323,29 @@ export default function MyEbooksSection() {
       }
     } finally {
       setSharingId(null);
+    }
+  };
+
+  const handleAddToLibrary = async (ebook) => {
+    if (!user?.uid || libraryBookIdByEbook.has(ebook.id)) return;
+    setAddingToLibraryId(ebook.id);
+    try {
+      await addBook(user.uid, `local_${ebook.id}`, {
+        title: ebook.title,
+        authors: [],
+        thumbnail: ebook.coverUrl || null,
+        status: 'library',
+        isFavorite: false,
+        inLibrary: true,
+        // Referencia al ebook local: ver LibraryPage.handleSelectBook, que lo
+        // abre leyendo el blob de IndexedDB en vez de resolver una URL remota.
+        freeSource: 'local',
+        localEbookId: ebook.id,
+      });
+    } catch (err) {
+      alert('No se pudo agregar a la biblioteca: ' + err.message);
+    } finally {
+      setAddingToLibraryId(null);
     }
   };
 
@@ -615,10 +659,31 @@ export default function MyEbooksSection() {
                         {/* Menú de acciones */}
                         <div className="flex items-center gap-0.5">
                           <button
+                            onClick={(e) => { e.stopPropagation(); setShareToFollowerEbook(ebook); }}
+                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition-all"
+                            title="Enviar a un seguidor"
+                          >
+                            <Send size={11} />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleAddToLibrary(ebook); }}
+                            className={`p-1 hover:bg-slate-100 rounded transition-all ${libraryBookIdByEbook.has(ebook.id) ? 'text-green-600' : 'text-slate-400 hover:text-amber-600'}`}
+                            disabled={addingToLibraryId === ebook.id}
+                            title={libraryBookIdByEbook.has(ebook.id) ? 'Ya está en tu biblioteca' : 'Agregar a mi biblioteca'}
+                          >
+                            {addingToLibraryId === ebook.id ? (
+                              <Loader2 size={11} className="animate-spin text-amber-500" />
+                            ) : libraryBookIdByEbook.has(ebook.id) ? (
+                              <BookmarkCheck size={11} />
+                            ) : (
+                              <BookmarkPlus size={11} />
+                            )}
+                          </button>
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleShareEbook(ebook); }}
                             className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-amber-600 transition-all"
                             disabled={sharingId === ebook.id}
-                            title="Compartir"
+                            title="Compartir (fuera de la app)"
                           >
                             {sharingId === ebook.id ? (
                               <Loader2 size={11} className="animate-spin text-amber-500" />
@@ -787,9 +852,24 @@ export default function MyEbooksSection() {
 
       {/* ── MODAL VISOR DE LECTURA COMPLETO (PDF / WORD) ────────── */}
       {activeReader && (
-        <EbookReaderModal 
-          ebook={activeReader} 
-          onClose={() => setActiveReader(null)} 
+        <EbookReaderModal
+          ebook={activeReader}
+          onClose={() => setActiveReader(null)}
+        />
+      )}
+
+      {/* ── MODAL: ENVIAR A UN SEGUIDOR ──────────────────────────── */}
+      {shareToFollowerEbook && (
+        <ShareEbookSheet
+          ebook={shareToFollowerEbook}
+          myUid={user?.uid}
+          myProfile={profile}
+          followers={followerUsers}
+          followersLoading={followerLoading}
+          onLoadFollowers={loadFollowers}
+          sendMessage={sendMessage}
+          canMessage={canMessage}
+          onClose={() => setShareToFollowerEbook(null)}
         />
       )}
 

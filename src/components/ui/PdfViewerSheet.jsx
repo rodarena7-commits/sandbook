@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, Loader2, ExternalLink } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, Loader2, ExternalLink, CalendarDays } from 'lucide-react'
 import * as pdfjsLib from 'pdfjs-dist'
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-import { proxiedFileUrl, downloadPdf } from '../../utils/freeBookFile'
+import { resolveViewUrl, downloadPdf } from '../../utils/freeBookFile'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl
 
-export default function PdfViewerSheet({ url, title, onClose }) {
+export default function PdfViewerSheet({ url, title, onClose, onStartPlan }) {
   const canvasRef = useRef(null)
   const pdfRef    = useRef(null)
   const renderTaskRef = useRef(null)
@@ -23,7 +23,7 @@ export default function PdfViewerSheet({ url, title, onClose }) {
     let cancelled = false
     setLoading(true)
     setError(null)
-    const loadingTask = pdfjsLib.getDocument(proxiedFileUrl(url))
+    const loadingTask = pdfjsLib.getDocument(resolveViewUrl(url))
     loadingTask.promise.then(pdf => {
       if (cancelled) return
       pdfRef.current = pdf
@@ -86,6 +86,15 @@ export default function PdfViewerSheet({ url, title, onClose }) {
           <X size={16} />
         </button>
         <p className="flex-1 text-white text-xs font-semibold line-clamp-1 min-w-0">{title}</p>
+        {onStartPlan && (
+          <button
+            onClick={onStartPlan}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-white/10 text-white rounded-full text-[11px] font-semibold flex-shrink-0"
+            title="Plan de lectura"
+          >
+            <CalendarDays size={12} />
+          </button>
+        )}
         <button
           onClick={handleDownload}
           disabled={downloading || loading || !!error}

@@ -12,6 +12,24 @@ export function proxiedFileUrl(originalUrl, { download = false, filename } = {})
   return `/api/free-book-file?${params.toString()}`
 }
 
+// El proxy sólo reenvía archive.org/gutenberg.org (ver server.js). Un blob:
+// local o un archivo ya alojado en nuestro propio servidor (shared-files) no
+// lo necesitan — de hecho el proxy los rechazaría (host no permitido).
+function needsProxy(url) {
+  if (!url || url.startsWith('blob:') || url.startsWith('data:')) return false
+  try {
+    const { hostname, protocol } = new URL(url)
+    if (!['http:', 'https:'].includes(protocol)) return false
+    return /(^|\.)archive\.org$/i.test(hostname) || /(^|\.)gutenberg\.org$/i.test(hostname)
+  } catch {
+    return false
+  }
+}
+
+export function resolveViewUrl(url) {
+  return needsProxy(url) ? proxiedFileUrl(url) : url
+}
+
 // Internet Archive no da el nombre exacto del PDF en la búsqueda, sólo que
 // existe un formato "Text PDF"/"Grayscale PDF". Se resuelve al vuelo con la
 // API de metadata (sí tiene CORS habilitado, a diferencia del archivo en sí).
@@ -37,7 +55,9 @@ function blobToBase64(blob) {
 }
 
 export async function downloadPdf(originalUrl, filename) {
-  const url = proxiedFileUrl(originalUrl, { download: true, filename })
+  const url = needsProxy(originalUrl)
+    ? proxiedFileUrl(originalUrl, { download: true, filename })
+    : originalUrl
 
   if (Capacitor.isNativePlatform()) {
     const res = await fetch(url)

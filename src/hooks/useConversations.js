@@ -46,16 +46,21 @@ export function useConversations(uid) {
     return true
   }
 
-  async function sendMessage(fromUid, fromProfile, toUid, toProfile, text) {
+  async function sendMessage(fromUid, fromProfile, toUid, toProfile, text, attachment = null) {
     const convId = getConvId(fromUid, toUid)
     const convRef = doc(db, 'conversations', convId)
 
     const msg = {
       fromUid,
-      text: text.trim(),
+      text: (text || '').trim(),
       createdAt: serverTimestamp(),
+      ...(attachment ? { attachment } : {}),
     }
     await addDoc(collection(db, 'conversations', convId, 'messages'), msg)
+
+    const lastMessage = attachment
+      ? `📎 ${attachment.title || 'Archivo compartido'}`
+      : text.trim().slice(0, 60)
 
     await setDoc(convRef, {
       participants: [fromUid, toUid],
@@ -67,7 +72,7 @@ export function useConversations(uid) {
         [fromUid]: fromProfile?.photoURL || null,
         [toUid]:   toProfile?.photoURL   || null,
       },
-      lastMessage: text.trim().slice(0, 60),
+      lastMessage,
       lastAt: serverTimestamp(),
       unread: { [toUid]: increment(1) },
     }, { merge: true })

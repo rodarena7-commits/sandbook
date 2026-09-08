@@ -2,9 +2,51 @@ import express from 'express'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { Readable } from 'stream'
+import fs from 'fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
+
+// ── Almacenamiento de archivos compartidos entre usuarios (ebooks locales) ──
+// Disco efímero de Render: sobrevive mientras la instancia esté arriba, pero
+// se borra en cada deploy/reinicio. Alcanza para "te mando este PDF, abrilo
+// ahora"; no reemplaza un storage permanente.
+const SHARED_FILES_DIR = join(__dirname, 'shared-files')
+fs.mkdirSync(SHARED_FILES_DIR, { recursive: true })
+
+const SHARED_FILE_MIME = {
+  pdf: 'application/pdf',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+}
+const SHARED_FILENAME_RE = /^[a-zA-Z0-9_-]+\.(pdf|docx|jpg|jpeg|png)$/
+
+app.put('/api/shared-files/:filename', express.raw({ type: () => true, limit: '80mb' }), (req, res) => {
+  const { filename } = req.params
+  if (!SHARED_FILENAME_RE.test(filename)) return res.status(400).json({ error: 'nombre de archivo inválido' })
+  if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'archivo vacío' })
+  try {
+    fs.writeFileSync(join(SHARED_FILES_DIR, filename), req.body)
+    res.json({ ok: true, filename })
+  } catch (e) {
+    console.error('shared-files write error:', e.message)
+    res.status(500).json({ error: 'no se pudo guardar el archivo' })
+  }
+})
+
+app.get('/api/shared-files/:filename', (req, res) => {
+  const { filename } = req.params
+  if (!SHARED_FILENAME_RE.test(filename)) return res.status(400).json({ error: 'nombre de archivo inválido' })
+  const filePath = join(SHARED_FILES_DIR, filename)
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'archivo no encontrado' })
+  const ext = filename.split('.').pop().toLowerCase()
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Content-Type', SHARED_FILE_MIME[ext] || 'application/octet-stream')
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+  res.sendFile(filePath)
+})
 
 // ── Dynamic manifest.json ─────────────────────────────────────────────
 app.get('/manifest.json', async (req, res) => {

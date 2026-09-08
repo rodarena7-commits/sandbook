@@ -1,7 +1,30 @@
-import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Send, Lock, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef, Suspense, lazy } from 'react'
+import { ArrowLeft, Send, Lock, Loader2, FileText, BookOpenText } from 'lucide-react'
 import { useMessages } from '../../hooks/useMessages'
 import { getConvId } from '../../hooks/useConversations'
+
+const PdfViewerSheet = lazy(() => import('../ui/PdfViewerSheet'))
+
+function AttachmentCard({ attachment, isMe, onOpen }) {
+  return (
+    <button
+      onClick={onOpen}
+      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-left max-w-[75%] ${
+        isMe ? 'bg-amber-500 text-white rounded-br-md' : 'bg-white text-slate-800 shadow-sm border border-slate-100 rounded-bl-md'
+      }`}
+    >
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isMe ? 'bg-white/20' : 'bg-amber-50'}`}>
+        <FileText size={16} className={isMe ? 'text-white' : 'text-amber-500'} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold line-clamp-2">{attachment.title || 'Archivo compartido'}</p>
+        <p className={`text-[10px] flex items-center gap-1 mt-0.5 ${isMe ? 'text-white/70' : 'text-slate-400'}`}>
+          <BookOpenText size={10} /> Abrir ebook
+        </p>
+      </div>
+    </button>
+  )
+}
 
 function timeLabel(ts) {
   if (!ts?.seconds) return ''
@@ -23,6 +46,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
   const { messages, loading } = useMessages(convId)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [openAttachment, setOpenAttachment] = useState(null)
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -71,16 +95,23 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
           return (
             <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
               {!isMe && <Avatar photoURL={otherUser.photoURL} displayName={otherUser.displayName} size={6} />}
-              <div className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                isMe
-                  ? 'bg-amber-500 text-white rounded-br-md'
-                  : 'bg-white text-slate-800 shadow-sm border border-slate-100 rounded-bl-md'
-              }`}>
-                <p>{msg.text}</p>
-                <p className={`text-[9px] mt-1 ${isMe ? 'text-white/60 text-right' : 'text-slate-400'}`}>
-                  {timeLabel(msg.createdAt)}
-                </p>
-              </div>
+              {msg.attachment ? (
+                <AttachmentCard attachment={msg.attachment} isMe={isMe} onOpen={() => {
+                  if (msg.attachment.fileType === 'pdf') setOpenAttachment(msg.attachment)
+                  else window.open(msg.attachment.url, '_blank', 'noopener,noreferrer')
+                }} />
+              ) : (
+                <div className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  isMe
+                    ? 'bg-amber-500 text-white rounded-br-md'
+                    : 'bg-white text-slate-800 shadow-sm border border-slate-100 rounded-bl-md'
+                }`}>
+                  <p>{msg.text}</p>
+                  <p className={`text-[9px] mt-1 ${isMe ? 'text-white/60 text-right' : 'text-slate-400'}`}>
+                    {timeLabel(msg.createdAt)}
+                  </p>
+                </div>
+              )}
             </div>
           )
         })}
@@ -105,6 +136,20 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
           {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={15} />}
         </button>
       </form>
+
+      {openAttachment && (
+        <Suspense fallback={
+          <div className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center">
+            <Loader2 size={32} className="animate-spin text-white" />
+          </div>
+        }>
+          <PdfViewerSheet
+            url={openAttachment.url}
+            title={openAttachment.title}
+            onClose={() => setOpenAttachment(null)}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

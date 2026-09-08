@@ -11,6 +11,8 @@ export function useUsers(myUid, myProfile, setProfile) {
   const [searchLoading, setSearchLoading] = useState(false)
   const [followingUsers, setFollowingUsers] = useState([])
   const [followingLoading, setFollowingLoading] = useState(false)
+  const [followerUsers, setFollowerUsers] = useState([])
+  const [followerLoading, setFollowerLoading] = useState(false)
 
   const searchUsers = useCallback(async (q) => {
     const trimmed = q.trim()
@@ -67,6 +69,23 @@ export function useUsers(myUid, myProfile, setProfile) {
     }
   }
 
+  // Gente que ME sigue a mí (distinto de loadFollowing, que es a quién sigo yo).
+  async function loadFollowers() {
+    const uids = myProfile?.followers || []
+    if (uids.length === 0) { setFollowerUsers([]); return }
+
+    setFollowerLoading(true)
+    try {
+      const docs = await Promise.all(uids.map(uid => getDoc(doc(db, 'users', uid))))
+      const users = docs.filter(d => d.exists()).map(d => ({ uid: d.id, ...d.data() }))
+      setFollowerUsers(users)
+    } catch {
+      setFollowerUsers([])
+    } finally {
+      setFollowerLoading(false)
+    }
+  }
+
   async function canReceiveNotifications(uid) {
     const snap = await getDoc(doc(db, 'users', uid))
     return snap.exists() ? snap.data().notificationsEnabled !== false : true
@@ -98,6 +117,7 @@ export function useUsers(myUid, myProfile, setProfile) {
   return {
     searchResults, searchLoading, searchUsers,
     followingUsers, followingLoading, loadFollowing,
+    followerUsers, followerLoading, loadFollowers,
     getUserBooks, followUser, unfollowUser,
   }
 }
