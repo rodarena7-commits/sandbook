@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
 import {
   Folder, FolderPlus, FileText, Plus, Trash2, Pencil, Move,
   ArrowLeft, Upload, Image, X, ChevronRight, Search,
@@ -16,6 +16,8 @@ import { useBooks } from '../../hooks/useBooks';
 import { useUsers } from '../../hooks/useUsers';
 import { useConversations } from '../../hooks/useConversations';
 import ShareEbookSheet from './ShareEbookSheet';
+
+const PdfViewerSheet = lazy(() => import('../ui/PdfViewerSheet'));
 
 // Generar IDs aleatorios si crypto.randomUUID no está disponible
 function generateId() {
@@ -94,7 +96,8 @@ export default function MyEbooksSection() {
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'folder'|'ebook', id: string, name: string }
   const [moveModal, setMoveModal] = useState(null); // { type: 'folder'|'ebook', id: string, name: string }
   const [coverModal, setCoverModal] = useState(null); // { ebookId: string, title: string, coverUrl?: string }
-  const [activeReader, setActiveReader] = useState(null); // ebook object
+  const [activeReader, setActiveReader] = useState(null); // ebook object (docx/imagen)
+  const [pdfViewer, setPdfViewer] = useState(null); // { url, title } (PDFs: mismo visor pdf.js del resto de la app)
   const [sharingId, setSharingId] = useState(null); // id of the ebook currently being shared
   const [shareToFollowerEbook, setShareToFollowerEbook] = useState(null); // ebook a enviar a un seguidor
   const [addingToLibraryId, setAddingToLibraryId] = useState(null);
@@ -323,6 +326,17 @@ export default function MyEbooksSection() {
       }
     } finally {
       setSharingId(null);
+    }
+  };
+
+  // Los PDF se abren con el visor pdf.js compartido (más confiable entre
+  // navegadores que un <iframe> con blob:, que en algunos —p.ej. Brave con
+  // Shields— no renderiza el PDF embebido). Word/imagen siguen con EbookReaderModal.
+  const handleOpenEbook = (ebook) => {
+    if (ebook.type === 'pdf') {
+      setPdfViewer({ url: URL.createObjectURL(ebook.fileBlob), title: ebook.title });
+    } else {
+      setActiveReader(ebook);
     }
   };
 
@@ -615,7 +629,7 @@ export default function MyEbooksSection() {
                     
                     {/* Tarjeta de eBook */}
                     <div 
-                      onClick={() => setActiveReader(ebook)}
+                      onClick={() => handleOpenEbook(ebook)}
                       className="aspect-[3/4] bg-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-amber-400 border border-transparent transition-all cursor-pointer relative"
                     >
                       {ebook.coverUrl ? (
@@ -850,7 +864,22 @@ export default function MyEbooksSection() {
         </div>
       )}
 
-      {/* ── MODAL VISOR DE LECTURA COMPLETO (PDF / WORD) ────────── */}
+      {/* ── VISOR DE PDF (pdf.js) ────────────────────────────────── */}
+      {pdfViewer && (
+        <Suspense fallback={
+          <div className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center">
+            <Loader2 size={32} className="animate-spin text-white" />
+          </div>
+        }>
+          <PdfViewerSheet
+            url={pdfViewer.url}
+            title={pdfViewer.title}
+            onClose={() => { URL.revokeObjectURL(pdfViewer.url); setPdfViewer(null); }}
+          />
+        </Suspense>
+      )}
+
+      {/* ── MODAL VISOR DE LECTURA COMPLETO (WORD / IMAGEN) ──────── */}
       {activeReader && (
         <EbookReaderModal
           ebook={activeReader}
@@ -992,26 +1021,27 @@ function CoverForm({ initialUrl, onSave, onUpload, onClose }) {
   );
 }
 
-// ── COMPONENTE INTERNO: MODAL LECTOR PREMIUM (PDF / WORD) ──
+// ── COMPONENTE INTERNO: MODAL LECTOR PREMIUM (WORD / IMAGEN) ──
+// Los PDF ya no pasan por acá: se abren con PdfViewerSheet (ver handleOpenEbook).
 function EbookReaderModal({ ebook, onClose }) {
   const [loading, setLoading] = useState(true);
   const [contentHtml, setContentHtml] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  
+
   // Ajustes de lectura (para Word HTML)
   const [fontSize, setFontSize] = useState(16); // px
   const [theme, setTheme] = useState('sepia'); // light, sepia, dark
   useEffect(() => {
     let objectUrl = '';
 
-    if (ebook.type === 'pdf' || ebook.type === 'image') {
+    if (ebook.type === 'image') {
       try {
         objectUrl = URL.createObjectURL(ebook.fileBlob);
         setPdfUrl(objectUrl);
         setLoading(false);
       } catch (err) {
-        setErrorMsg(ebook.type === 'image' ? 'No se pudo cargar la imagen' : 'No se pudo inicializar el visor de PDF');
+        setErrorMsg('No se pudo cargar la imagen');
         setLoading(false);
       }
     } else {
@@ -1117,11 +1147,8 @@ function EbookReaderModal({ ebook, onClose }) {
               </button>
             </div>
           </div>
-        ) : ebook.type === 'image' ? (
-          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Visualizador de Foto</span>
         ) : (
-          /* Para PDF */
-          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Visualizador PDF</span>
+          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Visualizador de Foto</span>
         )}
       </div>
 
@@ -1149,13 +1176,7 @@ function EbookReaderModal({ ebook, onClose }) {
 
         {!loading && !errorMsg && (
           <>
-            {ebook.type === 'pdf' ? (
-              <iframe 
-                src={pdfUrl} 
-                className="w-full h-full border-none" 
-                title={ebook.title}
-              />
-            ) : ebook.type === 'image' ? (
+            {ebook.type === 'image' ? (
               <div className="w-full h-full flex items-center justify-center p-4 bg-slate-950">
                 <img 
                   src={pdfUrl} 
