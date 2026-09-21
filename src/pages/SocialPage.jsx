@@ -747,10 +747,10 @@ export default function SocialPage() {
           myProfile={profile}
           otherUser={chatTarget}
           canSend={true}
-          onSend={async text => {
+          onSend={async (text, attachment) => {
             const allowed = await canMessage(user.uid, chatTarget.uid, profile)
             if (!allowed) return
-            await sendMessage(user.uid, profile, chatTarget.uid, chatTarget, text)
+            await sendMessage(user.uid, profile, chatTarget.uid, chatTarget, text, attachment)
           }}
           onBack={() => setChatTarget(null)}
         />

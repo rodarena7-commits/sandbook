@@ -49,9 +49,9 @@ export default function MessagesPage() {
     setOpenChat({ conv, otherUser, canSend: allowed })
   }
 
-  async function handleSend(text) {
+  async function handleSend(text, attachment) {
     const { otherUser } = openChat
-    await sendMessage(user.uid, profile, otherUser.uid, otherUser, text)
+    await sendMessage(user.uid, profile, otherUser.uid, otherUser, text, attachment)
   }
 
   if (openChat) {

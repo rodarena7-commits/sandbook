@@ -58,8 +58,10 @@ export function useConversations(uid) {
     }
     await addDoc(collection(db, 'conversations', convId, 'messages'), msg)
 
-    const lastMessage = attachment
-      ? `📎 ${attachment.title || 'Archivo compartido'}`
+    const lastMessage =
+      attachment?.kind === 'voice' ? '🎤 Mensaje de voz'
+      : attachment?.kind === 'call' ? '📹 Videollamada'
+      : attachment ? `📎 ${attachment.title || 'Archivo compartido'}`
       : text.trim().slice(0, 60)
 
     await setDoc(convRef, {
