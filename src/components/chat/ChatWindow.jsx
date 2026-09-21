@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, Suspense, lazy } from 'react'
-import { ArrowLeft, Send, Lock, Loader2, FileText, BookOpenText, Mic, Trash2, Play, Pause, Video } from 'lucide-react'
+import { ArrowLeft, Send, Lock, Loader2, FileText, BookOpenText, Mic, Trash2, Play, Pause, Video, Link2 } from 'lucide-react'
+import { useCall } from '../../contexts/CallContext'
 import { useMessages } from '../../hooks/useMessages'
 import { getConvId } from '../../hooks/useConversations'
 import { useVoiceRecorder, MAX_VOICE_SECONDS } from '../../hooks/useVoiceRecorder'
@@ -127,6 +128,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
   const voice = useVoiceRecorder()
+  const { startCall, active: callActive } = useCall()
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -165,7 +167,8 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
     if (voice.recording && voice.seconds >= MAX_VOICE_SECONDS) finishRecording()
   }, [voice.recording, voice.seconds])
 
-  async function startCall() {
+  // Respaldo: manda un enlace de Jitsi (abre en el navegador)
+  async function startLinkCall() {
     if (!canSend || sending) return
     const url = newCallUrl()
     await sendAttachment({ kind: 'call', title: 'Videollamada', url })
@@ -185,9 +188,18 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
           {!canSend && <p className="text-[10px] text-slate-400 flex items-center gap-1"><Lock size={9} /> No acepta mensajes</p>}
         </div>
         <button
-          onClick={startCall}
+          onClick={startLinkCall}
           disabled={!canSend || sending || voice.recording}
-          aria-label="Iniciar videollamada"
+          aria-label="Enviar enlace de videollamada"
+          title="Enviar enlace de videollamada (Jitsi)"
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 disabled:opacity-40 active:scale-90 transition-all"
+        >
+          <Link2 size={16} />
+        </button>
+        <button
+          onClick={() => startCall({ uid: otherUser.uid, displayName: otherUser.displayName, photoURL: otherUser.photoURL || null })}
+          disabled={!canSend || callActive || voice.recording}
+          aria-label="Videollamada"
           className="w-9 h-9 flex items-center justify-center rounded-full bg-amber-50 text-amber-500 disabled:opacity-40 active:scale-90 transition-all"
         >
           <Video size={17} />
