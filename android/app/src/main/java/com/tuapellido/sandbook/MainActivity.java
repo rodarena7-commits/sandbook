@@ -47,7 +47,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         // Retoma un update "flexible" a medio descargar, y avisa si terminó de
         // descargarse mientras la app estaba en segundo plano.
@@ -61,7 +61,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         appUpdateManager.unregisterListener(installStateListener);
         super.onDestroy();
     }
