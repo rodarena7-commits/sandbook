@@ -8,6 +8,7 @@ import { createReadingPlan, createRelaxPlan } from '../hooks/useReadingPlan'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
 import { useGoogleBooks } from '../hooks/useGoogleBooks'
+import { useBookCover } from '../hooks/useBookCover'
 import BarcodeScanner from '../components/books/BarcodeScanner'
 import BookDetailSheet from '../components/books/BookDetailSheet'
 
@@ -49,6 +50,8 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
   const [reaction, setReaction] = useState(savedBook?.myReaction || null)
   const { mlPrice, mlLoading, mlUrl } = useMercadoLibrePrice(book)
   const { blPrice, blLoading, blUrl } = useBuscaLibrePrice(book)
+  // Si Google Books no trae portada, usa la que alguien subió a bookCovers/{bookId}
+  const cover = useBookCover(book.bookId, savedBook?.customThumbnail || book.thumbnail)
 
   async function handleFav(e) {
     e.stopPropagation()
@@ -75,8 +78,8 @@ function SearchResultItem({ book, savedBook, uid, onView, onAddPress }) {
   return (
     <div className="flex gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
       <div className="flex-shrink-0 cursor-pointer" onClick={() => onView(book)}>
-        {book.thumbnail ? (
-          <img src={book.thumbnail} alt="" className="w-14 h-20 object-cover rounded-xl shadow-sm" />
+        {cover ? (
+          <img src={cover} alt="" referrerPolicy="no-referrer" className="w-14 h-20 object-cover rounded-xl shadow-sm" />
         ) : (
           <div className="w-14 h-20 bg-slate-100 rounded-xl flex items-center justify-center">
             <BookOpen size={20} className="text-slate-300" />
