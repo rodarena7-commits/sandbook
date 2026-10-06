@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { X, Check, ChevronRight, User, Eye, EyeOff, MessageCircle, Bell, BellOff } from 'lucide-react'
+import { X, Check, ChevronRight, User, Eye, EyeOff, MessageCircle, Bell, BellOff, HelpCircle } from 'lucide-react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
+import { resetSectionTours } from '../ui/SectionTour'
 
 const MESSAGING_OPTIONS = [
   { key: 'everyone',  label: 'Todos',                  desc: 'Cualquier usuario puede escribirte' },
@@ -37,6 +38,7 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
   const [showLibrary, setShowLibrary]     = useState(profile?.showLibrary !== false)
   const [notifsEnabled, setNotifsEnabled] = useState(profile?.notificationsEnabled !== false)
   const [msgPrivacy, setMsgPrivacy]       = useState(profile?.messagingPrivacy || 'everyone')
+  const [toursReset, setToursReset]       = useState(false)
 
   async function save(field, value) {
     await updateDoc(doc(db, 'users', uid), { [field]: value })
@@ -117,6 +119,26 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
               description="Recibir recomendaciones y mensajes"
               icon={notifsEnabled ? Bell : BellOff}
             />
+          </div>
+
+          {/* Guías */}
+          <div className="py-4 border-b border-slate-100">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Guías de la app</p>
+            <button
+              onClick={() => { resetSectionTours(); setToursReset(true) }}
+              disabled={toursReset}
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl bg-slate-50 text-left disabled:opacity-80"
+            >
+              <div className="w-9 h-9 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                {toursReset ? <Check size={16} className="text-green-600" /> : <HelpCircle size={16} className="text-amber-600" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-800">{toursReset ? 'Listo' : 'Volver a ver las guías'}</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  {toursReset ? 'Las verás de nuevo al entrar a cada sección.' : 'Muestra otra vez la explicación de los botones de cada sección.'}
+                </p>
+              </div>
+            </button>
           </div>
 
           {/* Messaging privacy */}

@@ -287,7 +287,7 @@ export default function SocialPage() {
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-slate-800">{t('soc_social_network')}</h1>
           {activeTab === 'feed' && (
-            <button onClick={() => setShowCreatePost(true)}
+            <button data-tour="soc-publish" onClick={() => setShowCreatePost(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-full text-xs font-semibold shadow-sm active:scale-95">
               <Plus size={13}/> {t('soc_publish')}
             </button>
@@ -295,7 +295,7 @@ export default function SocialPage() {
         </div>
 
         {/* Main tabs */}
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
+        <div data-tour="soc-tabs" className="flex gap-1.5 overflow-x-auto scrollbar-none">
           {tabs.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={`flex-shrink-0 flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${activeTab===tab.key?'bg-amber-500 text-white shadow-sm':'bg-slate-100 text-slate-500'}`}>

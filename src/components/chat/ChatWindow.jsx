@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, Suspense, lazy } from 'react'
 import { ArrowLeft, Send, Lock, Loader2, FileText, BookOpenText, Mic, Trash2, Play, Pause, Video, Link2 } from 'lucide-react'
 import { useCall } from '../../contexts/CallContext'
+import SectionTour from '../ui/SectionTour'
+import { TOURS } from '../../utils/tourSteps'
 import { useMessages } from '../../hooks/useMessages'
 import { getConvId } from '../../hooks/useConversations'
 import { useVoiceRecorder, MAX_VOICE_SECONDS } from '../../hooks/useVoiceRecorder'
@@ -188,6 +190,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
           {!canSend && <p className="text-[10px] text-slate-400 flex items-center gap-1"><Lock size={9} /> No acepta mensajes</p>}
         </div>
         <button
+          data-tour="chat-link"
           onClick={startLinkCall}
           disabled={!canSend || sending || voice.recording}
           aria-label="Enviar enlace de videollamada"
@@ -197,6 +200,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
           <Link2 size={16} />
         </button>
         <button
+          data-tour="chat-call"
           onClick={() => startCall({ uid: otherUser.uid, displayName: otherUser.displayName, photoURL: otherUser.photoURL || null })}
           disabled={!canSend || callActive || voice.recording}
           aria-label="Videollamada"
@@ -272,7 +276,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSend} className="bg-white border-t border-slate-100 px-4 py-3 flex gap-2 flex-shrink-0">
+        <form data-tour="chat-input" onSubmit={handleSend} className="bg-white border-t border-slate-100 px-4 py-3 flex gap-2 flex-shrink-0">
           <input
             ref={inputRef}
             value={text}
@@ -302,6 +306,8 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
           )}
         </form>
       )}
+
+      <SectionTour id="chat" steps={TOURS.chat} />
 
       {openAttachment && (
         <Suspense fallback={

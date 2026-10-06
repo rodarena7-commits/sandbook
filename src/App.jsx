@@ -16,6 +16,8 @@ import TutorialOverlay, { useTutorial } from './components/ui/TutorialOverlay'
 import OnboardingFlow from './components/ui/OnboardingFlow'
 import { useWidgetAction } from './hooks/useWidgetAction'
 import { CallProvider } from './contexts/CallContext'
+import SectionTour from './components/ui/SectionTour'
+import { TOURS } from './utils/tourSteps'
 
 function AppContent() {
   const { user, profile, loading } = useAuth()
@@ -106,6 +108,8 @@ function AppContent() {
       ) : (
         <OnboardingFlow />
       )}
+      {/* Guía de cada sección: una sola vez, cuando entrás por primera vez */}
+      <SectionTour key={activeTab} id={activeTab} steps={TOURS[activeTab] || []} />
       {/* Prompt de instalación PWA (opcional) */}
       <InstallPrompt />
     </div>

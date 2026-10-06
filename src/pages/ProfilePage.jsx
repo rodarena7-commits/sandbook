@@ -687,7 +687,7 @@ export default function ProfilePage({ onGoToPlan }) {
         <div className="px-4 pb-4">
           <div className="flex items-end justify-between -mt-10 mb-3">
             {/* Avatar */}
-            <div className="relative">
+            <div data-tour="prof-avatar" className="relative">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
               ) : (
@@ -702,7 +702,7 @@ export default function ProfilePage({ onGoToPlan }) {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 mb-1">
+            <div data-tour="prof-actions" className="flex items-center gap-2 mb-1">
               <button
                 onClick={() => { setShowNotifs(v => !v); if (!showNotifs && unreadCount > 0) markAllRead() }}
                 className="relative w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
@@ -729,7 +729,7 @@ export default function ProfilePage({ onGoToPlan }) {
           {memberSince && <p className="text-[10px] text-slate-300 mt-0.5">{t('prof_member_since')} {memberSince}</p>}
 
           {/* Followers / Following — clickeables */}
-          <div className="flex gap-4 mt-2 mb-3">
+          <div data-tour="prof-follow" className="flex gap-4 mt-2 mb-3">
             <button onClick={() => setUserListMode('following')} className="text-xs text-slate-500 hover:text-amber-600 transition-colors">
               <span className="font-bold text-slate-800">{followingCount}</span> {t('prof_following').toLowerCase()}
             </button>
@@ -774,7 +774,7 @@ export default function ProfilePage({ onGoToPlan }) {
       )}
 
       {/* Botones de acción rápida */}
-      <div className="mx-4 mt-4 flex gap-3">
+      <div data-tour="prof-quick" className="mx-4 mt-4 flex gap-3">
         <button
           onClick={() => {
             const url = window.location.href

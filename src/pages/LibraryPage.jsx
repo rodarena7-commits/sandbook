@@ -267,7 +267,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
         </div>
 
         {/* Toggle de Tipo de Biblioteca */}
-        <div className="flex bg-slate-100 p-1 rounded-2xl mb-3">
+        <div data-tour="lib-toggle" className="flex bg-slate-100 p-1 rounded-2xl mb-3">
           <button
             onClick={() => setLibraryType('sync')}
             className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all ${
@@ -290,7 +290,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
         {libraryType === 'sync' && (
           <>
             {/* Status tabs */}
-            <div className="flex gap-1 overflow-x-auto scrollbar-none pb-0.5 mb-2">
+            <div data-tour="lib-status" className="flex gap-1 overflow-x-auto scrollbar-none pb-0.5 mb-2">
               {STATUS_TABS.map(tab => (
                 <button key={tab.key} onClick={() => setStatusTab(tab.key)}
                   className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
@@ -302,7 +302,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
             </div>
 
             {/* Shelf tabs */}
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+            <div data-tour="lib-shelves" className="flex gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
               {/* Todos */}
               <button onClick={() => setShelfFilter(null)}
                 className={`flex-shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all border ${

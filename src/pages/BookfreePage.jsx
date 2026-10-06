@@ -251,7 +251,7 @@ export default function BookfreePage() {
         </div>
 
         {/* Source filter chips */}
-        <div className="flex gap-1.5 mb-2">
+        <div data-tour="free-sources" className="flex gap-1.5 mb-2">
           {SOURCES.map(s => {
             const disabledByKids = kidsOnly && s.key === 'archive'
             return (
@@ -274,6 +274,7 @@ export default function BookfreePage() {
         {/* Filtro Kids */}
         <div className="flex mb-3">
           <button
+            data-tour="free-kids"
             onClick={toggleKids}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all ${
               kidsOnly
@@ -286,7 +287,7 @@ export default function BookfreePage() {
         </div>
 
         {/* Search bar */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form data-tour="free-search" onSubmit={handleSubmit} className="flex gap-2">
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input

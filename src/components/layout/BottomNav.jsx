@@ -14,7 +14,7 @@ export default function BottomNav({ active, onChange, badges = {} }) {
   const { t } = useAuth()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-50">
+    <nav data-tour="nav" className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-50">
       <div className="flex items-center justify-around w-full max-w-4xl mx-auto">
         {TABS.map(({ id, translationKey, icon: Icon }) => {
           const isActive = active === id

@@ -288,6 +288,7 @@ export default function SearchPage({ onGoToPlan, widgetAction, onWidgetActionCon
           <h1 className="text-xl font-bold text-slate-800">{t('search_title')}</h1>
           {onGoToPlan && (
             <button
+              data-tour="search-plans"
               onClick={onGoToPlan}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-semibold active:scale-95 transition-all"
             >
@@ -298,7 +299,7 @@ export default function SearchPage({ onGoToPlan, widgetAction, onWidgetActionCon
         </div>
 
         {/* Type selector */}
-        <div className="flex gap-1.5 mb-3">
+        <div data-tour="search-type" className="flex gap-1.5 mb-3">
           {SEARCH_TYPES.map(st => (
             <button
               key={st.key}
@@ -315,7 +316,7 @@ export default function SearchPage({ onGoToPlan, widgetAction, onWidgetActionCon
         </div>
 
         {/* Search bar */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form data-tour="search-bar" onSubmit={handleSubmit} className="flex gap-2">
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
