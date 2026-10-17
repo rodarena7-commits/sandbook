@@ -23,6 +23,8 @@ import UserProfileScreen from '../components/social/UserProfileScreen'
 import ChatWindow from '../components/chat/ChatWindow'
 import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import MarketplacePage from './MarketplacePage'
+import AdminActivity from '../components/social/AdminActivity'
+import AdminBroadcast from '../components/social/AdminBroadcast'
 
 const ADMIN_EMAIL = 'rodrigo.n.arena@hotmail.com'
 
@@ -511,7 +513,7 @@ export default function SocialPage() {
 
       {/* ── ADMIN TAB ── */}
       {activeTab === 'admin' && isAdmin && (
-        <div className="px-4 py-4 flex flex-col gap-2">
+        <div data-no-track className="px-4 py-4 flex flex-col gap-2">
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mb-2">
@@ -574,7 +576,7 @@ export default function SocialPage() {
           </div>
 
           {/* Sub-tabs Selector inside Admin Panel */}
-          <div className="flex gap-2 mb-3 bg-slate-100 p-1 rounded-2xl">
+          <div className="grid grid-cols-2 gap-1 mb-3 bg-slate-100 p-1 rounded-2xl">
             <button
               onClick={() => setAdminSubTab('users')}
               className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
@@ -595,7 +597,18 @@ export default function SocialPage() {
             >
               📝 {t('soc_posts_count')} ({posts.length})
             </button>
+            {[['activity', '📊 Actividad'], ['broadcast', '📣 Mensaje a todos']].map(([key, label]) => (
+              <button key={key} onClick={() => setAdminSubTab(key)}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                  adminSubTab === key ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}>
+                {label}
+              </button>
+            ))}
           </div>
+
+          {adminSubTab === 'activity' && <AdminActivity users={allUsers} />}
+          {adminSubTab === 'broadcast' && <AdminBroadcast myUid={user.uid} myProfile={profile} />}
 
           {/* Tab 1: Users list */}
           {adminSubTab === 'users' && (

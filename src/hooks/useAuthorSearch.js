@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { track } from '../utils/analytics'
 
 const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY || ''
 
@@ -10,6 +11,7 @@ export function useAuthorSearch() {
   const search = useCallback(async (q) => {
     const trimmed = q.trim()
     if (!trimmed) { setAuthors([]); return }
+    track('search', { source: 'autores', query: trimmed })
     setLoading(true)
     try {
       const res  = await fetch(`https://openlibrary.org/search/authors.json?q=${encodeURIComponent(trimmed)}&limit=8`)

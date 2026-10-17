@@ -16,6 +16,7 @@ import { Capacitor } from '@capacitor/core'
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import { detectUserLocation } from '../utils/translationService'
 import { translations } from '../utils/translations'
+import { setAnalyticsUser } from '../utils/analytics'
 
 const AuthContext = createContext(null)
 
@@ -152,7 +153,9 @@ export function AuthProvider({ children }) {
           setLanguageState(detectedLang)
         }
         startHeartbeat(firebaseUser.uid)
+        setAnalyticsUser(firebaseUser, snap.exists() ? snap.data().displayName : firebaseUser.displayName)
       } else {
+        setAnalyticsUser(null)
         if (currentUid) setOnline(currentUid, false)
         currentUid = null
         setUser(null)

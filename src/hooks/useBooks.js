@@ -3,6 +3,7 @@ import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from 'fireb
 import { db } from '../firebase'
 import { incrementBookStat, setBookRoster } from './useBookStats'
 import { logReadingActivity } from './useStreak'
+import { track } from '../utils/analytics'
 
 export function useBooks(uid) {
   const [books, setBooks] = useState([])
@@ -27,6 +28,7 @@ export function useBooks(uid) {
   }, [uid])
 
   async function addBook(uid, bookId, data) {
+    track('book_add', { title: data?.title || '', status: data?.status || '' })
     await setDoc(doc(db, 'users', uid, 'myBooks', bookId), {
       bookId,
       ...data,

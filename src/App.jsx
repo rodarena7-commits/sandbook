@@ -18,6 +18,7 @@ import { useWidgetAction } from './hooks/useWidgetAction'
 import { CallProvider } from './contexts/CallContext'
 import SectionTour from './components/ui/SectionTour'
 import { TOURS } from './utils/tourSteps'
+import { trackScreen } from './utils/analytics'
 
 function AppContent() {
   const { user, profile, loading } = useAuth()
@@ -50,6 +51,8 @@ function AppContent() {
       window.swWaitingWorker.postMessage({ type: 'SKIP_WAITING' })
     }
   }
+
+  useEffect(() => { if (user) trackScreen(activeTab) }, [user, activeTab])
 
   // Botón del widget de pantalla de inicio tocado: lleva directo a Buscar
   useEffect(() => {

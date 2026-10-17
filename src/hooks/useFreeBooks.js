@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { track } from '../utils/analytics'
 
 // Bookfree: busca y sugiere libros gratis y de dominio público en tres
 // catálogos legales (Internet Archive, Project Gutenberg y Google Books
@@ -170,6 +171,7 @@ export function useFreeBooks() {
   const search = useCallback(async (q, sources = Object.keys(SEARCHERS), kidsOnly = false) => {
     const trimmed = q.trim()
     if (!trimmed) { setResults([]); return }
+    track('search', { source: 'bookfree', query: trimmed, kidsOnly })
 
     setLoading(true)
     setError(null)

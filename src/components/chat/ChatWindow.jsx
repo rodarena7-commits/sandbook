@@ -105,6 +105,20 @@ function AttachmentCard({ attachment, isMe, onOpen }) {
   )
 }
 
+const URL_RE = /(https?:\/\/[^\s]+)/g
+
+// Convierte las URLs del mensaje en links que se pueden tocar
+function LinkifiedText({ text, isMe }) {
+  return (text || '').split(URL_RE).map((part, i) =>
+    i % 2 === 1 ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+        className={`underline break-all ${isMe ? 'text-white' : 'text-amber-600'}`}>
+        {part}
+      </a>
+    ) : part
+  )
+}
+
 function timeLabel(ts) {
   if (!ts?.seconds) return ''
   return new Date(ts.seconds * 1000).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
@@ -211,7 +225,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
+      <div data-no-track className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
         {loading && <div className="flex justify-center py-8"><Loader2 size={22} className="animate-spin text-amber-400" /></div>}
 
         {!loading && messages.length === 0 && (
@@ -242,7 +256,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
                     ? 'bg-amber-500 text-white rounded-br-md'
                     : 'bg-white text-slate-800 shadow-sm border border-slate-100 rounded-bl-md'
                 }`}>
-                  <p>{msg.text}</p>
+                  <p className="whitespace-pre-wrap break-words"><LinkifiedText text={msg.text} isMe={isMe} /></p>
                   <p className={`text-[9px] mt-1 ${isMe ? 'text-white/60 text-right' : 'text-slate-400'}`}>
                     {timeLabel(msg.createdAt)}
                   </p>

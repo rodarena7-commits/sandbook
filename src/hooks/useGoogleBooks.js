@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { track } from '../utils/analytics'
 
 const API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY || ''
 const BASE_URL = 'https://www.googleapis.com/books/v1/volumes'
@@ -90,6 +91,7 @@ export function useGoogleBooks() {
   const search = useCallback(async (q, type = 'title') => {
     const trimmed = q.trim()
     if (!trimmed) { setResults([]); return }
+    track('search', { source: 'libros', query: trimmed, searchType: type })
 
     setLoading(true)
     setError(null)

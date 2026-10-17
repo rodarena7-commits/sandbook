@@ -4,6 +4,7 @@ import {
   onSnapshot, query, where, orderBy, serverTimestamp, increment,
 } from 'firebase/firestore'
 import { db } from '../firebase'
+import { track } from '../utils/analytics'
 
 export function getConvId(uid1, uid2) {
   return [uid1, uid2].sort().join('_')
@@ -57,6 +58,8 @@ export function useConversations(uid) {
       ...(attachment ? { attachment } : {}),
     }
     await addDoc(collection(db, 'conversations', convId, 'messages'), msg)
+    // Sólo el tipo de mensaje, nunca el contenido
+    track('message_sent', { kind: attachment?.kind || 'text' })
 
     const lastMessage =
       attachment?.kind === 'voice' ? '🎤 Mensaje de voz'
