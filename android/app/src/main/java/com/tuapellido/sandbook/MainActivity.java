@@ -1,5 +1,6 @@
 package com.tuapellido.sandbook;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,12 +22,21 @@ public class MainActivity extends BridgeActivity {
 
     private static final String TAG = "SandbookUpdate";
 
+    // Días que una versión nueva puede quedar sin instalar antes de volverse obligatoria
+    private static final int DAYS_UNTIL_FORCED = 3;
+
     private AppUpdateManager appUpdateManager;
+    private boolean forcedUpdateShown = false;
 
     // Debe registrarse antes de onCreate (patrón estándar de ActivityResultLauncher).
     private final ActivityResultLauncher<IntentSenderRequest> updateLauncher =
         registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), result -> {
-            // Si el usuario cancela, Play Store se lo vuelve a ofrecer la próxima vez que abra la app.
+            // Actualización opcional cancelada: se vuelve a ofrecer la próxima vez que abra la app.
+            // Actualización obligatoria cancelada (botón atrás): se vuelve a mostrar enseguida.
+            if (forcedUpdateShown && result.getResultCode() != Activity.RESULT_OK) {
+                forcedUpdateShown = false;
+                checkForUpdate();
+            }
         });
 
     private final InstallStateUpdatedListener installStateListener = state -> {
@@ -55,7 +65,8 @@ public class MainActivity extends BridgeActivity {
             if (info.installStatus() == InstallStatus.DOWNLOADED) {
                 showUpdateReadySnackbar();
             } else if (info.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
-                startFlexibleUpdate(info);
+                if (shouldForce(info)) startUpdate(info, AppUpdateType.IMMEDIATE);
+                else startUpdate(info, AppUpdateType.FLEXIBLE);
             }
         });
     }
@@ -69,22 +80,34 @@ public class MainActivity extends BridgeActivity {
     // Le pregunta a Play Store si hay una versión más nueva publicada que la instalada.
     // No depende de nada manual: Google Play sabe cuál es el versionCode más reciente
     // en el momento en que la revisión termina y la versión queda "publicada".
+    // Los primeros días se ofrece como opcional (se descarga en segundo plano y se reinicia
+    // con un botón); pasados DAYS_UNTIL_FORCED días, pantalla completa obligatoria.
     private void checkForUpdate() {
         appUpdateManager.getAppUpdateInfo().addOnSuccessListener(info -> {
-            if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-                    && info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
-                startFlexibleUpdate(info);
+            if (info.updateAvailability() != UpdateAvailability.UPDATE_AVAILABLE) return;
+            if (shouldForce(info)) {
+                startUpdate(info, AppUpdateType.IMMEDIATE);
+            } else if (info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
+                startUpdate(info, AppUpdateType.FLEXIBLE);
             }
         }).addOnFailureListener(e -> Log.e(TAG, "No se pudo chequear actualizaciones", e));
     }
 
-    private void startFlexibleUpdate(AppUpdateInfo info) {
+    private boolean shouldForce(AppUpdateInfo info) {
+        Integer staleDays = info.clientVersionStalenessDays();
+        return staleDays != null && staleDays >= DAYS_UNTIL_FORCED
+            && info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE);
+    }
+
+    private void startUpdate(AppUpdateInfo info, int type) {
         try {
+            forcedUpdateShown = type == AppUpdateType.IMMEDIATE;
             appUpdateManager.startUpdateFlowForResult(
-                info, updateLauncher, AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build()
+                info, updateLauncher, AppUpdateOptions.newBuilder(type).build()
             );
         } catch (Exception e) {
-            Log.e(TAG, "No se pudo iniciar la actualización flexible", e);
+            forcedUpdateShown = false;
+            Log.e(TAG, "No se pudo iniciar la actualización", e);
         }
     }
 
