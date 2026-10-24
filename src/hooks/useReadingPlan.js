@@ -1,4 +1,4 @@
-import { doc, updateDoc, deleteField } from 'firebase/firestore'
+import { doc, updateDoc, deleteField, increment } from 'firebase/firestore'
 import { db } from '../firebase'
 import { logReadingActivity } from './useStreak'
 
@@ -106,5 +106,62 @@ export async function deleteRelaxPlan(uid, bookId) {
     relaxNotes:   deleteField(),
     relaxNote:    '',
     currentPage:  0,
+  })
+}
+
+// ── Plan por tiempo ────────────────────────────────────────
+// timePlan: { minutes, totalPages, createdAt }
+// timeSessions: { [id]: { startedAt, seconds, startPage, endPage } }
+// timeTotalSeconds: suma de todas las sesiones
+
+export const DEFAULT_TIME_PLAN_MINUTES = 15
+
+export async function createTimePlan(uid, bookId, totalPages, minutes = DEFAULT_TIME_PLAN_MINUTES) {
+  await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
+    status:      'reading',
+    pageCount:   Number(totalPages) || 0,
+    timePlan: {
+      minutes:    Number(minutes) || DEFAULT_TIME_PLAN_MINUTES,
+      totalPages: Number(totalPages) || 0,
+      createdAt:  new Date().toISOString(),
+    },
+    currentPage:      0,
+    timeSessions:     {},
+    timeTotalSeconds: 0,
+  })
+}
+
+export async function setTimePlanMinutes(uid, bookId, minutes) {
+  await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), { 'timePlan.minutes': Number(minutes) })
+}
+
+export async function addTimeSession(uid, bookId, { startedAt, seconds, startPage, endPage }) {
+  const id = Date.now().toString()
+  await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
+    [`timeSessions.${id}`]: {
+      startedAt,
+      seconds:   Math.max(0, Math.round(seconds)),
+      startPage: Number(startPage) || 0,
+      endPage:   Number(endPage) || 0,
+    },
+    timeTotalSeconds: increment(Math.max(0, Math.round(seconds))),
+    currentPage:      Number(endPage) || 0,
+  })
+  logReadingActivity(uid)
+}
+
+export async function deleteTimeSession(uid, bookId, id, seconds) {
+  await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
+    [`timeSessions.${id}`]: deleteField(),
+    timeTotalSeconds: increment(-Math.max(0, Math.round(seconds || 0))),
+  })
+}
+
+export async function deleteTimePlan(uid, bookId) {
+  await updateDoc(doc(db, 'users', uid, 'myBooks', bookId), {
+    timePlan:         deleteField(),
+    timeSessions:     deleteField(),
+    timeTotalSeconds: deleteField(),
+    currentPage:      0,
   })
 }

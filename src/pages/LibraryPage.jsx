@@ -12,9 +12,11 @@ const PdfViewerSheet = lazy(() => import('../components/ui/PdfViewerSheet'))
 import CreatePlanSheet from '../components/books/CreatePlanSheet'
 import ReadingPlanView from '../components/books/ReadingPlanView'
 import RelaxPlanView from '../components/books/RelaxPlanView'
+import TimePlanView from '../components/books/TimePlanView'
+import { formatDuration } from '../contexts/ReadingTimerContext'
 import BiblePlanView from '../components/books/BiblePlanView'
 import Loader from '../components/ui/Loader'
-import { createReadingPlan, createRelaxPlan } from '../hooks/useReadingPlan'
+import { createReadingPlan, createRelaxPlan, createTimePlan } from '../hooks/useReadingPlan'
 import { isBibleBook, initBiblePlan, countCompleted, TOTAL_CHAPTERS } from '../hooks/useBibleProgress'
 import MyEbooksSection from '../components/books/MyEbooksSection'
 
@@ -146,6 +148,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
   const [planBook, setPlanBook]           = useState(null)
   const [viewPlanBook, setViewPlanBook]   = useState(null)
   const [viewRelaxBook, setViewRelaxBook] = useState(null)
+  const [viewTimeBook, setViewTimeBook]   = useState(null)
   const [viewBibleBook, setViewBibleBook] = useState(null)
   const [planSearch, setPlanSearch]       = useState('')
   const [pendingPlan, setPendingPlan]     = useState(null) // book awaiting plan creation
@@ -185,6 +188,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
     if (book.biblePlan)      setViewBibleBook(book)
     else if (book.readingPlan) setViewPlanBook(book)
     else if (book.relaxPlan)   setViewRelaxBook(book)
+    else if (book.timePlan)    setViewTimeBook(book)
     else setPlanBook(book)
   }
 
@@ -204,6 +208,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
       if (pendingPlan.biblePlan)      setViewBibleBook(pendingPlan)
       else if (pendingPlan.readingPlan) setViewPlanBook(pendingPlan)
       else if (pendingPlan.relaxPlan)   setViewRelaxBook(pendingPlan)
+      else if (pendingPlan.timePlan)    setViewTimeBook(pendingPlan)
       else setPlanBook(pendingPlan)
       setPendingPlan(null)
     }
@@ -213,7 +218,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
     let list = books
     if (statusTab === 'fav')        list = list.filter(b => b.isFavorite)
     else if (statusTab === 'shared') list = list.filter(b => b.coReaders?.length > 0)
-    else if (statusTab === 'plan')  list = list.filter(b => !!b.readingPlan || !!b.relaxPlan || !!b.biblePlan)
+    else if (statusTab === 'plan')  list = list.filter(b => !!b.readingPlan || !!b.relaxPlan || !!b.biblePlan || !!b.timePlan)
     else if (statusTab !== 'all')   list = list.filter(b => b.status === statusTab)
     if (shelfFilter !== null)       list = list.filter(b => b.shelfId === shelfFilter)
     return list
@@ -389,7 +394,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                         b.authors?.some(a => a.toLowerCase().includes(q))
                       )
                     : books
-                  ).filter(b => !!b.readingPlan || !!b.relaxPlan || !!b.biblePlan || b.status !== 'read')
+                  ).filter(b => !!b.readingPlan || !!b.relaxPlan || !!b.biblePlan || !!b.timePlan || b.status !== 'read')
 
                   if (!list.length) {
                     return (
@@ -404,7 +409,8 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                       {list.map(b => {
                         const hasMetaPlan  = !!b.readingPlan
                         const hasRelaxPlan = !!b.relaxPlan
-                        const hasPlan      = hasMetaPlan || hasRelaxPlan
+                        const hasTimePlan  = !!b.timePlan
+                        const hasPlan      = hasMetaPlan || hasRelaxPlan || hasTimePlan
 
                         const metaPct = hasMetaPlan
                           ? Math.round((Object.values(b.planDays||{}).filter(d=>d?.checked).length / b.readingPlan.totalDays) * 100)
@@ -416,6 +422,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                         function openPlan() {
                           if (b.relaxPlan)      setViewRelaxBook(b)
                           else if (b.readingPlan) setViewPlanBook(b)
+                          else if (b.timePlan)    setViewTimeBook(b)
                           else setPlanBook(b)
                         }
 
@@ -462,6 +469,13 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                                   </p>
                                 </div>
                               )}
+
+                              {hasTimePlan && (
+                                <p className="text-[10px] text-violet-500 font-medium mt-1.5">
+                                  ⏱ Plan por tiempo · {formatDuration(b.timeTotalSeconds || 0)} leídos
+                                  {b.currentPage > 0 ? ` · ${t('lib_page_abbrev')} ${b.currentPage}` : ''}
+                                </p>
+                              )}
                             </div>
 
                             {isBibleBook(b) ? (
@@ -469,22 +483,25 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                                 onClick={() => {
                                   if (b.biblePlan)      setViewBibleBook(b)
                                   else if (b.relaxPlan) setViewRelaxBook(b)
+                                  else if (b.timePlan)  setViewTimeBook(b)
                                   else setPlanBook(b)
                                 }}
                                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                                   b.biblePlan ? 'bg-amber-500 text-white shadow-sm'
                                   : b.relaxPlan ? 'bg-blue-500 text-white shadow-sm'
+                                  : b.timePlan ? 'bg-violet-500 text-white shadow-sm'
                                   : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
                                 }`}
                               >
                                 <CalendarDays size={13}/>
-                                {b.biblePlan ? t('lib_bible_plan') : b.relaxPlan ? t('lib_relax_plan') : t('lib_create_plan')}
+                                {b.biblePlan ? t('lib_bible_plan') : b.relaxPlan ? t('lib_relax_plan') : b.timePlan ? 'Plan por tiempo' : t('lib_create_plan')}
                               </button>
                             ) : (
                               <button
                                 onClick={openPlan}
                                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                                   hasRelaxPlan ? 'bg-blue-500 text-white shadow-sm'
+                                  : hasTimePlan ? 'bg-violet-500 text-white shadow-sm'
                                   : hasMetaPlan ? 'bg-amber-500 text-white shadow-sm'
                                   : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
                                 }`}
@@ -517,7 +534,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
             {statusTab !== 'plan' && filtered.length > 0 && (
               <div className="grid grid-cols-3 lg:grid-cols-8 gap-3">
                 {filtered.map(book => {
-                  const hasPlan = book.status !== 'read' && (!!book.readingPlan || !!book.relaxPlan || !!book.biblePlan)
+                  const hasPlan = book.status !== 'read' && (!!book.readingPlan || !!book.relaxPlan || !!book.biblePlan || !!book.timePlan)
                   return (
                     <div key={book.id} className="relative group">
                       <BookCard
@@ -527,7 +544,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                         onRemove={(bookId) => removeBook(user.uid, bookId)}
                         onReaction={(bookId, reaction) => updateReaction(user.uid, bookId, reaction)}
                         onSelect={handleSelectBook}
-                        onOpenPlan={b => b.relaxPlan ? setViewRelaxBook(b) : setViewPlanBook(b)}
+                        onOpenPlan={b => b.relaxPlan ? setViewRelaxBook(b) : b.timePlan ? setViewTimeBook(b) : setViewPlanBook(b)}
                         onStartPlan={b => setPendingPlan(b)}
                         onUpdateLoanedTo={(bookId, name) => updateLoanedTo(user.uid, bookId, name)}
                       />
@@ -536,9 +553,10 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                           e.stopPropagation()
                           if (book.biblePlan)       setViewBibleBook(book)
                           else if (book.relaxPlan)  setViewRelaxBook(book)
+                          else if (book.timePlan)   setViewTimeBook(book)
                           else                      setViewPlanBook(book)
                         }}
-                          className={`absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md ${book.relaxPlan ? 'bg-blue-500' : 'bg-amber-500'}`}>
+                          className={`absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md ${book.relaxPlan ? 'bg-blue-500' : book.timePlan ? 'bg-violet-500' : 'bg-amber-500'}`}>
                           <CalendarDays size={13} className="text-white" />
                         </button>
                       )}
@@ -621,8 +639,9 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
           <CreatePlanSheet
             book={planBook}
             isBible={isBibleBook(planBook)}
-            onSave={({ type, pages, days }) => {
+            onSave={({ type, pages, days, minutes }) => {
               if (type === 'relax')  return createRelaxPlan(user.uid, planBook.bookId, pages)
+              if (type === 'time')   return createTimePlan(user.uid, planBook.bookId, pages, minutes)
               if (type === 'bible')  return initBiblePlan(user.uid, planBook.bookId)
               return createReadingPlan(user.uid, planBook.bookId, pages, days)
             }}
@@ -651,6 +670,16 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
           onClose={() => setViewRelaxBook(null)}
           onDelete={() => setViewRelaxBook(null)}
           onFinish={() => updateStatus(user.uid, viewRelaxBook.bookId, 'read')}
+        />
+      )}
+
+      {/* Reading plan — view (Plan por tiempo) */}
+      {viewTimeBook && (
+        <TimePlanView
+          book={books.find(b => b.bookId === viewTimeBook.bookId) || viewTimeBook}
+          uid={user.uid}
+          onClose={() => setViewTimeBook(null)}
+          onDelete={() => setViewTimeBook(null)}
         />
       )}
 

@@ -4,7 +4,7 @@ import { useMercadoLibrePrice } from '../hooks/useMercadoLibrePrice'
 import { useBuscaLibrePrice } from '../hooks/useBuscaLibrePrice'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
-import { createReadingPlan, createRelaxPlan } from '../hooks/useReadingPlan'
+import { createReadingPlan, createRelaxPlan, createTimePlan } from '../hooks/useReadingPlan'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
 import { useGoogleBooks } from '../hooks/useGoogleBooks'
@@ -275,6 +275,8 @@ export default function SearchPage({ onGoToPlan, widgetAction, onWidgetActionCon
     // Create the reading plan
     if (planData.type === 'relax') {
       await createRelaxPlan(user.uid, book.bookId, pages)
+    } else if (planData.type === 'time') {
+      await createTimePlan(user.uid, book.bookId, pages, planData.minutes)
     } else {
       await createReadingPlan(user.uid, book.bookId, pages, days)
     }

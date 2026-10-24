@@ -6,24 +6,18 @@ const BASE_URL = 'https://www.googleapis.com/books/v1/volumes'
 const OL_FIELDS = 'key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,isbn'
 
 // Google Books a veces responde 503 "Service temporarily unavailable" (backendFailed) de forma
-// intermitente, o un 200 vacío. Reintentamos una vez y después pasamos a Open Library.
-const RETRY_DELAYS_MS = [400]
-const GOOGLE_TIMEOUT_MS = 5000
+// intermitente, un 200 vacío, o directamente no responde. Por eso se consulta a Open Library en
+// paralelo y, si Google no sirve, se usa esa respuesta sin esperar reintentos.
+const GOOGLE_TIMEOUT_MS = 4000
 
-const sleep = ms => new Promise(r => setTimeout(r, ms))
-
+// Devuelve el JSON de Google Books o null si falló / no respondió a tiempo
 async function fetchGoogleBooks(url) {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      // AbortSignal.timeout no existe en WebViews viejos: ahí va sin límite de tiempo
-      const res = await fetch(url, AbortSignal.timeout ? { signal: AbortSignal.timeout(GOOGLE_TIMEOUT_MS) } : {})
-      if (res.ok) return await res.json()
-      const retryable = res.status >= 500 || res.status === 429
-      if (!retryable || attempt >= RETRY_DELAYS_MS.length) return null
-    } catch {
-      if (attempt >= RETRY_DELAYS_MS.length) return null
-    }
-    await sleep(RETRY_DELAYS_MS[attempt])
+  try {
+    // AbortSignal.timeout no existe en WebViews viejos: ahí va sin límite de tiempo
+    const res = await fetch(url, AbortSignal.timeout ? { signal: AbortSignal.timeout(GOOGLE_TIMEOUT_MS) } : {})
+    return res.ok ? await res.json() : null
+  } catch {
+    return null
   }
 }
 
@@ -82,6 +76,28 @@ async function searchOpenLibrary(q, type) {
   }
 }
 
+// Busca en Google Books y, si está caído o no devuelve nada, en Open Library.
+// Devuelve la lista (puede ser vacía) o lanza Error('unavailable') si fallan los dos.
+export async function searchBooks(q, type = 'title') {
+  const prefix = type === 'author' ? 'inauthor:' : type === 'isbn' ? 'isbn:' : 'intitle:'
+  const url = `${BASE_URL}?q=${encodeURIComponent(prefix + q)}&maxResults=20${API_KEY ? `&key=${API_KEY}` : ''}`
+
+  const olPromise = searchOpenLibrary(q, type)
+  const data = await fetchGoogleBooks(url)
+  const googleBooks = data ? (data.items || []).map(mapGoogleBook) : []
+  if (googleBooks.length) return googleBooks
+
+  // Google no sirvió: Open Library ya viene en camino
+  const olBooks = await olPromise
+  if (olBooks?.length) return olBooks
+
+  // Open Library tampoco trajo nada: un último intento con Google
+  const retry = await fetchGoogleBooks(url)
+  const retryBooks = retry ? (retry.items || []).map(mapGoogleBook) : []
+  if (retryBooks.length || retry || data || olBooks) return retryBooks
+  throw new Error('unavailable')
+}
+
 export function useGoogleBooks() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
@@ -97,20 +113,7 @@ export function useGoogleBooks() {
     setError(null)
 
     try {
-      const prefix = type === 'author' ? 'inauthor:' : type === 'isbn' ? 'isbn:' : 'intitle:'
-      const url = `${BASE_URL}?q=${encodeURIComponent(prefix + trimmed)}&maxResults=20${API_KEY ? `&key=${API_KEY}` : ''}`
-      const data = await fetchGoogleBooks(url)
-
-      let books = data ? (data.items || []).map(mapGoogleBook) : []
-
-      // Open Library cubre cuando Google está caído o no devuelve nada
-      if (books.length === 0) {
-        const olBooks = await searchOpenLibrary(trimmed, type)
-        if (olBooks) books = olBooks
-        else if (!data) throw new Error('unavailable')
-      }
-
-      setResults(books)
+      setResults(await searchBooks(trimmed, type))
     } catch {
       setError('La búsqueda no está disponible en este momento. Probá de nuevo en unos minutos.')
       setResults([])

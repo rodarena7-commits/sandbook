@@ -5,28 +5,32 @@ import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useBooks } from '../hooks/useBooks'
 import { useNotifications } from '../hooks/useNotifications'
+import { searchBooks } from '../hooks/useGoogleBooks'
 import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import SettingsSheet from '../components/profile/SettingsSheet'
 import { respondToLoan } from '../hooks/useLoanRequests'
 import { cleanThumbnail } from '../utils/cleanThumbnail'
 import ReadingPlanView from '../components/books/ReadingPlanView'
 import RelaxPlanView from '../components/books/RelaxPlanView'
+import TimePlanView from '../components/books/TimePlanView'
+import { formatDuration } from '../contexts/ReadingTimerContext'
 import BiblePlanView from '../components/books/BiblePlanView'
 import CreatePlanSheet from '../components/books/CreatePlanSheet'
-import { createReadingPlan, createRelaxPlan } from '../hooks/useReadingPlan'
+import { createReadingPlan, createRelaxPlan, createTimePlan } from '../hooks/useReadingPlan'
 import { isBibleBook, initBiblePlan } from '../hooks/useBibleProgress'
 import { useFavoriteAuthors } from '../hooks/useFavoriteAuthors'
 import { getGlobalAuthorPhoto, saveGlobalAuthorPhoto } from '../hooks/useGlobalMedia'
 import UserProfileScreen from '../components/social/UserProfileScreen'
 import { useUsers } from '../hooks/useUsers'
 
-const GBOOKS_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY || ''
 
 // ── Sheet de detalle de autor: bio + carrusel de libros ───────────────
-function AuthorDetailSheet({ author, uid, onPhotoSaved, onClose }) {
+function AuthorDetailSheet({ author, uid, savedIds, onAddBook, onPhotoSaved, onClose }) {
   const [photo,       setPhoto]       = useState(author.photoUrl || null)
   const [bio,         setBio]         = useState(null)
   const [books,       setBooks]       = useState([])
+  const [booksError,  setBooksError]  = useState(false)
+  const [adding,      setAdding]      = useState(null)
   const [loading,     setLoading]     = useState(true)
   const [showPicker,  setShowPicker]  = useState(false)
 
@@ -51,22 +55,30 @@ function AuthorDetailSheet({ author, uid, onPhotoSaved, onClose }) {
           }
         } catch {}
       }
-      // Libros desde Google Books
+      // Libros: Google Books con reintento y, si falla, Open Library
       try {
-        const url  = `https://www.googleapis.com/books/v1/volumes?q=inauthor:${encodeURIComponent('"' + author.name + '"')}&maxResults=12${GBOOKS_KEY ? `&key=${GBOOKS_KEY}` : ''}`
-        const res  = await fetch(url)
-        const data = await res.json()
-        setBooks((data.items || []).map(item => ({
-          bookId:       item.id,
-          title:        item.volumeInfo.title,
-          thumbnail:    item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
-          publishedDate: item.volumeInfo.publishedDate || '',
-        })))
-      } catch {}
+        const found = await searchBooks(author.name, 'author')
+        // Sin repetir el mismo título (ediciones distintas)
+        const seen = new Set()
+        setBooks(found.filter(b => {
+          const k = (b.title || '').toLowerCase().trim()
+          if (!k || seen.has(k)) return false
+          seen.add(k)
+          return true
+        }))
+      } catch {
+        setBooksError(true)
+      }
       setLoading(false)
     }
     load()
   }, [author.olid, author.name])
+
+  async function handleAdd(b) {
+    if (!onAddBook || adding) return
+    setAdding(b.bookId)
+    try { await onAddBook(b) } finally { setAdding(null) }
+  }
 
   async function handlePhotoSave(url) {
     setPhoto(url)
@@ -125,28 +137,49 @@ function AuthorDetailSheet({ author, uid, onPhotoSaved, onClose }) {
                 )}
                 {books.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-3">Libros</p>
-                    <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2">
-                      {books.map(b => (
-                        <div key={b.bookId} className="flex-shrink-0 w-20">
-                          {b.thumbnail ? (
-                            <img src={b.thumbnail} alt={b.title}
-                              className="w-20 h-[112px] object-cover rounded-xl shadow-sm" />
-                          ) : (
-                            <div className="w-20 h-[112px] bg-slate-100 rounded-xl flex items-center justify-center">
-                              <BookOpen size={16} className="text-slate-300" />
-                            </div>
-                          )}
-                          <p className="text-[9px] text-slate-500 mt-1.5 line-clamp-2 text-center leading-tight">{b.title}</p>
-                          {b.publishedDate && (
-                            <p className="text-[8px] text-slate-300 text-center">{b.publishedDate.slice(0, 4)}</p>
-                          )}
-                        </div>
-                      ))}
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-3">
+                      Libros de {author.name} ({books.length})
+                    </p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {books.map(b => {
+                        const saved = savedIds?.has(b.bookId)
+                        return (
+                          <div key={b.bookId} className="flex flex-col">
+                            {b.thumbnail ? (
+                              <img src={b.thumbnail} alt={b.title} referrerPolicy="no-referrer"
+                                className="w-full aspect-[2/3] object-cover rounded-xl shadow-sm" />
+                            ) : (
+                              <div className="w-full aspect-[2/3] bg-slate-100 rounded-xl flex items-center justify-center">
+                                <BookOpen size={16} className="text-slate-300" />
+                              </div>
+                            )}
+                            <p className="text-[10px] text-slate-600 font-medium mt-1.5 line-clamp-2 leading-tight">{b.title}</p>
+                            {b.publishedDate && (
+                              <p className="text-[9px] text-slate-300">{b.publishedDate.slice(0, 4)}</p>
+                            )}
+                            {onAddBook && (
+                              <button
+                                onClick={() => handleAdd(b)}
+                                disabled={saved || adding === b.bookId}
+                                className={`mt-1.5 py-1 rounded-lg text-[10px] font-semibold flex items-center justify-center gap-1 transition-all ${
+                                  saved ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600 active:scale-95'
+                                }`}
+                              >
+                                {saved ? <><Check size={10} /> En tu biblioteca</>
+                                  : adding === b.bookId ? <Loader2 size={10} className="animate-spin" />
+                                  : <><Plus size={10} /> Agregar</>}
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
-                {!bio && books.length === 0 && (
+                {booksError && (
+                  <p className="text-xs text-slate-400 text-center py-4">No se pudieron cargar los libros ahora. Probá de nuevo en unos minutos.</p>
+                )}
+                {!bio && books.length === 0 && !booksError && (
                   <p className="text-xs text-slate-400 text-center py-8">Sin información disponible</p>
                 )}
               </>
@@ -172,7 +205,7 @@ function AuthorDetailSheet({ author, uid, onPhotoSaved, onClose }) {
 }
 
 // ── Avatar de autor favorito — toca para abrir detalle ────────────────
-function FavAuthorAvatar({ author, uid, onPhotoSaved }) {
+function FavAuthorAvatar({ author, uid, savedIds, onAddBook, onPhotoSaved }) {
   const [photo,      setPhoto]      = useState(author.photoUrl || null)
   const [showDetail, setShowDetail] = useState(false)
 
@@ -206,6 +239,8 @@ function FavAuthorAvatar({ author, uid, onPhotoSaved }) {
         <AuthorDetailSheet
           author={author}
           uid={uid}
+          savedIds={savedIds}
+          onAddBook={onAddBook}
           onPhotoSaved={(id, url) => { setPhoto(url); onPhotoSaved?.(id, url) }}
           onClose={() => setShowDetail(false)}
         />
@@ -424,12 +459,13 @@ function BookRow({ book }) {
 
 // ── Plan Screen ────────────────────────────────────────────
 function PlanScreen({ books, uid, updateStatus, onClose }) {
-  const planBooks    = books.filter(b => b.readingPlan || b.relaxPlan || b.biblePlan)
-  const nonPlanBooks = books.filter(b => !b.readingPlan && !b.relaxPlan && !b.biblePlan && b.status !== 'read')
+  const planBooks    = books.filter(b => b.readingPlan || b.relaxPlan || b.biblePlan || b.timePlan)
+  const nonPlanBooks = books.filter(b => !b.readingPlan && !b.relaxPlan && !b.biblePlan && !b.timePlan && b.status !== 'read')
 
   const [viewPlanBook,  setViewPlanBook]  = useState(null)
   const [viewRelaxBook, setViewRelaxBook] = useState(null)
   const [viewBibleBook, setViewBibleBook] = useState(null)
+  const [viewTimeBook,  setViewTimeBook]  = useState(null)
   const [showPicker,    setShowPicker]    = useState(false)
   const [createBook,    setCreateBook]    = useState(null)
 
@@ -451,6 +487,15 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
       onClose={() => setViewRelaxBook(null)}
       onDelete={() => setViewRelaxBook(null)}
       onFinish={() => { updateStatus(uid, viewRelaxBook.bookId, 'read'); setViewRelaxBook(null) }}
+    />
+  )
+
+  if (viewTimeBook) return (
+    <TimePlanView
+      book={books.find(b => b.bookId === viewTimeBook.bookId) || viewTimeBook}
+      uid={uid}
+      onClose={() => setViewTimeBook(null)}
+      onDelete={() => setViewTimeBook(null)}
     />
   )
 
@@ -505,6 +550,7 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
                   if (book.relaxPlan)        setViewRelaxBook(book)
                   else if (book.readingPlan) setViewPlanBook(book)
                   else if (book.biblePlan)   setViewBibleBook(book)
+                  else if (book.timePlan)    setViewTimeBook(book)
                 }}
                 className="flex gap-3 items-center bg-white rounded-2xl px-3 py-3 shadow-sm border border-slate-100 text-left active:bg-slate-50 transition-all"
               >
@@ -523,9 +569,10 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                     book.relaxPlan ? 'bg-blue-100 text-blue-600'
                     : book.biblePlan ? 'bg-purple-100 text-purple-600'
+                    : book.timePlan ? 'bg-violet-100 text-violet-600'
                     : 'bg-amber-100 text-amber-600'
                   }`}>
-                    {book.biblePlan ? 'Plan Bíblico' : book.relaxPlan ? 'Plan Relax' : 'Plan con Meta'}
+                    {book.biblePlan ? 'Plan Bíblico' : book.relaxPlan ? 'Plan Relax' : book.timePlan ? `Plan por tiempo · ${formatDuration(book.timeTotalSeconds || 0)}` : 'Plan con Meta'}
                   </span>
                   {pct !== null && (
                     <>
@@ -605,6 +652,7 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
             isBible={isBibleBook(createBook)}
             onCreate={async (type, pages, days) => {
               if (type === 'relax')       await createRelaxPlan(uid, createBook.bookId, pages)
+              else if (type === 'time')   await createTimePlan(uid, createBook.bookId, pages, days)
               else if (type === 'bible')  await initBiblePlan(uid, createBook.bookId)
               else                        await createReadingPlan(uid, createBook.bookId, pages, days)
               setCreateBook(null)
@@ -620,7 +668,8 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
 // ── Main Page ──────────────────────────────────────────────
 export default function ProfilePage({ onGoToPlan }) {
   const { user, profile, setProfile, logout, t } = useAuth()
-  const { books, updateStatus } = useBooks(user?.uid)
+  const { books, updateStatus, addBook } = useBooks(user?.uid)
+  const savedBookIds = useMemo(() => new Set(books.map(b => b.bookId)), [books])
   const { authors: favAuthors, updateAuthorPhoto } = useFavoriteAuthors(user?.uid)
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(user?.uid)
 
@@ -861,6 +910,14 @@ export default function ProfilePage({ onGoToPlan }) {
                 <FavAuthorAvatar
                   author={a}
                   uid={user?.uid}
+                  savedIds={savedBookIds}
+                  onAddBook={b => addBook(user.uid, b.bookId, {
+                    title: b.title, authors: b.authors?.length ? b.authors : [a.name],
+                    thumbnail: b.thumbnail || null, description: b.description || '',
+                    pageCount: b.pageCount || 0, publishedDate: b.publishedDate || '',
+                    categories: b.categories || [],
+                    status: 'library', isFavorite: false, inLibrary: true,
+                  })}
                   onPhotoSaved={(id, url) => updateAuthorPhoto(id, url)}
                 />
               </div>

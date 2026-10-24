@@ -1,13 +1,18 @@
 import { useState } from 'react'
-import { X, BookOpen, CalendarDays, Coffee, Target, BookMarked } from 'lucide-react'
+import { X, BookOpen, CalendarDays, Coffee, Target, BookMarked, Timer } from 'lucide-react'
+import { DEFAULT_TIME_PLAN_MINUTES } from '../../hooks/useReadingPlan'
+
+const TIME_PRESETS = [10, 15, 20, 30, 45, 60]
 
 // isBible: true cuando el libro es una Biblia — cambia "Plan con Meta" por "Plan Bíblico"
 export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBible = false }) {
-  const [planType, setPlanType] = useState(null) // 'relax' | 'meta' | 'bible'
+  const [planType, setPlanType] = useState(null) // 'relax' | 'meta' | 'bible' | 'time'
   const initialPages = book.pageCount || book.totalPages || book.volumeInfo?.pageCount || book.readingPlan?.totalPages || book.relaxPlan?.totalPages || '';
   const [totalPages, setTotalPages] = useState(initialPages > 0 ? String(initialPages) : '')
   const [totalDays,  setTotalDays]  = useState('')
   const [saving,     setSaving]     = useState(false)
+  const [minutes,    setMinutes]    = useState(DEFAULT_TIME_PLAN_MINUTES)
+  const [customMin,  setCustomMin]  = useState('')
 
   const pages    = Number(totalPages)
   const days     = Number(totalDays)
@@ -23,6 +28,13 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
           await onSave({ type: 'bible' })
         } else {
           await onCreate('bible')
+        }
+      } else if (planType === 'time') {
+        if (!(minutes > 0)) { setSaving(false); return }
+        if (onSave) {
+          await onSave({ type: 'time', pages, minutes })
+        } else {
+          await onCreate('time', pages, minutes)
         }
       } else if (planType === 'meta') {
         if (!validMeta) { setSaving(false); return }
@@ -129,7 +141,85 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
                 </div>
               </button>
             )}
+
+            <button
+              onClick={() => setPlanType('time')}
+              className="flex items-center gap-4 p-4 rounded-2xl border-2 border-violet-100 bg-violet-50 text-left active:scale-95 transition-all"
+            >
+              <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+                <Timer size={20} className="text-violet-500" />
+              </div>
+              <div>
+                <p className="font-bold text-slate-800 text-sm">Plan por tiempo</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Elegí cuántos minutos leer. Cuando suena la alarma anotás la página y se suma tu tiempo total.
+                </p>
+              </div>
+            </button>
           </div>
+        )}
+
+        {/* ── Plan por tiempo ── */}
+        {planType === 'time' && (
+          <>
+            <div className="flex items-center gap-2 mb-4">
+              <button onClick={() => setPlanType(null)} className="text-xs text-slate-400 underline">
+                ← Cambiar tipo
+              </button>
+              <Timer size={12} className="text-violet-500" />
+              <span className="text-xs font-bold text-violet-500">Plan por tiempo</span>
+            </div>
+
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
+              Tiempo de cada lectura
+            </label>
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {TIME_PRESETS.map(m => (
+                <button key={m} onClick={() => { setMinutes(m); setCustomMin('') }}
+                  className={`py-2 rounded-xl text-sm font-semibold transition-all ${minutes === m && !customMin ? 'bg-violet-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600'}`}>
+                  {m} min
+                </button>
+              ))}
+            </div>
+            <div className="relative mb-4">
+              <input
+                type="number" min="1" max="600" inputMode="numeric"
+                value={customMin}
+                onChange={e => { setCustomMin(e.target.value); const m = Number(e.target.value); if (m > 0 && m <= 600) setMinutes(m) }}
+                placeholder="Otro tiempo"
+                className={`w-full px-4 py-3 pr-20 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-violet-400 ${customMin ? 'bg-violet-50 text-violet-700 font-semibold' : 'bg-slate-100 text-slate-800'}`}
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">minutos</span>
+            </div>
+
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
+              Páginas totales (opcional)
+            </label>
+            <div className="relative mb-5">
+              <input
+                type="number" min="1" inputMode="numeric"
+                value={totalPages}
+                onChange={e => setTotalPages(e.target.value)}
+                placeholder="ej: 320"
+                className="w-full px-4 py-3 pr-20 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-400"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">páginas</span>
+            </div>
+
+            <div className="bg-violet-50 border border-violet-100 rounded-2xl p-4 mb-5">
+              <p className="text-xs text-violet-700 text-center leading-relaxed">
+                Leé {minutes} {minutes === 1 ? 'minuto' : 'minutos'} con el temporizador. Al terminar suena la alarma, anotás en qué página quedaste y el tiempo se suma al historial del libro. Podés cambiar los minutos cada vez que leas.
+              </p>
+            </div>
+
+            <button
+              onClick={handleCreate}
+              disabled={!(minutes > 0) || saving}
+              className="w-full py-3.5 bg-violet-500 text-white rounded-2xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all shadow-sm"
+            >
+              {saving ? 'Creando plan…' : 'Crear Plan por tiempo'}
+            </button>
+          </>
         )}
 
         {/* ── Plan Bíblico confirmación ── */}
