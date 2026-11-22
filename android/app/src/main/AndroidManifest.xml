@@ -55,7 +55,10 @@
     <!-- El plugin de notificaciones lo agrega, pero Google Play lo reserva para apps de
          despertador/calendario: el temporizador de lectura usa notificaciones no exactas. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <!-- La cámara (videollamadas) es opcional. Sin aclarar el autoenfoque, Google Play lo
+         asume obligatorio por el permiso CAMERA y deja afuera a los equipos de foco fijo. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 </manifest>
