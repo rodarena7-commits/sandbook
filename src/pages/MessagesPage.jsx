@@ -3,6 +3,7 @@ import { MessageCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useConversations } from '../hooks/useConversations'
 import ChatWindow from '../components/chat/ChatWindow'
+import StatusRing from '../components/status/StatusRing'
 
 function timeAgo(ts, t) {
   if (!ts?.seconds) return ''
@@ -95,7 +96,7 @@ export default function MessagesPage() {
           return (
             <button key={conv.id} onClick={() => openConversation(conv)}
               className="flex items-center gap-3 bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 text-left active:bg-slate-50">
-              <Avatar photoURL={otherPhoto} displayName={otherName} />
+              <StatusRing uid={otherId}><Avatar photoURL={otherPhoto} displayName={otherName} /></StatusRing>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-0.5">
                   <p className={`text-sm ${unread > 0 ? 'font-bold text-slate-800' : 'font-semibold text-slate-700'}`}>

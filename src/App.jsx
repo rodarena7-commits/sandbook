@@ -17,6 +17,7 @@ import OnboardingFlow from './components/ui/OnboardingFlow'
 import { useWidgetAction } from './hooks/useWidgetAction'
 import { CallProvider } from './contexts/CallContext'
 import { ReadingTimerProvider } from './contexts/ReadingTimerContext'
+import { StatusProvider } from './contexts/StatusContext'
 import SectionTour from './components/ui/SectionTour'
 import { TOURS } from './utils/tourSteps'
 import { trackScreen } from './utils/analytics'
@@ -80,6 +81,7 @@ function AppContent() {
   return (
     <CallProvider user={user} profile={profile}>
     <ReadingTimerProvider user={user}>
+    <StatusProvider user={user} profile={profile}>
     <div className={`min-h-screen bg-slate-50 pb-16 ${updateAvailable ? 'pt-14' : ''}`}>
       {updateAvailable && (
         <div className="fixed top-0 left-0 right-0 z-[100] bg-slate-900/95 backdrop-blur-md text-white py-3 px-4 flex items-center justify-between border-b border-slate-800 animate-slide-down shadow-md">
@@ -118,6 +120,7 @@ function AppContent() {
       {/* Prompt de instalación PWA (opcional) */}
       <InstallPrompt />
     </div>
+    </StatusProvider>
     </ReadingTimerProvider>
     </CallProvider>
   )

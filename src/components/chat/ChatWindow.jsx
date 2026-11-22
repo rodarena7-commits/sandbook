@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, Suspense, lazy } from 'react'
 import { ArrowLeft, Send, Lock, Loader2, FileText, BookOpenText, Mic, Trash2, Play, Pause, Video, Link2 } from 'lucide-react'
 import { useCall } from '../../contexts/CallContext'
 import SectionTour from '../ui/SectionTour'
+import AvatarActions from '../status/AvatarActions'
+import StatusRing from '../status/StatusRing'
 import { TOURS } from '../../utils/tourSteps'
 import { useMessages } from '../../hooks/useMessages'
 import { getConvId } from '../../hooks/useConversations'
@@ -198,7 +200,11 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
           <ArrowLeft size={16} />
         </button>
-        <Avatar photoURL={otherUser.photoURL} displayName={otherUser.displayName} size={8} />
+        <AvatarActions uid={otherUser.uid} photoURL={otherUser.photoURL} name={otherUser.displayName}>
+          <StatusRing uid={otherUser.uid}>
+            <Avatar photoURL={otherUser.photoURL} displayName={otherUser.displayName} size={8} />
+          </StatusRing>
+        </AvatarActions>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-slate-800 text-sm">{otherUser.displayName || 'Lector'}</p>
           {!canSend && <p className="text-[10px] text-slate-400 flex items-center gap-1"><Lock size={9} /> No acepta mensajes</p>}

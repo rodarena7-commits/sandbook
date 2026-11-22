@@ -3,7 +3,7 @@ import { X, Upload, Link, Loader2, Image } from 'lucide-react'
 
 // Comprime y devuelve base64 para guardar directo en Firestore (sin Firebase Storage).
 // max 800px, JPEG 75% → ~80-180KB como base64 → bien bajo el límite de 1MB de Firestore.
-function compressToBase64(file, maxPx = 800, quality = 0.75) {
+export function compressToBase64(file, maxPx = 800, quality = 0.75) {
   return new Promise(resolve => {
     const img = new window.Image()
     const blobUrl = URL.createObjectURL(file)

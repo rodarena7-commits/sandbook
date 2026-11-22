@@ -17,7 +17,8 @@ import { sendLoanRequest } from '../../hooks/useLoanRequests'
 import { isBibleBook, countCompleted, TOTAL_CHAPTERS } from '../../hooks/useBibleProgress'
 import BiblePlanView from '../books/BiblePlanView'
 import BookThread from './BookThread'
-import PhotoViewer from '../ui/PhotoViewer'
+import AvatarActions from '../status/AvatarActions'
+import StatusRing from '../status/StatusRing'
 
 const STATUS_LABELS = { reading:'Leyendo', read:'Leído', pending:'Pendiente', library:'Biblioteca', ebook:'Ebook', loaned:'Prestado' }
 
@@ -80,7 +81,6 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
   const [loanBook, setLoanBook]   = useState(null)
   const [viewBible, setViewBible] = useState(null)
   const [fullUser, setFullUser]   = useState(targetUser)
-  const [showPhotoViewer, setShowPhotoViewer] = useState(false)
   const [viewBook, setViewBook]   = useState(null)
 
   // My own library to check if a book is already saved
@@ -156,22 +156,12 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
 
         {/* Avatar — absolute, solapando la portada por abajo */}
         <div className="absolute bottom-0 translate-y-1/2 left-4 z-20">
-          {fullUser.photoURL ? (
-            <button onClick={() => setShowPhotoViewer(true)} aria-label="Ver foto de perfil" className="block rounded-full">
+          <AvatarActions uid={fullUser.uid} photoURL={fullUser.photoURL} name={fullUser.displayName} isMe={fullUser.uid === me?.uid}>
+            <StatusRing uid={fullUser.uid}>
               <Avatar photoURL={fullUser.photoURL} displayName={fullUser.displayName} size="lg" />
-            </button>
-          ) : (
-            <Avatar photoURL={fullUser.photoURL} displayName={fullUser.displayName} size="lg" />
-          )}
+            </StatusRing>
+          </AvatarActions>
         </div>
-        {showPhotoViewer && (
-          <PhotoViewer
-            uid={fullUser.uid}
-            currentUrl={fullUser.photoURL}
-            name={fullUser.displayName}
-            onClose={() => setShowPhotoViewer(false)}
-          />
-        )}
       </div>
 
       {/* Info blanca debajo — pt-12 para dejar espacio al avatar */}

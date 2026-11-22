@@ -46,6 +46,11 @@ export const TOURS = {
 
   social: [
     {
+      target: t('soc-status'),
+      title: 'Estados',
+      desc: 'Compartí una foto o una frase que dura 24 horas. Las personas con estado nuevo tienen un círculo de color alrededor de su foto: tocala para verlo.',
+    },
+    {
       target: t('soc-tabs'),
       title: 'Las secciones de Social',
       desc: 'Feed: lo que publican los lectores que seguís. Descubrir: encontrá lectores y escritores nuevos. Siguiendo: tu lista de seguidos. Marketplace: comprá y vendé libros usados.',

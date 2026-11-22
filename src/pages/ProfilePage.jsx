@@ -7,7 +7,8 @@ import { useBooks } from '../hooks/useBooks'
 import { useNotifications } from '../hooks/useNotifications'
 import { searchBooks } from '../hooks/useGoogleBooks'
 import ImagePickerSheet from '../components/ui/ImagePickerSheet'
-import PhotoViewer from '../components/ui/PhotoViewer'
+import AvatarActions from '../components/status/AvatarActions'
+import StatusRing from '../components/status/StatusRing'
 import { savePhotoWithHistory } from '../hooks/usePhotoHistory'
 import SettingsSheet from '../components/profile/SettingsSheet'
 import { respondToLoan } from '../hooks/useLoanRequests'
@@ -678,7 +679,6 @@ export default function ProfilePage({ onGoToPlan }) {
   const [showNotifs, setShowNotifs]     = useState(false)
   const [pickerTarget, setPickerTarget] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
-  const [showPhotoViewer, setShowPhotoViewer] = useState(false)
   const [userListMode, setUserListMode] = useState(null) // 'following' | 'followers' | 'mutual'
   const [showPlanScreen, setShowPlanScreen] = useState(false)
 
@@ -741,15 +741,17 @@ export default function ProfilePage({ onGoToPlan }) {
           <div className="flex items-end justify-between -mt-10 mb-3">
             {/* Avatar */}
             <div data-tour="prof-avatar" className="relative">
-              {avatarUrl ? (
-                <button onClick={() => setShowPhotoViewer(true)} aria-label="Ver foto de perfil" className="block rounded-full">
-                  <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
-                </button>
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-amber-100 border-4 border-white shadow-md flex items-center justify-center text-amber-600 font-bold text-2xl">
-                  {avatarInitials}
-                </div>
-              )}
+              <AvatarActions uid={user.uid} photoURL={avatarUrl} name={profile?.displayName} isMe>
+                <StatusRing uid={user.uid}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-amber-100 border-4 border-white shadow-md flex items-center justify-center text-amber-600 font-bold text-2xl">
+                      {avatarInitials}
+                    </div>
+                  )}
+                </StatusRing>
+              </AvatarActions>
               <button onClick={() => setPickerTarget('avatar')}
                 className="absolute bottom-0 right-0 w-7 h-7 bg-amber-500 rounded-full flex items-center justify-center text-white shadow-md border-2 border-white">
                 <Camera size={11} />
@@ -987,16 +989,6 @@ export default function ProfilePage({ onGoToPlan }) {
             onClose={() => setShowSettings(false)}
           />
         </>
-      )}
-
-      {showPhotoViewer && (
-        <PhotoViewer
-          uid={user.uid}
-          currentUrl={avatarUrl}
-          name={profile?.displayName}
-          canDelete
-          onClose={() => setShowPhotoViewer(false)}
-        />
       )}
 
       {/* Image pickers */}

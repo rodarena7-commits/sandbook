@@ -26,6 +26,8 @@ import MarketplacePage from './MarketplacePage'
 import AdminActivity from '../components/social/AdminActivity'
 import AdminBroadcast from '../components/social/AdminBroadcast'
 import AdminAutoWelcome from '../components/social/AdminAutoWelcome'
+import StatusRing from '../components/status/StatusRing'
+import StatusBar from '../components/status/StatusBar'
 import { ADMIN_EMAIL } from '../utils/welcome'
 
 
@@ -37,17 +39,19 @@ const TABS = [
 ]
 
 // ── Avatar con punto online ─────────────────────────────────
-function Avatar({ photoURL, displayName, size = 'md', online = false }) {
+function Avatar({ uid, photoURL, displayName, size = 'md', online = false }) {
   const [imgError, setImgError] = useState(false)
   const init = (displayName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
   const sz = { sm:'w-8 h-8 text-xs', md:'w-10 h-10 text-sm', lg:'w-14 h-14 text-lg' }[size] || 'w-10 h-10 text-sm'
   const dotSize = size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3'
   return (
     <div className="relative flex-shrink-0">
-      {photoURL && !imgError
-        ? <img src={photoURL} alt="" referrerPolicy="no-referrer" onError={() => setImgError(true)} className={`${sz} rounded-full object-cover border-2 border-amber-200`} />
-        : <div className={`${sz} rounded-full bg-amber-100 border-2 border-amber-200 flex items-center justify-center font-bold text-amber-600`}>{init}</div>
-      }
+      <StatusRing uid={uid}>
+        {photoURL && !imgError
+          ? <img src={photoURL} alt="" referrerPolicy="no-referrer" onError={() => setImgError(true)} className={`${sz} rounded-full object-cover border-2 border-amber-200`} />
+          : <div className={`${sz} rounded-full bg-amber-100 border-2 border-amber-200 flex items-center justify-center font-bold text-amber-600`}>{init}</div>
+        }
+      </StatusRing>
       {online && (
         <span className={`absolute bottom-0 right-0 ${dotSize} bg-green-400 border-2 border-white rounded-full`}
               style={{boxShadow:'0 0 6px #4ade80'}} />
@@ -62,7 +66,7 @@ function FeedItem({ item, onUserPress }) {
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <button onClick={() => onUserPress(item.user)}
         className="flex items-center gap-2.5 px-3 pt-3 pb-2 w-full text-left hover:bg-slate-50">
-        <Avatar photoURL={item.user.photoURL} displayName={item.user.displayName} size="sm" />
+        <Avatar uid={item.user.uid} photoURL={item.user.photoURL} displayName={item.user.displayName} size="sm" />
         <div className="flex-1 min-w-0">
           <span className="text-xs font-semibold text-slate-800">{item.user.displayName||'Lector'}</span>
           <span className="text-xs text-slate-400"> {item.action}</span>
@@ -90,7 +94,7 @@ function UserCard({ user, isFollowing, onSelect }) {
   return (
     <button onClick={() => onSelect(user)}
       className="w-full flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 active:bg-slate-50 text-left">
-      <Avatar photoURL={user.photoURL} displayName={user.displayName} online={user.online} />
+      <Avatar uid={user.uid} photoURL={user.photoURL} displayName={user.displayName} online={user.online} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-semibold text-slate-800 line-clamp-1">{user.displayName||t('soc_reader_default')}</p>
@@ -137,7 +141,7 @@ function AdminUserRow({ user, onSelect }) {
   return (
     <button onClick={() => onSelect(user)}
       className="w-full flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 active:bg-slate-50 text-left">
-      <Avatar photoURL={user.photoURL} displayName={user.displayName} size="sm" online={user.online} />
+      <Avatar uid={user.uid} photoURL={user.photoURL} displayName={user.displayName} size="sm" online={user.online} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="text-xs font-semibold text-slate-800 line-clamp-1">{user.displayName||t('soc_no_name')}</p>
@@ -165,7 +169,7 @@ function FollowingCard({ user, onSelect }) {
   return (
     <button onClick={() => onSelect(user)}
       className="w-full flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 active:bg-slate-50 text-left">
-      <Avatar photoURL={user.photoURL} displayName={user.displayName} online={user.online} />
+      <Avatar uid={user.uid} photoURL={user.photoURL} displayName={user.displayName} online={user.online} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-semibold text-slate-800 line-clamp-1">{user.displayName||t('soc_reader_default')}</p>
@@ -372,6 +376,7 @@ export default function SocialPage() {
       </div>
 
       {/* ── FEED TAB ── */}
+      {activeTab==='feed' && <StatusBar myProfile={profile} />}
       {activeTab==='feed' && (
         <div className="px-4 py-4 flex flex-col gap-3">
           {postsLoading && <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-amber-400"/></div>}
