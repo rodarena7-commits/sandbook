@@ -1,16 +1,19 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import {
-  addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, serverTimestamp,
-  Timestamp, updateDoc, where,
+  collection, deleteDoc, doc, getDocs, onSnapshot, query, serverTimestamp,
+  setDoc, Timestamp, updateDoc, where, writeBatch,
 } from 'firebase/firestore'
 import { db } from '../firebase'
+import { blobToBase64Chunks } from '../utils/videoCompress'
 import StatusViewer from '../components/status/StatusViewer'
 import CreateStatusSheet from '../components/status/CreateStatusSheet'
 
 // Estados de 24 h. statuses/{id} = {
-//   uid, name, photo, type: 'image' | 'text', image, text, bg, createdAt, expiresAt,
+//   uid, name, photo, type: 'image' | 'text' | 'video', image, text, bg, createdAt, expiresAt,
+//   video: { chunks, mime, duration, poster },  ← sólo videos
 //   views: { [uid]: { name, photo, at } }
 // }
+// Los videos van partidos en statuses/{id}/chunks/{i} = { data } (base64 < 1 MB por documento).
 // expiresAt permite activar una política TTL en Firestore para borrarlos solos.
 
 export const STATUS_HOURS = 24
@@ -50,7 +53,7 @@ export function StatusProvider({ user, profile, children }) {
     getDocs(query(collection(db, 'statuses'), where('uid', '==', myUid)))
       .then(snap => snap.docs
         .filter(d => millis(d.data().expiresAt) < Date.now())
-        .forEach(d => deleteDoc(d.ref).catch(() => {})))
+        .forEach(d => removeStatus(d.id).catch(() => {})))
       .catch(() => {})
   }, [myUid])
 
@@ -87,22 +90,44 @@ export function StatusProvider({ user, profile, children }) {
     else setViewer({ queue: [uid], index: 0 })
   }
 
-  async function createStatus({ type, image = null, text = '', bg = null }) {
+  // video: { blob, mime, duration, poster }
+  async function createStatus({ type, image = null, text = '', bg = null, video = null }) {
     if (!myUid) return
     const nowMs = Date.now()
-    await addDoc(collection(db, 'statuses'), {
+    const ref = doc(collection(db, 'statuses'))
+    let videoMeta = null
+    if (type === 'video' && video) {
+      const parts = await blobToBase64Chunks(video.blob)
+      // Primero los pedazos y después el estado: así nadie ve un video incompleto
+      for (let i = 0; i < parts.length; i++) {
+        await setDoc(doc(db, 'statuses', ref.id, 'chunks', String(i)), { data: parts[i] })
+      }
+      videoMeta = { chunks: parts.length, mime: video.mime, duration: video.duration, poster: video.poster }
+    }
+    await setDoc(ref, {
       uid: myUid,
       name: profile?.displayName || 'Lector',
       photo: profile?.photoURL || null,
       type, image, text: text.trim(), bg,
+      ...(videoMeta ? { video: videoMeta } : {}),
       createdAt: serverTimestamp(),
       expiresAt: Timestamp.fromMillis(nowMs + STATUS_HOURS * 60 * 60 * 1000),
       views: {},
     })
   }
 
-  async function deleteStatus(id) {
+  async function removeStatus(id) {
+    const chunks = await getDocs(collection(db, 'statuses', id, 'chunks'))
+    if (!chunks.empty) {
+      const batch = writeBatch(db)
+      chunks.docs.forEach(d => batch.delete(d.ref))
+      await batch.commit()
+    }
     await deleteDoc(doc(db, 'statuses', id))
+  }
+
+  async function deleteStatus(id) {
+    await removeStatus(id)
   }
 
   function markSeen(status) {

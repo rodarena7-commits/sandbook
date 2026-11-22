@@ -1,5 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
-import { X, Eye, Trash2, ChevronDown } from 'lucide-react'
+import { X, Eye, Trash2, ChevronDown, Loader2, Volume2, VolumeX } from 'lucide-react'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '../../firebase'
+import { base64ChunksToBlob } from '../../utils/videoCompress'
+
+// URLs de videos ya armados, para no volver a descargarlos al ir y venir
+const videoCache = new Map()
+
+async function loadVideoUrl(status) {
+  if (videoCache.has(status.id)) return videoCache.get(status.id)
+  const snap = await getDocs(collection(db, 'statuses', status.id, 'chunks'))
+  const parts = snap.docs
+    .sort((a, b) => Number(a.id) - Number(b.id))
+    .map(d => d.data().data)
+  if (!parts.length || parts.length < (status.video?.chunks || 0)) throw new Error('incompleto')
+  const url = URL.createObjectURL(base64ChunksToBlob(parts, status.video?.mime))
+  videoCache.set(status.id, url)
+  return url
+}
 
 const DURATION_MS = 6000
 
@@ -30,6 +48,10 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
   const [showViews, setShowViews] = useState(false)
   const elapsedRef = useRef(0)
   const pressRef = useRef(null)
+  const videoRef = useRef(null)
+  const [videoUrl, setVideoUrl] = useState(null)
+  const [videoError, setVideoError] = useState(false)
+  const [muted, setMuted] = useState(false)
 
   const uid = queue[userIdx]
   const items = byUser[uid] || []
@@ -46,6 +68,32 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
   }, [item, items.length])
 
   useEffect(() => { if (item) onSeen(item) }, [item?.id])
+
+  const isVideo = item?.type === 'video'
+
+  // Videos: se descargan los pedazos y se arman; el avance lo marca el propio video
+  useEffect(() => {
+    setVideoUrl(null)
+    setVideoError(false)
+    if (!isVideo) return
+    let cancelled = false
+    loadVideoUrl(item)
+      .then(url => { if (!cancelled) setVideoUrl(url) })
+      .catch(() => { if (!cancelled) setVideoError(true) })
+    return () => { cancelled = true }
+  }, [item?.id])
+
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v || !videoUrl) return
+    if (paused || showViews) { v.pause(); return }
+    v.play().catch(() => {
+      // Sin interacción previa algunos navegadores sólo dejan reproducir sin sonido
+      v.muted = true
+      setMuted(true)
+      v.play().catch(() => {})
+    })
+  }, [videoUrl, paused, showViews])
 
   function next() {
     elapsedRef.current = 0
@@ -66,9 +114,10 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
     }
   }
 
-  // Avance automático (pausado mientras se aprieta o se mira la lista de vistas)
+  // Avance automático (pausado mientras se aprieta o se mira la lista de vistas).
+  // Los videos avanzan con su propia reproducción (onTimeUpdate / onEnded).
   useEffect(() => {
-    if (!item || paused || showViews) return
+    if (!item || paused || showViews || (isVideo && !videoError)) return
     let last = performance.now()
     let raf
     const tick = t => {
@@ -156,7 +205,49 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
         onPointerCancel={() => setPaused(false)}
         style={item.type === 'text' ? { background: item.bg || '#f59e0b' } : undefined}
       >
-        {item.type === 'image' ? (
+        {isVideo ? (
+          <>
+            {videoUrl ? (
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                playsInline
+                muted={muted}
+                poster={item.video?.poster}
+                className="max-w-full max-h-full pointer-events-none"
+                onTimeUpdate={e => {
+                  const v = e.currentTarget
+                  // Los .webm grabados no informan su duración: se usa la guardada al publicar
+                  const total = isFinite(v.duration) && v.duration > 0 ? v.duration : item.video?.duration
+                  if (total) setProgress(Math.min(1, v.currentTime / total))
+                }}
+                onEnded={next}
+              />
+            ) : videoError ? (
+              <p className="text-white/70 text-sm">No se pudo cargar el video.</p>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                {item.video?.poster && <img src={item.video.poster} alt="" className="max-w-[70%] max-h-[50vh] object-contain opacity-60 rounded-xl" />}
+                <Loader2 size={26} className="animate-spin text-white" />
+              </div>
+            )}
+            {videoUrl && (
+              <button
+                onPointerDown={e => e.stopPropagation()}
+                onPointerUp={e => e.stopPropagation()}
+                onClick={() => { const m = !muted; setMuted(m); if (videoRef.current) videoRef.current.muted = m }}
+                aria-label={muted ? 'Activar sonido' : 'Silenciar'}
+                className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 text-white flex items-center justify-center">
+                {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              </button>
+            )}
+            {item.text && (
+              <p className="absolute bottom-6 left-4 right-4 text-center text-white text-base font-medium bg-black/45 rounded-2xl px-4 py-2.5 whitespace-pre-wrap break-words">
+                {item.text}
+              </p>
+            )}
+          </>
+        ) : item.type === 'image' ? (
           <>
             <img src={item.image} alt="" className="max-w-full max-h-full object-contain pointer-events-none" draggable={false} />
             {item.text && (
