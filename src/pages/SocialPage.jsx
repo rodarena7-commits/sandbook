@@ -25,8 +25,9 @@ import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import MarketplacePage from './MarketplacePage'
 import AdminActivity from '../components/social/AdminActivity'
 import AdminBroadcast from '../components/social/AdminBroadcast'
+import AdminAutoWelcome from '../components/social/AdminAutoWelcome'
+import { ADMIN_EMAIL } from '../utils/welcome'
 
-const ADMIN_EMAIL = 'rodrigo.n.arena@hotmail.com'
 
 const TABS = [
   { key: 'feed',        label: 'Feed' },
@@ -608,7 +609,12 @@ export default function SocialPage() {
           </div>
 
           {adminSubTab === 'activity' && <AdminActivity users={allUsers} />}
-          {adminSubTab === 'broadcast' && <AdminBroadcast myUid={user.uid} myProfile={profile} />}
+          {adminSubTab === 'broadcast' && (
+            <>
+              <AdminAutoWelcome myUid={user.uid} appConfig={appConfig} />
+              <AdminBroadcast myUid={user.uid} myProfile={profile} />
+            </>
+          )}
 
           {/* Tab 1: Users list */}
           {adminSubTab === 'users' && (

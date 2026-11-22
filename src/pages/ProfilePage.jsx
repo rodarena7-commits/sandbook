@@ -7,6 +7,8 @@ import { useBooks } from '../hooks/useBooks'
 import { useNotifications } from '../hooks/useNotifications'
 import { searchBooks } from '../hooks/useGoogleBooks'
 import ImagePickerSheet from '../components/ui/ImagePickerSheet'
+import PhotoViewer from '../components/ui/PhotoViewer'
+import { savePhotoWithHistory } from '../hooks/usePhotoHistory'
 import SettingsSheet from '../components/profile/SettingsSheet'
 import { respondToLoan } from '../hooks/useLoanRequests'
 import { cleanThumbnail } from '../utils/cleanThumbnail'
@@ -676,6 +678,7 @@ export default function ProfilePage({ onGoToPlan }) {
   const [showNotifs, setShowNotifs]     = useState(false)
   const [pickerTarget, setPickerTarget] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false)
   const [userListMode, setUserListMode] = useState(null) // 'following' | 'followers' | 'mutual'
   const [showPlanScreen, setShowPlanScreen] = useState(false)
 
@@ -704,7 +707,8 @@ export default function ProfilePage({ onGoToPlan }) {
   }
 
   async function saveAvatar(url) {
-    await updateDoc(doc(db, 'users', user.uid), { photoURL: url })
+    // La foto anterior queda en el historial para poder verla después
+    await savePhotoWithHistory(user.uid, url, profile?.photoURL || null)
     setProfile(p => ({ ...p, photoURL: url }))
   }
 
@@ -738,7 +742,9 @@ export default function ProfilePage({ onGoToPlan }) {
             {/* Avatar */}
             <div data-tour="prof-avatar" className="relative">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
+                <button onClick={() => setShowPhotoViewer(true)} aria-label="Ver foto de perfil" className="block rounded-full">
+                  <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
+                </button>
               ) : (
                 <div className="w-20 h-20 rounded-full bg-amber-100 border-4 border-white shadow-md flex items-center justify-center text-amber-600 font-bold text-2xl">
                   {avatarInitials}
@@ -981,6 +987,16 @@ export default function ProfilePage({ onGoToPlan }) {
             onClose={() => setShowSettings(false)}
           />
         </>
+      )}
+
+      {showPhotoViewer && (
+        <PhotoViewer
+          uid={user.uid}
+          currentUrl={avatarUrl}
+          name={profile?.displayName}
+          canDelete
+          onClose={() => setShowPhotoViewer(false)}
+        />
       )}
 
       {/* Image pickers */}

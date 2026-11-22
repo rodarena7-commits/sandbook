@@ -17,6 +17,7 @@ import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import { detectUserLocation } from '../utils/translationService'
 import { translations } from '../utils/translations'
 import { setAnalyticsUser } from '../utils/analytics'
+import { sendAutoWelcome } from '../utils/welcome'
 
 const AuthContext = createContext(null)
 
@@ -148,9 +149,18 @@ export function AuthProvider({ children }) {
             countryCode,
             language: detectedLang,
           }
-          await setDoc(ref, newProfile)
+          // merge y sin followers/following: el registro con email crea el perfil en paralelo,
+          // y la bienvenida automática puede haber agregado un seguidor; no hay que pisarlo.
+          const { followers: _f, following: _g, ...toWrite } = newProfile
+          await setDoc(ref, toWrite, { merge: true })
           setProfile(newProfile)
           setLanguageState(detectedLang)
+          // Los invitados no reciben bienvenida; el registro con email la manda él mismo
+          // (ya con el nombre real que eligió el usuario)
+          const isPassword = firebaseUser.providerData?.some(p => p.providerId === 'password')
+          if (!firebaseUser.isAnonymous && !isPassword) {
+            sendAutoWelcome(firebaseUser.uid, newProfile.displayName, newProfile.photoURL)
+          }
         }
         startHeartbeat(firebaseUser.uid)
         setAnalyticsUser(firebaseUser, snap.exists() ? snap.data().displayName : firebaseUser.displayName)
@@ -211,9 +221,11 @@ export function AuthProvider({ children }) {
       countryCode,
       language:    detectedLang,
     }
-    await setDoc(ref, newProfile)
+    const { followers: _f, following: _g, ...toWrite } = newProfile
+    await setDoc(ref, toWrite, { merge: true })
     setProfile(newProfile)
     setLanguageState(detectedLang)
+    sendAutoWelcome(cred.user.uid, name, null)
   }
 
   async function loginWithEmail(email, password) {
