@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { Timer, Pause, Play, BellRing, Plus } from 'lucide-react'
 import { addTimeSession } from '../hooks/useReadingPlan'
+import { useAuth } from './AuthContext'
 
 // Temporizador del "Plan por tiempo". Es global (no depende de la pantalla del plan):
 // sigue corriendo si el usuario navega por la app y sobrevive a que se cierre, porque
@@ -82,7 +83,7 @@ async function keepScreenOn(on) {
 
 // ── Notificación de respaldo (si la app queda en segundo plano) ──
 let channelReady = false
-async function scheduleNotification(timer) {
+async function scheduleNotification(timer, texts) {
   if (!isNative) return
   try {
     let perm = await LocalNotifications.checkPermissions()
@@ -90,8 +91,8 @@ async function scheduleNotification(timer) {
     if (perm.display !== 'granted') return
     if (!channelReady) {
       await LocalNotifications.createChannel({
-        id: CHANNEL_ID, name: 'Temporizador de lectura',
-        description: 'Avisa cuando termina tu tiempo de lectura',
+        id: CHANNEL_ID, name: texts.channel,
+        description: texts.channel,
         importance: 5, vibration: true, visibility: 1,
       })
       channelReady = true
@@ -100,8 +101,8 @@ async function scheduleNotification(timer) {
     await LocalNotifications.schedule({
       notifications: [{
         id: NOTIFICATION_ID,
-        title: '⏰ ¡Tiempo de lectura cumplido!',
-        body: `Anotá en qué página quedaste de «${timer.title}».`,
+        title: texts.title,
+        body: texts.body,
         channelId: CHANNEL_ID,
         // No exacta: Google Play reserva las alarmas exactas para despertadores.
         // Mientras la app está abierta suena la alarma propia, que sí es puntual.
@@ -157,6 +158,12 @@ function useAlarm(active) {
 }
 
 export function ReadingTimerProvider({ user, children }) {
+  const { t } = useAuth()
+  const notifTexts = timer => ({
+    channel: t('tp_channel'),
+    title: t('tp_notif_title'),
+    body: t('tp_notif_body', { title: timer.title }),
+  })
   const [timer, setTimerState] = useState(load)
   const [now, setNow] = useState(Date.now())
   const timerRef = useRef(timer)
@@ -201,7 +208,7 @@ export function ReadingTimerProvider({ user, children }) {
     const durationSec = Math.max(1, Math.round(Number(minutes) * 60))
     const next = {
       bookId: book.bookId,
-      title: book.title || 'tu libro',
+      title: book.title || t('tp_your_book'),
       totalPages: book.timePlan?.totalPages || book.pageCount || 0,
       startPage: Number(book.currentPage) || 0,
       startedAt: new Date().toISOString(),
@@ -212,7 +219,7 @@ export function ReadingTimerProvider({ user, children }) {
       status: 'running',
     }
     setTimer(next)
-    scheduleNotification(next)
+    scheduleNotification(next, notifTexts(next))
   }
 
   function pause() {
@@ -227,7 +234,7 @@ export function ReadingTimerProvider({ user, children }) {
     if (cur?.status !== 'paused') return
     const next = { ...cur, status: 'running', endAt: Date.now() + cur.remainingMs, remainingMs: null }
     setTimer(next)
-    scheduleNotification(next)
+    scheduleNotification(next, notifTexts(next))
   }
 
   // Terminar antes de tiempo: se guarda lo que se leyó hasta ahora
@@ -253,7 +260,7 @@ export function ReadingTimerProvider({ user, children }) {
       remainingMs: null,
     }
     setTimer(next)
-    scheduleNotification(next)
+    scheduleNotification(next, notifTexts(next))
   }
 
   function discard() {
@@ -281,10 +288,11 @@ export function ReadingTimerProvider({ user, children }) {
     <ReadingTimerContext.Provider value={value}>
       {children}
       {timer && timer.status !== 'done' && (
-        <MiniTimer timer={timer} remainingMs={remainingMs} onPause={pause} onResume={resume} />
+        <MiniTimer timer={timer} remainingMs={remainingMs} onPause={pause} onResume={resume} t={t} />
       )}
       {timer?.status === 'done' && (
         <FinishSessionModal
+          t={t}
           timer={timer}
           onSave={saveSession}
           onExtra={addExtraMinutes}
@@ -300,14 +308,14 @@ export function useReadingTimer() {
 }
 
 // Pastilla flotante con el tiempo restante, visible en toda la app
-function MiniTimer({ timer, remainingMs, onPause, onResume }) {
+function MiniTimer({ timer, remainingMs, onPause, onResume, t }) {
   const running = timer.status === 'running'
   return (
     <div className="fixed top-3 right-3 z-[70] flex items-center gap-2 bg-slate-900/90 backdrop-blur text-white rounded-full pl-3 pr-1 py-1 shadow-lg max-w-[60vw]">
       <Timer size={13} className={running ? 'text-amber-400 animate-pulse' : 'text-slate-400'} />
       <span className="text-xs font-bold tabular-nums">{formatClock(remainingMs)}</span>
       <span className="text-[10px] text-slate-300 truncate hidden sm:inline">{timer.title}</span>
-      <button onClick={running ? onPause : onResume} aria-label={running ? 'Pausar temporizador' : 'Reanudar temporizador'}
+      <button onClick={running ? onPause : onResume} aria-label={running ? t('tp_pause_timer') : t('tp_resume_timer')}
         className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
         {running ? <Pause size={12} /> : <Play size={12} className="ml-0.5" />}
       </button>
@@ -315,7 +323,7 @@ function MiniTimer({ timer, remainingMs, onPause, onResume }) {
   )
 }
 
-function FinishSessionModal({ timer, onSave, onExtra, onDiscard }) {
+function FinishSessionModal({ timer, onSave, onExtra, onDiscard, t }) {
   const [page, setPage]     = useState(String(timer.startPage || ''))
   const [saving, setSaving] = useState(false)
   const seconds = timer.doneSec + timer.durationSec
@@ -335,14 +343,14 @@ function FinishSessionModal({ timer, onSave, onExtra, onDiscard }) {
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 ${timer.early ? 'bg-violet-100' : 'bg-violet-500 animate-bounce'}`}>
             <BellRing size={26} className={timer.early ? 'text-violet-500' : 'text-white'} />
           </div>
-          <h3 className="text-lg font-bold text-slate-800">{timer.early ? 'Sesión terminada' : '¡Tiempo cumplido!'}</h3>
+          <h3 className="text-lg font-bold text-slate-800">{timer.early ? t('tp_session_done') : t('tp_time_up')}</h3>
           <p className="text-sm text-slate-500 mt-1">
-            Leíste <b className="text-slate-700">{formatDuration(seconds)}</b> de «{timer.title}».
+            {t('tp_you_read', { time: formatDuration(seconds), title: timer.title })}
           </p>
         </div>
 
         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
-          ¿En qué página quedaste?
+          {t('plan_where_left')}
         </label>
         <div className="relative mb-1">
           <input
@@ -356,20 +364,20 @@ function FinishSessionModal({ timer, onSave, onExtra, onDiscard }) {
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">/ {timer.totalPages}</span>
           )}
         </div>
-        <p className="text-[11px] text-slate-400 mb-4">Empezaste en la página {timer.startPage || 0}.</p>
+        <p className="text-[11px] text-slate-400 mb-4">{t('tp_started_at', { n: timer.startPage || 0 })}</p>
 
         <button onClick={handleSave} disabled={!valid || saving}
           className="w-full py-3 bg-violet-500 text-white rounded-2xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all shadow-sm">
-          {saving ? 'Guardando…' : 'Guardar sesión'}
+          {saving ? t('common_saving') : t('tp_save_session')}
         </button>
         <div className="flex gap-2 mt-2">
           <button onClick={onExtra}
             className="flex-1 py-2.5 bg-violet-50 text-violet-600 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1">
-            <Plus size={13} /> {EXTRA_MINUTES} minutos más
+            <Plus size={13} /> {t('tp_extra', { n: EXTRA_MINUTES })}
           </button>
-          <button onClick={() => { if (window.confirm('¿Descartar esta sesión? No se va a sumar el tiempo.')) onDiscard() }}
+          <button onClick={() => { if (window.confirm(t('tp_discard_confirm'))) onDiscard() }}
             className="flex-1 py-2.5 bg-slate-100 text-slate-500 rounded-2xl text-xs font-semibold">
-            Descartar
+            {t('common_discard')}
           </button>
         </div>
       </div>

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { X, BookOpen, CalendarDays, Coffee, Target, BookMarked, Timer } from 'lucide-react'
 import { DEFAULT_TIME_PLAN_MINUTES } from '../../hooks/useReadingPlan'
+import { useAuth } from '../../contexts/AuthContext'
 
 const TIME_PRESETS = [10, 15, 20, 30, 45, 60]
 
 // isBible: true cuando el libro es una Biblia — cambia "Plan con Meta" por "Plan Bíblico"
 export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBible = false }) {
+  const { t } = useAuth()
   const [planType, setPlanType] = useState(null) // 'relax' | 'meta' | 'bible' | 'time'
   const initialPages = book.pageCount || book.totalPages || book.volumeInfo?.pageCount || book.readingPlan?.totalPages || book.relaxPlan?.totalPages || '';
   const [totalPages, setTotalPages] = useState(initialPages > 0 ? String(initialPages) : '')
@@ -63,7 +65,7 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <CalendarDays size={18} className="text-amber-500" />
-            <h3 className="font-bold text-slate-800">Plan de lectura</h3>
+            <h3 className="font-bold text-slate-800">{t('plan_title')}</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
             <X size={15} />
@@ -90,7 +92,7 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
         {!planType && (
           <div className="flex flex-col gap-3">
             <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide text-center mb-1">
-              ¿Qué tipo de plan querés?
+              {t('plan_which')}
             </p>
 
             <button
@@ -101,11 +103,9 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
                 <Coffee size={20} className="text-blue-500" />
               </div>
               <div>
-                <p className="font-bold text-slate-800 text-sm">Plan Relax</p>
+                <p className="font-bold text-slate-800 text-sm">{t('plan_relax_name')}</p>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {isBible
-                    ? 'Marcá el versículo donde quedaste, llevá historial diario y agregá anotaciones con marcador.'
-                    : 'Leé a tu ritmo. Solo marcá dónde quedaste y llevá un historial de tus días de lectura.'}
+                  {isBible ? t('plan_relax_desc_bible') : t('plan_relax_desc')}
                 </p>
               </div>
             </button>
@@ -119,9 +119,9 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
                   <BookMarked size={20} className="text-amber-500" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800 text-sm">Plan Bíblico</p>
+                  <p className="font-bold text-slate-800 text-sm">{t('plan_bible_name')}</p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Seguí tu avance capítulo por capítulo en los 66 libros de la Biblia (1.189 capítulos).
+                    {t('plan_bible_desc')}
                   </p>
                 </div>
               </button>
@@ -134,9 +134,9 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
                   <Target size={20} className="text-amber-500" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800 text-sm">Plan con Meta</p>
+                  <p className="font-bold text-slate-800 text-sm">{t('plan_meta_name')}</p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Definí en cuántos días querés terminar el libro y seguí tu progreso día a día.
+                    {t('plan_meta_desc')}
                   </p>
                 </div>
               </button>
@@ -150,9 +150,9 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
                 <Timer size={20} className="text-violet-500" />
               </div>
               <div>
-                <p className="font-bold text-slate-800 text-sm">Plan por tiempo</p>
+                <p className="font-bold text-slate-800 text-sm">{t('plan_time_name')}</p>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Elegí cuántos minutos leer. Cuando suena la alarma anotás la página y se suma tu tiempo total.
+                  {t('plan_time_desc')}
                 </p>
               </div>
             </button>
@@ -164,20 +164,20 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
           <>
             <div className="flex items-center gap-2 mb-4">
               <button onClick={() => setPlanType(null)} className="text-xs text-slate-400 underline">
-                ← Cambiar tipo
+                {t('plan_change_type')}
               </button>
               <Timer size={12} className="text-violet-500" />
-              <span className="text-xs font-bold text-violet-500">Plan por tiempo</span>
+              <span className="text-xs font-bold text-violet-500">{t('plan_time_name')}</span>
             </div>
 
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
-              Tiempo de cada lectura
+              {t('plan_time_each')}
             </label>
             <div className="grid grid-cols-3 gap-2 mb-2">
               {TIME_PRESETS.map(m => (
                 <button key={m} onClick={() => { setMinutes(m); setCustomMin('') }}
                   className={`py-2 rounded-xl text-sm font-semibold transition-all ${minutes === m && !customMin ? 'bg-violet-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600'}`}>
-                  {m} min
+                  {t('plan_min_short', { n: m })}
                 </button>
               ))}
             </div>
@@ -186,29 +186,29 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
                 type="number" min="1" max="600" inputMode="numeric"
                 value={customMin}
                 onChange={e => { setCustomMin(e.target.value); const m = Number(e.target.value); if (m > 0 && m <= 600) setMinutes(m) }}
-                placeholder="Otro tiempo"
+                placeholder={t('plan_other_time')}
                 className={`w-full px-4 py-3 pr-20 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-violet-400 ${customMin ? 'bg-violet-50 text-violet-700 font-semibold' : 'bg-slate-100 text-slate-800'}`}
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">minutos</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">{t('plan_minutes_unit')}</span>
             </div>
 
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
-              Páginas totales (opcional)
+              {t('plan_total_pages_optional')}
             </label>
             <div className="relative mb-5">
               <input
                 type="number" min="1" inputMode="numeric"
                 value={totalPages}
                 onChange={e => setTotalPages(e.target.value)}
-                placeholder="ej: 320"
+                placeholder={t('plan_pages_placeholder')}
                 className="w-full px-4 py-3 pr-20 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-400"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">páginas</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">{t('plan_pages_unit')}</span>
             </div>
 
             <div className="bg-violet-50 border border-violet-100 rounded-2xl p-4 mb-5">
               <p className="text-xs text-violet-700 text-center leading-relaxed">
-                Leé {minutes} {minutes === 1 ? 'minuto' : 'minutos'} con el temporizador. Al terminar suena la alarma, anotás en qué página quedaste y el tiempo se suma al historial del libro. Podés cambiar los minutos cada vez que leas.
+                {t('plan_time_info', { minutes: t(minutes === 1 ? 'plan_minute_one' : 'plan_minute_many', { n: minutes }) })}
               </p>
             </div>
 
@@ -217,7 +217,7 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
               disabled={!(minutes > 0) || saving}
               className="w-full py-3.5 bg-violet-500 text-white rounded-2xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all shadow-sm"
             >
-              {saving ? 'Creando plan…' : 'Crear Plan por tiempo'}
+              {saving ? t('plan_creating') : t('plan_time_create')}
             </button>
           </>
         )}
@@ -226,13 +226,13 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
         {planType === 'bible' && (
           <>
             <div className="flex items-center gap-2 mb-4">
-              <button onClick={() => setPlanType(null)} className="text-xs text-slate-400 underline">← Cambiar tipo</button>
+              <button onClick={() => setPlanType(null)} className="text-xs text-slate-400 underline">{t('plan_change_type')}</button>
               <BookMarked size={12} className="text-amber-500" />
-              <span className="text-xs font-bold text-amber-500">Plan Bíblico</span>
+              <span className="text-xs font-bold text-amber-500">{t('plan_bible_name')}</span>
             </div>
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-5">
               <p className="text-xs text-amber-700 text-center leading-relaxed">
-                Vas a poder marcar cada capítulo leído en los 66 libros de la Biblia, agregar notas por libro y ver tu progreso general.
+                {t('plan_bible_info')}
               </p>
             </div>
             <button
@@ -240,7 +240,7 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
               disabled={saving}
               className="w-full py-3.5 bg-amber-500 text-white rounded-2xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all shadow-sm"
             >
-              {saving ? 'Activando…' : 'Activar Plan Bíblico'}
+              {saving ? t('plan_activating') : t('plan_bible_activate')}
             </button>
           </>
         )}
@@ -250,35 +250,33 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
           <>
             <div className="flex items-center gap-2 mb-4">
               <button onClick={() => setPlanType(null)} className="text-xs text-slate-400 underline">
-                ← Cambiar tipo
+                {t('plan_change_type')}
               </button>
               <Coffee size={12} className="text-blue-400" />
-              <span className="text-xs font-bold text-blue-500">Plan Relax</span>
+              <span className="text-xs font-bold text-blue-500">{t('plan_relax_name')}</span>
             </div>
 
             {!isBible && (
               <div className="mb-5">
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
-                  Páginas totales (opcional)
+                  {t('plan_total_pages_optional')}
                 </label>
                 <div className="relative">
                   <input
                     type="number" min="1" inputMode="numeric"
                     value={totalPages}
                     onChange={e => setTotalPages(e.target.value)}
-                    placeholder="ej: 320"
+                    placeholder={t('plan_pages_placeholder')}
                     className="w-full px-4 py-3 pr-20 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-400"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">páginas</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">{t('plan_pages_unit')}</span>
                 </div>
               </div>
             )}
 
             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-5">
               <p className="text-xs text-blue-600 text-center leading-relaxed">
-                {isBible
-                  ? 'Marcá el versículo donde quedaste cada vez que leas. El historial diario se guarda automáticamente y podés agregar notas con marcador de versículo.'
-                  : 'Cada vez que leas, actualizá el marcador con tu página actual. El historial diario de páginas leídas se guarda automáticamente.'}
+                {isBible ? t('plan_relax_info_bible') : t('plan_relax_info')}
               </p>
             </div>
 
@@ -287,7 +285,7 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
               disabled={saving}
               className="w-full py-3.5 bg-blue-500 text-white rounded-2xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all shadow-sm"
             >
-              {saving ? 'Creando plan…' : 'Crear Plan Relax'}
+              {saving ? t('plan_creating') : t('plan_relax_create')}
             </button>
           </>
         )}
@@ -297,41 +295,41 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
           <>
             <div className="flex items-center gap-2 mb-4">
               <button onClick={() => setPlanType(null)} className="text-xs text-slate-400 underline">
-                ← Cambiar tipo
+                {t('plan_change_type')}
               </button>
               <Target size={12} className="text-amber-500" />
-              <span className="text-xs font-bold text-amber-500">Plan con Meta</span>
+              <span className="text-xs font-bold text-amber-500">{t('plan_meta_name')}</span>
             </div>
 
             <div className="flex flex-col gap-4 mb-5">
               <div>
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
-                  Páginas totales del libro
+                  {t('plan_total_pages')}
                 </label>
                 <div className="relative">
                   <input
                     type="number" min="1" inputMode="numeric"
                     value={totalPages}
                     onChange={e => setTotalPages(e.target.value)}
-                    placeholder="ej: 320"
+                    placeholder={t('plan_pages_placeholder')}
                     className="w-full px-4 py-3 pr-20 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">páginas</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">{t('plan_pages_unit')}</span>
                 </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">
-                  Meta — días para terminarlo
+                  {t('plan_goal_days')}
                 </label>
                 <div className="relative">
                   <input
                     type="number" min="1" inputMode="numeric"
                     value={totalDays}
                     onChange={e => setTotalDays(e.target.value)}
-                    placeholder="ej: 30"
+                    placeholder={t('plan_days_placeholder')}
                     className="w-full px-4 py-3 pr-12 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">días</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">{t('plan_days_unit')}</span>
                 </div>
               </div>
             </div>
@@ -339,9 +337,9 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
             {validMeta && (
               <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-5 text-center">
                 <p className="text-2xl font-bold text-amber-500">{daily}</p>
-                <p className="text-xs text-amber-700 mt-0.5">páginas por día</p>
+                <p className="text-xs text-amber-700 mt-0.5">{t('plan_pages_per_day')}</p>
                 <p className="text-[11px] text-slate-400 mt-2">
-                  {pages} páginas en {days} días · empieza hoy
+                  {t('plan_summary', { pages, days })}
                 </p>
               </div>
             )}
@@ -351,7 +349,7 @@ export default function CreatePlanSheet({ book, onSave, onCreate, onClose, isBib
               disabled={!validMeta || saving}
               className="w-full py-3.5 bg-amber-500 text-white rounded-2xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all shadow-sm"
             >
-              {saving ? 'Creando plan…' : 'Crear plan de lectura'}
+              {saving ? t('plan_creating') : t('plan_meta_create')}
             </button>
           </>
         )}

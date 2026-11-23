@@ -7,7 +7,7 @@ import ja from './i18n/ja'
 import hi from './i18n/hi'
 import ar from './i18n/ar'
 
-export const translations = {
+const base = {
   es: {
     // Navigation
     nav_library: 'Biblioteca',
@@ -760,3 +760,13 @@ export const translations = {
   },
   fr, de, it, ru, zh, ja, hi, ar,
 }
+
+// Textos por pantalla: cada archivo trae los 11 idiomas juntos ({ es: {...}, en: {...}, ... })
+const GROUPS = import.meta.glob('./i18n/groups/*.js', { eager: true, import: 'default' })
+
+export const translations = Object.fromEntries(
+  Object.entries(base).map(([lang, dict]) => [
+    lang,
+    Object.assign({}, dict, ...Object.values(GROUPS).map(g => g[lang] || {})),
+  ])
+)

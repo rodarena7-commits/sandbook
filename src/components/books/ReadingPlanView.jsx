@@ -1,3 +1,5 @@
+import { useAuth } from '../../contexts/AuthContext'
+import { dateLocale } from '../../utils/locale'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   ArrowLeft, Check, Trash2, StickyNote, Bookmark,
@@ -9,17 +11,19 @@ function debounce(fn, ms) {
   let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms) }
 }
 
-function dayLabel(startDate, dayNum) {
+function dayLabel(startDate, dayNum, locale = 'es-AR') {
   const d = new Date(startDate + 'T00:00:00')
   d.setDate(d.getDate() + dayNum - 1)
   return {
-    short: d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }),
-    week:  d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }),
+    short: d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' }),
+    week:  d.toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
   }
 }
 
 // ── Horizontal Day Slider ──────────────────────────────────
 function DaySlider({ days, dayData, startDate, onToggle }) {
+  const { t, language } = useAuth()
+  const locale = dateLocale(language)
   const sliderRef = useRef(null)
 
   // Scroll to first uncompleted day on mount
@@ -44,7 +48,7 @@ function DaySlider({ days, dayData, startDate, onToggle }) {
       {days.map(d => {
         const data    = dayData[d.day] || {}
         const checked = !!data.checked
-        const label   = dayLabel(startDate, d.day)
+        const label   = dayLabel(startDate, d.day, locale)
 
         return (
           <button
@@ -64,13 +68,13 @@ function DaySlider({ days, dayData, startDate, onToggle }) {
               {checked && <Check size={12} className="text-white" />}
             </div>
             <p className={`text-[11px] font-bold leading-none ${checked ? 'text-white' : 'text-slate-700'}`}>
-              Día {d.day}
+              {t('plan_day_n', { n: d.day })}
             </p>
             <p className={`text-[9px] leading-none text-center ${checked ? 'text-white/80' : 'text-slate-400'}`}>
               {label.week}
             </p>
             <p className={`text-[9px] leading-none ${checked ? 'text-white/70' : 'text-slate-400'}`}>
-              {d.pages} págs
+              {t('common_pages_short', { n: d.pages })}
             </p>
           </button>
         )
@@ -81,11 +85,13 @@ function DaySlider({ days, dayData, startDate, onToggle }) {
 
 // ── Single Day Row ─────────────────────────────────────────
 function DayRow({ d, dayData, startDate, uid, bookId, onToggle }) {
+  const { t, language } = useAuth()
+  const locale = dateLocale(language)
   const data    = dayData[d.day] || {}
   const checked = !!data.checked
   const [showNote, setShowNote] = useState(false)
   const note = data.note || ''
-  const label = dayLabel(startDate, d.day)
+  const label = dayLabel(startDate, d.day, locale)
 
   async function saveNote(val) {
     await updatePlanDay(uid, bookId, d.day, { ...data, note: val })
@@ -106,12 +112,12 @@ function DayRow({ d, dayData, startDate, uid, bookId, onToggle }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2">
             <p className={`text-xs font-semibold ${checked ? 'line-through text-slate-400' : 'text-slate-800'}`}>
-              Día {d.day}
+              {t('plan_day_n', { n: d.day })}
             </p>
             <p className="text-[10px] text-slate-400">{label.short}</p>
           </div>
           <p className="text-[10px] text-slate-500">
-            Págs {d.start}–{d.end} <span className="text-slate-300">({d.pages} págs)</span>
+            {t('plan_pages_range', { start: d.start, end: d.end })} <span className="text-slate-300">({t('common_pages_short', { n: d.pages })})</span>
           </p>
           {note && !showNote && (
             <p className="text-[10px] text-amber-600 italic line-clamp-1 mt-0.5">"{note}"</p>
@@ -134,7 +140,7 @@ function DayRow({ d, dayData, startDate, uid, bookId, onToggle }) {
             defaultValue={note}
             rows={2}
             maxLength={200}
-            placeholder="Anotá algo sobre este día…"
+            placeholder={t('plan_day_note_placeholder')}
             onBlur={e => saveNote(e.target.value)}
             className="w-full px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl text-xs text-slate-700 placeholder-slate-300 outline-none focus:ring-2 focus:ring-amber-300 resize-none"
           />
@@ -146,13 +152,15 @@ function DayRow({ d, dayData, startDate, uid, bookId, onToggle }) {
 
 // ── Week Section ───────────────────────────────────────────
 function WeekSection({ weekNum, days, dayData, startDate, uid, bookId, onToggle }) {
+  const { t, language } = useAuth()
+  const locale = dateLocale(language)
   const [open, setOpen] = useState(true)
 
   const completed = days.filter(d => dayData[d.day]?.checked).length
   const total     = days.length
 
-  const first = dayLabel(startDate, days[0].day).week
-  const last  = dayLabel(startDate, days[days.length - 1].day).week
+  const first = dayLabel(startDate, days[0].day, locale).week
+  const last  = dayLabel(startDate, days[days.length - 1].day, locale).week
 
   return (
     <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
@@ -162,7 +170,7 @@ function WeekSection({ weekNum, days, dayData, startDate, uid, bookId, onToggle 
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-100 transition-all"
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-slate-700">Semana {weekNum}</span>
+          <span className="text-sm font-bold text-slate-700">{t('plan_week_n', { n: weekNum })}</span>
           <span className="text-xs text-slate-400">{first} – {last}</span>
         </div>
         <div className="flex items-center gap-3">
@@ -195,6 +203,8 @@ function WeekSection({ weekNum, days, dayData, startDate, uid, bookId, onToggle 
 
 // ── Main View ──────────────────────────────────────────────
 export default function ReadingPlanView({ book, uid, onClose, onDelete, onFinish }) {
+  const { t, language } = useAuth()
+  const locale = dateLocale(language)
   const plan      = book.readingPlan
   const allDays   = calculatePlan(plan.totalPages, plan.totalDays)
   const startDate = plan.startDate || new Date().toISOString().slice(0,10)
@@ -251,7 +261,7 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete, onFinish
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-slate-800 line-clamp-1">{book.title}</p>
           <p className="text-[10px] text-slate-400">
-            {plan.totalPages} págs · Meta: {plan.totalDays} días · {plan.dailyPages} págs/día
+            {t('plan_meta_header', { pages: plan.totalPages, days: plan.totalDays, daily: plan.dailyPages })}
           </p>
         </div>
         <button onClick={() => setShowDelete(true)} className="text-slate-300 hover:text-red-400 p-1 flex-shrink-0">
@@ -262,7 +272,7 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete, onFinish
       {/* Progress */}
       <div className="bg-white px-4 pb-3 flex-shrink-0 border-b border-slate-100">
         <div className="flex items-center justify-between mb-1.5">
-          <p className="text-xs text-slate-400">{totalCompleted} de {allDays.length} días completados</p>
+          <p className="text-xs text-slate-400">{t('plan_days_completed', { done: totalCompleted, total: allDays.length })}</p>
           <p className="text-xs font-bold text-amber-500">{pct}%</p>
         </div>
         <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -287,7 +297,7 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete, onFinish
             type="number" min="0" max={plan.totalPages} inputMode="numeric"
             value={currentPage}
             onChange={e => { setCurrentPage(e.target.value); savePageDebounced(e.target.value) }}
-            placeholder="Página actual"
+            placeholder={t('plan_current_page')}
             className="bg-transparent text-sm text-slate-700 outline-none w-full"
           />
           <span className="text-xs text-slate-400 flex-shrink-0">/ {plan.totalPages}</span>
@@ -302,7 +312,7 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete, onFinish
             value={planNote}
             onChange={e => { setPlanNote(e.target.value); saveNoteDebounced(e.target.value) }}
             rows={2} maxLength={300}
-            placeholder="Nota general del libro…"
+            placeholder={t('plan_general_note_short')}
             className="bg-transparent text-sm text-slate-700 outline-none w-full resize-none placeholder-slate-300 leading-relaxed"
           />
         </div>
@@ -330,11 +340,11 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete, onFinish
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-6 bg-black/40">
           <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl text-center">
             <p className="text-4xl mb-3">🎉</p>
-            <p className="font-bold text-slate-800 mb-1">¡Completaste el plan!</p>
-            <p className="text-sm text-slate-500 mb-4">Terminaste todos los días de lectura.</p>
+            <p className="font-bold text-slate-800 mb-1">{t('plan_completed_title')}</p>
+            <p className="text-sm text-slate-500 mb-4">{t('plan_completed_desc')}</p>
             <div className="flex gap-2">
-              <button onClick={() => setShowFinished(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Después</button>
-              <button onClick={() => { onFinish(); onClose() }} className="flex-1 py-3 bg-green-500 text-white rounded-2xl text-sm font-semibold">✅ Marcar como leído</button>
+              <button onClick={() => setShowFinished(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">{t('common_later')}</button>
+              <button onClick={() => { onFinish(); onClose() }} className="flex-1 py-3 bg-green-500 text-white rounded-2xl text-sm font-semibold">{t('plan_mark_read')}</button>
             </div>
           </div>
         </div>
@@ -344,11 +354,11 @@ export default function ReadingPlanView({ book, uid, onClose, onDelete, onFinish
       {showDelete && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-6 bg-black/40">
           <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl">
-            <p className="font-bold text-slate-800 mb-1">Eliminar plan</p>
-            <p className="text-sm text-slate-500 mb-4">Se borrará el plan y todo el progreso. No se puede deshacer.</p>
+            <p className="font-bold text-slate-800 mb-1">{t('plan_delete_title')}</p>
+            <p className="text-sm text-slate-500 mb-4">{t('plan_delete_meta_desc')}</p>
             <div className="flex gap-2">
-              <button onClick={() => setShowDelete(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Cancelar</button>
-              <button onClick={handleDelete} className="flex-1 py-3 bg-red-500 text-white rounded-2xl text-sm font-semibold">Eliminar</button>
+              <button onClick={() => setShowDelete(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">{t('common_cancel')}</button>
+              <button onClick={handleDelete} className="flex-1 py-3 bg-red-500 text-white rounded-2xl text-sm font-semibold">{t('common_delete')}</button>
             </div>
           </div>
         </div>

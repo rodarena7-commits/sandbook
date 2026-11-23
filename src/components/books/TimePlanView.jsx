@@ -2,19 +2,23 @@ import { useState } from 'react'
 import { ArrowLeft, Trash2, Timer, Play, Pause, Square, Bookmark, Clock, X } from 'lucide-react'
 import { setTimePlanMinutes, deleteTimeSession, deleteTimePlan, DEFAULT_TIME_PLAN_MINUTES } from '../../hooks/useReadingPlan'
 import { useReadingTimer, formatClock, formatDuration } from '../../contexts/ReadingTimerContext'
+import { useAuth } from '../../contexts/AuthContext'
+import { dateLocale } from '../../utils/locale'
 
 export const TIME_PRESETS = [10, 15, 20, 30, 45, 60]
 
-function formatDate(iso) {
+function formatDate(iso, locale) {
   const d = new Date(iso)
-  return d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }) +
-    ' · ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' }) +
+    ' · ' + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
 }
 
 export default function TimePlanView({ book, uid, onClose, onDelete }) {
   const plan       = book.timePlan || {}
   const totalPages = plan.totalPages || book.pageCount || 0
   const { timer, remainingMs, start, pause, resume, finishEarly } = useReadingTimer()
+  const { t, language } = useAuth()
+  const locale = dateLocale(language)
 
   const [minutes, setMinutes]       = useState(plan.minutes || DEFAULT_TIME_PLAN_MINUTES)
   const [custom, setCustom]         = useState(TIME_PRESETS.includes(plan.minutes || DEFAULT_TIME_PLAN_MINUTES) ? '' : String(plan.minutes))
@@ -49,7 +53,7 @@ export default function TimePlanView({ book, uid, onClose, onDelete }) {
   }
 
   async function handleDeleteSession(s) {
-    if (!window.confirm('¿Borrar esta sesión del historial?')) return
+    if (!window.confirm(t('tp_delete_session'))) return
     await deleteTimeSession(uid, book.bookId, s.id, s.seconds)
   }
 
@@ -76,11 +80,11 @@ export default function TimePlanView({ book, uid, onClose, onDelete }) {
           <p className="text-sm font-bold text-slate-800 line-clamp-1">{book.title}</p>
           <div className="flex items-center gap-1.5">
             <Timer size={10} className="text-violet-500" />
-            <p className="text-[10px] text-violet-500 font-medium">Plan por tiempo</p>
-            {totalPages > 0 && <p className="text-[10px] text-slate-400">· {totalPages} págs totales</p>}
+            <p className="text-[10px] text-violet-500 font-medium">{t('plan_time_name')}</p>
+            {totalPages > 0 && <p className="text-[10px] text-slate-400">· {t('plan_total_pages_short', { n: totalPages })}</p>}
           </div>
         </div>
-        <button onClick={() => setShowDelete(true)} aria-label="Borrar plan" className="text-slate-300 hover:text-red-400 p-1 flex-shrink-0">
+        <button onClick={() => setShowDelete(true)} aria-label={t('plan_delete_title')} className="text-slate-300 hover:text-red-400 p-1 flex-shrink-0">
           <Trash2 size={15} />
         </button>
       </div>
@@ -91,14 +95,14 @@ export default function TimePlanView({ book, uid, onClose, onDelete }) {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-violet-500 rounded-2xl p-4 text-white text-center shadow-sm">
             <p className="text-2xl font-bold">{formatDuration(totalSeconds)}</p>
-            <p className="text-[11px] text-violet-100 mt-0.5">tiempo total leído</p>
+            <p className="text-[11px] text-violet-100 mt-0.5">{t('tp_total_time')}</p>
           </div>
           <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-slate-100">
             <p className="text-2xl font-bold text-slate-800 flex items-center justify-center gap-1.5">
               <Bookmark size={16} className="text-violet-400" /> {currentPage}
             </p>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              {pct !== null ? `página actual · ${pct}%` : 'página actual'}
+              {pct !== null ? t('tp_current_page_pct', { pct }) : t('tp_current_page')}
             </p>
           </div>
         </div>
@@ -116,19 +120,19 @@ export default function TimePlanView({ book, uid, onClose, onDelete }) {
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-4xl font-bold text-slate-800 tabular-nums">{formatClock(clockMs)}</span>
               <span className="text-[11px] text-slate-400 mt-1">
-                {running ? 'leyendo…' : paused ? 'en pausa' : done ? '¡tiempo cumplido!' : 'listo para empezar'}
+                {running ? t('tp_reading') : paused ? t('tp_paused') : done ? t('tp_done') : t('tp_ready')}
               </span>
             </div>
           </div>
 
           {!mine && (
             <>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide text-center mb-2">¿Cuánto tiempo querés leer?</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide text-center mb-2">{t('tp_how_long')}</p>
               <div className="grid grid-cols-3 gap-2 mb-2">
                 {TIME_PRESETS.map(m => (
                   <button key={m} onClick={() => pickMinutes(m)}
                     className={`py-2 rounded-xl text-sm font-semibold transition-all ${minutes === m && !custom ? 'bg-violet-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600'}`}>
-                    {m} min
+                    {t('plan_min_short', { n: m })}
                   </button>
                 ))}
               </div>
@@ -137,25 +141,24 @@ export default function TimePlanView({ book, uid, onClose, onDelete }) {
                   type="number" min="1" max="600" inputMode="numeric"
                   value={custom}
                   onChange={e => handleCustom(e.target.value)}
-                  placeholder="Otro tiempo"
+                  placeholder={t('plan_other_time')}
                   className={`w-full px-4 py-2.5 pr-16 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-400 ${custom ? 'bg-violet-50 text-violet-700 font-semibold' : 'bg-slate-100 text-slate-800'}`}
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">minutos</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">{t('plan_minutes_unit')}</span>
               </div>
 
               {otherBook ? (
                 <p className="text-xs text-center text-amber-600 bg-amber-50 rounded-xl px-3 py-2.5">
-                  Ya tenés un temporizador corriendo para «{timer.title}». Terminalo antes de empezar otro.
+                  {t('tp_other_running', { title: timer.title })}
                 </p>
               ) : (
                 <button onClick={() => start(book, minutes)} disabled={!(minutes > 0)}
                   className="w-full py-3.5 bg-violet-500 text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-40 active:scale-95 transition-all shadow-sm">
-                  <Play size={16} /> Empezar a leer {minutes} min
+                  <Play size={16} /> {t('tp_start', { n: minutes })}
                 </button>
               )}
               <p className="text-[10px] text-slate-400 text-center mt-2 leading-relaxed">
-                Cuando se cumpla el tiempo suena una alarma y anotás en qué página quedaste.
-                Mientras corre, la pantalla queda encendida.
+                {t('tp_hint')}
               </p>
             </>
           )}
@@ -164,11 +167,11 @@ export default function TimePlanView({ book, uid, onClose, onDelete }) {
             <div className="flex gap-2">
               <button onClick={running ? pause : resume}
                 className="flex-1 py-3 bg-violet-500 text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
-                {running ? <><Pause size={15} /> Pausar</> : <><Play size={15} /> Seguir</>}
+                {running ? <><Pause size={15} /> {t('tp_pause')}</> : <><Play size={15} /> {t('tp_resume')}</>}
               </button>
               <button onClick={finishEarly}
                 className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <Square size={13} /> Terminar
+                <Square size={13} /> {t('tp_finish')}
               </button>
             </div>
           )}
@@ -176,11 +179,11 @@ export default function TimePlanView({ book, uid, onClose, onDelete }) {
 
         {/* Historial */}
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Historial de lectura</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">{t('tp_history')}</p>
           {sessions.length === 0 ? (
             <div className="bg-white rounded-2xl p-6 text-center border border-slate-100">
               <Clock size={22} className="text-slate-200 mx-auto mb-2" />
-              <p className="text-xs text-slate-400">Todavía no hay sesiones. Empezá tu primera lectura con el temporizador.</p>
+              <p className="text-xs text-slate-400">{t('tp_history_empty')}</p>
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-50">
@@ -193,13 +196,13 @@ export default function TimePlanView({ book, uid, onClose, onDelete }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-700">{formatDuration(s.seconds)}</p>
-                      <p className="text-[11px] text-slate-400 capitalize">{formatDate(s.startedAt)}</p>
+                      <p className="text-[11px] text-slate-400 capitalize">{formatDate(s.startedAt, locale)}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-xs font-semibold text-slate-600">pág. {s.startPage} → {s.endPage}</p>
-                      <p className="text-[10px] text-slate-400">{pages} {pages === 1 ? 'página' : 'páginas'}</p>
+                      <p className="text-xs font-semibold text-slate-600">{t('tp_page_range', { start: s.startPage, end: s.endPage })}</p>
+                      <p className="text-[10px] text-slate-400">{t(pages === 1 ? 'tp_pages_one' : 'tp_pages_many', { n: pages })}</p>
                     </div>
-                    <button onClick={() => handleDeleteSession(s)} aria-label="Borrar sesión" className="text-slate-200 hover:text-red-400 p-1 flex-shrink-0">
+                    <button onClick={() => handleDeleteSession(s)} aria-label={t('common_remove')} className="text-slate-200 hover:text-red-400 p-1 flex-shrink-0">
                       <X size={14} />
                     </button>
                   </div>
@@ -213,11 +216,11 @@ export default function TimePlanView({ book, uid, onClose, onDelete }) {
       {showDelete && (
         <div className="fixed inset-0 z-[70] bg-black/40 flex items-end" onClick={() => setShowDelete(false)}>
           <div className="w-full max-w-lg mx-auto bg-white rounded-t-3xl p-5 pb-8" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-slate-800 mb-1">¿Borrar el plan por tiempo?</p>
-            <p className="text-xs text-slate-500 mb-4">Se borra el historial de sesiones y el tiempo total de este libro.</p>
+            <p className="font-bold text-slate-800 mb-1">{t('tp_delete_title')}</p>
+            <p className="text-xs text-slate-500 mb-4">{t('tp_delete_desc')}</p>
             <div className="flex gap-2">
-              <button onClick={() => setShowDelete(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-semibold">Cancelar</button>
-              <button onClick={handleDeletePlan} className="flex-1 py-3 bg-red-500 text-white rounded-2xl text-sm font-semibold">Borrar</button>
+              <button onClick={() => setShowDelete(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-semibold">{t('common_cancel')}</button>
+              <button onClick={handleDeletePlan} className="flex-1 py-3 bg-red-500 text-white rounded-2xl text-sm font-semibold">{t('common_remove')}</button>
             </div>
           </div>
         </div>

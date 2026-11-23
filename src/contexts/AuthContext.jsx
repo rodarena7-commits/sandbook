@@ -283,9 +283,12 @@ export function AuthProvider({ children }) {
     }
   }
 
-  function t(key) {
+  // t('clave') o t('clave', { min: 5 }) → reemplaza {min} en el texto
+  function t(key, vars) {
     const currentLang = language || 'es'
-    return translations[currentLang]?.[key] || translations['es']?.[key] || key
+    let text = translations[currentLang]?.[key] ?? translations['es']?.[key] ?? key
+    if (vars) for (const [k, v] of Object.entries(vars)) text = text.split(`{${k}}`).join(String(v))
+    return text
   }
 
   return (

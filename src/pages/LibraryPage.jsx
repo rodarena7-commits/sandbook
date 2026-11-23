@@ -472,7 +472,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
 
                               {hasTimePlan && (
                                 <p className="text-[10px] text-violet-500 font-medium mt-1.5">
-                                  ⏱ Plan por tiempo · {formatDuration(b.timeTotalSeconds || 0)} leídos
+                                  {t('plan_time_read_summary', { time: formatDuration(b.timeTotalSeconds || 0) })}
                                   {b.currentPage > 0 ? ` · ${t('lib_page_abbrev')} ${b.currentPage}` : ''}
                                 </p>
                               )}
@@ -494,7 +494,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
                                 }`}
                               >
                                 <CalendarDays size={13}/>
-                                {b.biblePlan ? t('lib_bible_plan') : b.relaxPlan ? t('lib_relax_plan') : b.timePlan ? 'Plan por tiempo' : t('lib_create_plan')}
+                                {b.biblePlan ? t('lib_bible_plan') : b.relaxPlan ? t('lib_relax_plan') : b.timePlan ? t('plan_time_name') : t('lib_create_plan')}
                               </button>
                             ) : (
                               <button

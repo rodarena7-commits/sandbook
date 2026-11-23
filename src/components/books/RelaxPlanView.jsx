@@ -7,22 +7,26 @@ import {
   savePlanMeta, deleteRelaxPlan,
   deleteRelaxHistoryDay, updateRelaxHistoryDay,
 } from '../../hooks/useReadingPlan'
+import { useAuth } from '../../contexts/AuthContext'
+import { dateLocale } from '../../utils/locale'
 
 function debounce(fn, ms) {
   let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms) }
 }
 
-function formatDate(dateStr) {
+function formatDate(dateStr, locale) {
   const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+  return d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
 }
 export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: initialIsBible = false, onFinish }) {
   const isBible = false // Plan Relax siempre realiza seguimiento por páginas
+  const { t, language } = useAuth()
+  const locale = dateLocale(language)
   const plan       = book.relaxPlan || {}
   const totalPages = plan.totalPages || 0
-  const labelMarcador  = '¿En qué página quedaste?'
-  const labelPagina    = 'Página'
-  const labelHistorial = 'págs leídas'
+  const labelMarcador  = t('plan_where_left')
+  const labelPagina    = t('common_page')
+  const labelHistorial = t('plan_pages_read')
 
   const [currentPage,   setCurrentPage]   = useState(book.currentPage || 0)
   const [relaxNote,     setRelaxNote]     = useState(book.relaxNote || '')
@@ -118,8 +122,8 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
           <p className="text-sm font-bold text-slate-800 line-clamp-1">{book.title}</p>
           <div className="flex items-center gap-1.5">
             <Coffee size={10} className="text-blue-400" />
-            <p className="text-[10px] text-blue-400 font-medium">Plan Relax</p>
-            {totalPages > 0 && <p className="text-[10px] text-slate-400">· {totalPages} págs totales</p>}
+            <p className="text-[10px] text-blue-400 font-medium">{t('plan_relax_name')}</p>
+            {totalPages > 0 && <p className="text-[10px] text-slate-400">· {t('plan_total_pages_short', { n: totalPages })}</p>}
           </div>
         </div>
         <button onClick={() => setShowDelete(true)} className="text-slate-300 hover:text-red-400 p-1 flex-shrink-0">
@@ -155,13 +159,13 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
             {isComplete ? (
               <>
                 <p className="text-2xl mb-1">✅</p>
-                <p className="text-sm font-bold">¡Libro terminado!</p>
-                <p className="text-xs text-white/80 mt-0.5">Marcado como leído</p>
+                <p className="text-sm font-bold">{t('plan_book_finished')}</p>
+                <p className="text-xs text-white/80 mt-0.5">{t('plan_marked_read')}</p>
               </>
             ) : (
               <>
                 <p className="text-3xl font-bold">{totalRead}</p>
-                <p className="text-xs text-blue-100 mt-0.5">{labelHistorial} en total</p>
+                <p className="text-xs text-blue-100 mt-0.5">{t('plan_pages_read_total')}</p>
               </>
             )}
           </div>
@@ -169,11 +173,11 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
 
         {/* Daily history */}
         <div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Historial por día</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">{t('plan_daily_history')}</p>
           {sortedHistory.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
               <p className="text-xs text-slate-400">
-                Actualizá el marcador para que se registre tu progreso diario automáticamente
+                {t('plan_history_empty')}
               </p>
             </div>
           ) : (
@@ -183,7 +187,7 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
                   {editingDay === date ? (
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
-                        <p className="text-xs font-semibold text-slate-700 capitalize mb-1">{formatDate(date)}</p>
+                        <p className="text-xs font-semibold text-slate-700 capitalize mb-1">{formatDate(date, locale)}</p>
                         <input
                           type={isBible ? 'text' : 'number'}
                           inputMode={isBible ? 'text' : 'numeric'}
@@ -191,7 +195,7 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
                           onChange={e => setEditDayPage(e.target.value)}
                           autoFocus
                           className="w-full px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-300"
-                          placeholder={isBible ? 'Versículo' : 'Página'}
+                          placeholder={isBible ? 'Versículo' : t('common_page')}
                         />
                       </div>
                       <button
@@ -210,10 +214,10 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
                   ) : (
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs font-semibold text-slate-700 capitalize">{formatDate(date)}</p>
+                        <p className="text-xs font-semibold text-slate-700 capitalize">{formatDate(date, locale)}</p>
                         {data.endPage > 0 && (
                           <p className="text-[11px] text-slate-400 mt-0.5">
-                            {isBible ? `Versículo: ${data.endPage}` : `Marcador en pág. ${data.endPage}`}
+                            {isBible ? `Versículo: ${data.endPage}` : t('plan_marker_at', { n: data.endPage })}
                           </p>
                         )}
                       </div>
@@ -248,12 +252,12 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
         {/* Notepad */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Anotador</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">{t('plan_notepad')}</p>
             <button
               onClick={() => { setShowAddNote(true); setNewNotePage(String(currentPage)) }}
               className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 text-white rounded-full text-xs font-semibold active:scale-95 transition-all"
             >
-              <Plus size={12} /> Nueva nota
+              <Plus size={12} /> {t('plan_new_note')}
             </button>
           </div>
 
@@ -267,17 +271,17 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
                   min="0" inputMode={isBible ? 'text' : 'numeric'}
                   value={newNotePage}
                   onChange={e => setNewNotePage(e.target.value)}
-                  placeholder={isBible ? 'Versículo' : 'Pág.'}
+                  placeholder={isBible ? 'Versículo' : t('plan_page_short')}
                   className={`${isBible ? 'w-32' : 'w-20'} px-2 py-1 bg-white border border-amber-200 rounded-xl text-xs text-slate-700 outline-none focus:ring-2 focus:ring-amber-300`}
                 />
-                <span className="text-xs text-slate-400">{isBible ? 'versículo' : 'página'}</span>
+                <span className="text-xs text-slate-400">{isBible ? 'versículo' : t('plan_page_word')}</span>
               </div>
               <textarea
                 value={newNoteText}
                 onChange={e => setNewNoteText(e.target.value)}
                 rows={3}
                 maxLength={500}
-                placeholder="Escribí tu nota aquí…"
+                placeholder={t('plan_note_placeholder')}
                 autoFocus
                 className="w-full px-3 py-2 bg-white border border-amber-100 rounded-xl text-sm text-slate-700 placeholder-slate-300 outline-none focus:ring-2 focus:ring-amber-300 resize-none mb-2"
               />
@@ -286,14 +290,14 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
                   onClick={() => setShowAddNote(false)}
                   className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-medium"
                 >
-                  Cancelar
+                  {t('common_cancel')}
                 </button>
                 <button
                   onClick={handleAddNote}
                   disabled={!newNoteText.trim()}
                   className="flex-1 py-2 bg-amber-500 text-white rounded-xl text-xs font-semibold disabled:opacity-40"
                 >
-                  Guardar
+                  {t('common_save')}
                 </button>
               </div>
             </div>
@@ -306,7 +310,7 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
               <p className="text-xs text-slate-400">
                 {isBible
                   ? 'Anotá reflexiones o versículos destacados con su referencia bíblica'
-                  : 'Anotá reflexiones, frases importantes o momentos del libro con su número de página'}
+                  : t('plan_notes_empty')}
               </p>
             </div>
           ) : (
@@ -316,11 +320,11 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Bookmark size={10} className="text-amber-500 flex-shrink-0" />
                     <span className="text-[10px] font-semibold text-amber-600">
-                      {isBible ? note.page : `Pág. ${note.page}`}
+                      {isBible ? note.page : t('plan_note_page', { n: note.page })}
                     </span>
                     <span className="text-[10px] text-slate-300">·</span>
                     <span className="text-[10px] text-slate-400">
-                      {new Date(note.createdAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                      {new Date(note.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
                     </span>
                     <button
                       onClick={() => handleDeleteNote(id)}
@@ -338,14 +342,14 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
 
         {/* General note */}
         <div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Nota general del libro</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">{t('plan_general_note')}</p>
           <div className="bg-white rounded-2xl border border-slate-100 p-3">
             <textarea
               value={relaxNote}
               onChange={e => { setRelaxNote(e.target.value); saveNoteDebounced(e.target.value) }}
               rows={3}
               maxLength={500}
-              placeholder="Impresiones generales, personajes favoritos, lo que sentís al leer…"
+              placeholder={t('plan_general_note_placeholder')}
               className="w-full bg-transparent text-sm text-slate-700 outline-none resize-none placeholder-slate-300 leading-relaxed"
             />
           </div>
@@ -358,22 +362,22 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
       {showDelete && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-6 bg-black/40">
           <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl">
-            <p className="font-bold text-slate-800 mb-1">Eliminar plan</p>
+            <p className="font-bold text-slate-800 mb-1">{t('plan_delete_title')}</p>
             <p className="text-sm text-slate-500 mb-4">
-              Se borrará el plan, el historial y todas las notas. No se puede deshacer.
+              {t('plan_delete_relax_desc')}
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowDelete(false)}
                 className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium"
               >
-                Cancelar
+                {t('common_cancel')}
               </button>
               <button
                 onClick={handleDelete}
                 className="flex-1 py-3 bg-red-500 text-white rounded-2xl text-sm font-semibold"
               >
-                Eliminar
+                {t('common_delete')}
               </button>
             </div>
           </div>

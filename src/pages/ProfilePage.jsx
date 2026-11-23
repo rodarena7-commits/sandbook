@@ -462,6 +462,7 @@ function BookRow({ book }) {
 
 // ── Plan Screen ────────────────────────────────────────────
 function PlanScreen({ books, uid, updateStatus, onClose }) {
+  const { t } = useAuth()
   const planBooks    = books.filter(b => b.readingPlan || b.relaxPlan || b.biblePlan || b.timePlan)
   const nonPlanBooks = books.filter(b => !b.readingPlan && !b.relaxPlan && !b.biblePlan && !b.timePlan && b.status !== 'read')
 
@@ -575,7 +576,7 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
                     : book.timePlan ? 'bg-violet-100 text-violet-600'
                     : 'bg-amber-100 text-amber-600'
                   }`}>
-                    {book.biblePlan ? 'Plan Bíblico' : book.relaxPlan ? 'Plan Relax' : book.timePlan ? `Plan por tiempo · ${formatDuration(book.timeTotalSeconds || 0)}` : 'Plan con Meta'}
+                    {book.biblePlan ? t('plan_bible_name') : book.relaxPlan ? t('plan_relax_name') : book.timePlan ? `${t('plan_time_name')} · ${formatDuration(book.timeTotalSeconds || 0)}` : t('plan_meta_name')}
                   </span>
                   {pct !== null && (
                     <>
