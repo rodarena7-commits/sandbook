@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { X, ChevronLeft, ChevronRight, Loader2, Trash2 } from 'lucide-react'
 import { loadPhotoHistory, deletePhotoFromHistory } from '../../hooks/usePhotoHistory'
+import ZoomableImage from './ZoomableImage'
 
 function dateLabel(ts) {
   const ms = ts?.toMillis?.() || (ts?.seconds || 0) * 1000
@@ -14,6 +15,7 @@ export default function PhotoViewer({ uid, currentUrl, name, canDelete = false, 
   const [history, setHistory] = useState(null)
   const [index, setIndex]     = useState(0)
   const touchX = useRef(null)
+  const [zoomed, setZoomed] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -54,9 +56,11 @@ export default function PhotoViewer({ uid, currentUrl, name, canDelete = false, 
   return (
     <div
       className="fixed inset-0 z-[300] bg-black flex flex-col"
-      onTouchStart={e => { touchX.current = e.touches[0].clientX }}
+      // Deslizar cambia de foto sólo si no está ampliada y es con un solo dedo
+      onTouchStart={e => { touchX.current = !zoomed && e.touches.length === 1 ? e.touches[0].clientX : null }}
+      onTouchMove={e => { if (e.touches.length > 1) touchX.current = null }}
       onTouchEnd={e => {
-        if (touchX.current === null) return
+        if (touchX.current === null || zoomed) return
         const dx = e.changedTouches[0].clientX - touchX.current
         if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1)
         touchX.current = null
@@ -84,19 +88,18 @@ export default function PhotoViewer({ uid, currentUrl, name, canDelete = false, 
 
       <div className="flex-1 relative flex items-center justify-center px-2 min-h-0">
         {photo ? (
-          <img src={photo.url} alt="" referrerPolicy="no-referrer"
-            className="max-w-full max-h-full object-contain select-none" draggable={false} />
+          <ZoomableImage src={photo.url} onZoomChange={setZoomed} />
         ) : (
           <p className="text-white/50 text-sm">Sin foto de perfil</p>
         )}
 
-        {index > 0 && (
+        {index > 0 && !zoomed && (
           <button onClick={() => go(-1)} aria-label="Foto anterior"
             className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center">
             <ChevronLeft size={22} />
           </button>
         )}
-        {index < photos.length - 1 && (
+        {index < photos.length - 1 && !zoomed && (
           <button onClick={() => go(1)} aria-label="Foto siguiente"
             className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center">
             <ChevronRight size={22} />

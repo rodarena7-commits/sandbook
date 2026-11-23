@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { X, Check, ChevronRight, User, Eye, EyeOff, MessageCircle, Bell, BellOff, HelpCircle } from 'lucide-react'
+import { X, Check, ChevronRight, User, Eye, EyeOff, MessageCircle, Bell, BellOff, HelpCircle, Globe } from 'lucide-react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { resetSectionTours } from '../ui/SectionTour'
+import { useAuth } from '../../contexts/AuthContext'
+import { LANGUAGES } from '../../utils/languages'
 
 const MESSAGING_OPTIONS = [
   { key: 'everyone',  label: 'Todos',                  desc: 'Cualquier usuario puede escribirte' },
@@ -39,6 +41,7 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
   const [notifsEnabled, setNotifsEnabled] = useState(profile?.notificationsEnabled !== false)
   const [msgPrivacy, setMsgPrivacy]       = useState(profile?.messagingPrivacy || 'everyone')
   const [toursReset, setToursReset]       = useState(false)
+  const { language, changeLanguage, t }   = useAuth()
 
   async function save(field, value) {
     await updateDoc(doc(db, 'users', uid), { [field]: value })
@@ -70,7 +73,7 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
-          <h3 className="font-bold text-slate-800">Configuración</h3>
+          <h3 className="font-bold text-slate-800">{t('set_title')}</h3>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
             <X size={16} />
           </button>
@@ -119,6 +122,29 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
               description="Recibir recomendaciones y mensajes"
               icon={notifsEnabled ? Bell : BellOff}
             />
+          </div>
+
+          {/* Idioma */}
+          <div className="py-4 border-b border-slate-100" data-tour="set-language">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1 flex items-center gap-1.5">
+              <Globe size={11} /> {t('set_language')}
+            </p>
+            <p className="text-[11px] text-slate-400 mb-3">{t('set_language_desc')}</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {LANGUAGES.map(l => (
+                <button key={l.code} onClick={() => changeLanguage(l.code)}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl text-left transition-all ${
+                    language === l.code ? 'bg-amber-50 border border-amber-300' : 'bg-slate-50 border border-transparent'
+                  }`}>
+                  <span className="text-lg leading-none">{l.flag}</span>
+                  <span className={`flex-1 text-sm ${language === l.code ? 'font-bold text-amber-700' : 'text-slate-700'}`}>{l.name}</span>
+                  {language === l.code && <Check size={14} className="text-amber-500 flex-shrink-0" />}
+                </button>
+              ))}
+            </div>
+            {language !== 'es' && (
+              <p className="text-[10px] text-slate-400 mt-2">{t('set_language_partial')}</p>
+            )}
           </div>
 
           {/* Guías */}

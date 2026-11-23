@@ -1,3 +1,12 @@
+import fr from './i18n/fr'
+import de from './i18n/de'
+import it from './i18n/it'
+import ru from './i18n/ru'
+import zh from './i18n/zh'
+import ja from './i18n/ja'
+import hi from './i18n/hi'
+import ar from './i18n/ar'
+
 export const translations = {
   es: {
     // Navigation
@@ -214,6 +223,40 @@ export const translations = {
     prof_mutual_followers: 'Seguidores mutuos',
     prof_avatar_picker: 'Foto de perfil',
     prof_cover_picker: 'Imagen de portada',
+
+    // Configuración e idioma
+    set_title: 'Configuración',
+    set_language: 'Idioma',
+    set_language_desc: 'Al instalar la app se eligió según tu ubicación. Podés cambiarlo cuando quieras.',
+    set_language_partial: 'Algunas pantallas todavía se muestran en español.',
+
+    // Tutorial
+    tut_skip: 'Saltar tutorial',
+    tut_back: 'Atrás',
+    tut_next: 'Siguiente',
+    tut_start: '¡Empezar!',
+    tut_welcome_title: '¡Bienvenido a Sandbook!',
+    tut_welcome_desc: 'Tu compañero de lectura. Te mostramos rápido dónde tocar para buscar libros y autores, guardarlos y usar todas las herramientas de la app.',
+    tut_lang_title: 'Elegí tu idioma',
+    tut_lang_desc: 'Elegimos el idioma según tu ubicación. Si preferís otro, tocalo acá. También podés cambiarlo cuando quieras en Perfil → ⚙️ Configuración → Idioma.',
+    tut_search_title: 'Buscá libros',
+    tut_search_desc: 'Tocá el ícono 🔍 "Buscar" en el menú de abajo. Arriba elegí Título, Autor o ISBN para filtrar tu búsqueda.',
+    tut_scan_title: 'Escaneá el código de barras',
+    tut_scan_desc: 'En Buscar, elegí "ISBN" y tocá el ícono de cámara 📷 a la derecha del buscador para escanear el código de barras del libro.',
+    tut_save_title: 'Guardá un libro',
+    tut_save_desc: 'En cada resultado tocá "+ Agregar" para guardarlo en tu biblioteca, o "Ver" para ver el detalle y elegir su estado. También podés comparar precios.',
+    tut_authors_title: 'Autores favoritos',
+    tut_authors_desc: 'En Comunidad → Descubrir → Escritores buscá autores, mirá su biografía y agregalos a favoritos. En tu Perfil, tocá un autor para ver sus libros.',
+    tut_library_title: 'Tu Biblioteca',
+    tut_library_desc: 'En "Biblioteca" (primer ícono del menú) guardá libros como "Leyendo", "Leído" o "Pendiente". Tocá la ⭐ para marcarlo como favorito.',
+    tut_plans_title: 'Planes de lectura',
+    tut_plans_desc: 'Elegí Plan Relax (marcá tu página), Plan con Meta (páginas por día) o Plan por tiempo (leé unos minutos con temporizador y alarma).',
+    tut_community_title: 'Comunidad',
+    tut_community_desc: 'Seguí lectores, publicá reseñas en el Feed, compartí estados de 24 horas y explorá el Marketplace.',
+    tut_messages_title: 'Mensajes',
+    tut_messages_desc: 'Chateá en privado con otros lectores: mensajes de texto, de voz y videollamadas.',
+    tut_market_title: 'Marketplace',
+    tut_market_desc: 'En Comunidad encontrás el Marketplace: publicá libros que ya no usás y los compradores te contactan por mensaje.',
   },
   en: {
     // Navigation
@@ -430,6 +473,40 @@ export const translations = {
     prof_mutual_followers: 'Mutual followers',
     prof_avatar_picker: 'Profile photo',
     prof_cover_picker: 'Cover image',
+
+    // Settings & language
+    set_title: 'Settings',
+    set_language: 'Language',
+    set_language_desc: 'When you installed the app it was chosen based on your location. You can change it anytime.',
+    set_language_partial: 'Some screens are still shown in Spanish.',
+
+    // Tutorial
+    tut_skip: 'Skip tutorial',
+    tut_back: 'Back',
+    tut_next: 'Next',
+    tut_start: "Let's go!",
+    tut_welcome_title: 'Welcome to Sandbook!',
+    tut_welcome_desc: 'Your reading companion. Here is a quick tour of where to tap to find books and authors, save them and use every tool in the app.',
+    tut_lang_title: 'Choose your language',
+    tut_lang_desc: 'We picked the language based on your location. If you prefer another one, tap it here. You can also change it anytime in Profile → ⚙️ Settings → Language.',
+    tut_search_title: 'Search for books',
+    tut_search_desc: 'Tap the 🔍 "Search" icon in the bottom menu. At the top choose Title, Author or ISBN to filter your search.',
+    tut_scan_title: 'Scan the barcode',
+    tut_scan_desc: 'In Search, choose "ISBN" and tap the camera icon 📷 to the right of the search bar to scan the book barcode.',
+    tut_save_title: 'Save a book',
+    tut_save_desc: 'On each result tap "+ Add" to save it to your library, or "View" to see the details and choose its status. You can also compare prices.',
+    tut_authors_title: 'Favorite authors',
+    tut_authors_desc: 'In Community → Discover → Writers, search for authors, read their biography and add them to your favorites. In your Profile, tap an author to see their books.',
+    tut_library_title: 'Your Library',
+    tut_library_desc: 'In "Library" (first icon in the menu) save books as "Reading", "Read" or "Pending". Tap the ⭐ to mark a favorite.',
+    tut_plans_title: 'Reading plans',
+    tut_plans_desc: 'Choose a Relax Plan (mark your page), a Goal Plan (pages per day) or a Time Plan (read for a few minutes with a timer and alarm).',
+    tut_community_title: 'Community',
+    tut_community_desc: 'Follow readers, post reviews in the Feed, share 24-hour statuses and explore the Marketplace.',
+    tut_messages_title: 'Messages',
+    tut_messages_desc: 'Chat privately with other readers: text messages, voice messages and video calls.',
+    tut_market_title: 'Marketplace',
+    tut_market_desc: 'In Community you will find the Marketplace: list books you no longer use and buyers will contact you by message.',
   },
   pt: {
     // Navigation
@@ -646,5 +723,40 @@ export const translations = {
     prof_mutual_followers: 'Seguidores mútuos',
     prof_avatar_picker: 'Foto de perfil',
     prof_cover_picker: 'Imagem de capa',
-  }
+
+    // Configurações e idioma
+    set_title: 'Configurações',
+    set_language: 'Idioma',
+    set_language_desc: 'Ao instalar o app, ele foi escolhido de acordo com a sua localização. Você pode mudá-lo quando quiser.',
+    set_language_partial: 'Algumas telas ainda aparecem em espanhol.',
+
+    // Tutorial
+    tut_skip: 'Pular tutorial',
+    tut_back: 'Voltar',
+    tut_next: 'Próximo',
+    tut_start: 'Começar!',
+    tut_welcome_title: 'Boas-vindas ao Sandbook!',
+    tut_welcome_desc: 'Seu companheiro de leitura. Mostramos rapidinho onde tocar para buscar livros e autores, salvá-los e usar todas as ferramentas do app.',
+    tut_lang_title: 'Escolha seu idioma',
+    tut_lang_desc: 'Escolhemos o idioma de acordo com a sua localização. Se preferir outro, toque nele aqui. Você também pode mudá-lo em Perfil → ⚙️ Configurações → Idioma.',
+    tut_search_title: 'Busque livros',
+    tut_search_desc: 'Toque no ícone 🔍 "Buscar" no menu de baixo. No topo escolha Título, Autor ou ISBN para filtrar a busca.',
+    tut_scan_title: 'Escaneie o código de barras',
+    tut_scan_desc: 'Em Buscar, escolha "ISBN" e toque no ícone da câmera 📷 à direita da busca para escanear o código de barras do livro.',
+    tut_save_title: 'Salve um livro',
+    tut_save_desc: 'Em cada resultado toque em "+ Adicionar" para salvá-lo na sua biblioteca, ou em "Ver" para ver os detalhes e escolher o status. Você também pode comparar preços.',
+    tut_authors_title: 'Autores favoritos',
+    tut_authors_desc: 'Em Comunidade → Descobrir → Escritores, busque autores, veja a biografia e adicione aos favoritos. No seu Perfil, toque em um autor para ver os livros dele.',
+    tut_library_title: 'Sua Biblioteca',
+    tut_library_desc: 'Em "Biblioteca" (primeiro ícone do menu) salve livros como "Lendo", "Lido" ou "Pendente". Toque na ⭐ para marcar como favorito.',
+    tut_plans_title: 'Planos de leitura',
+    tut_plans_desc: 'Escolha o Plano Relax (marque sua página), o Plano com Meta (páginas por dia) ou o Plano por tempo (leia alguns minutos com cronômetro e alarme).',
+    tut_community_title: 'Comunidade',
+    tut_community_desc: 'Siga leitores, publique resenhas no Feed, compartilhe status de 24 horas e explore o Marketplace.',
+    tut_messages_title: 'Mensagens',
+    tut_messages_desc: 'Converse em particular com outros leitores: mensagens de texto, de voz e videochamadas.',
+    tut_market_title: 'Marketplace',
+    tut_market_desc: 'Na Comunidade você encontra o Marketplace: anuncie livros que não usa mais e os compradores entram em contato por mensagem.',
+  },
+  fr, de, it, ru, zh, ja, hi, ar,
 }

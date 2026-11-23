@@ -16,10 +16,21 @@ import { Capacitor } from '@capacitor/core'
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import { detectUserLocation } from '../utils/translationService'
 import { translations } from '../utils/translations'
+import { applyDocumentLanguage, SUPPORTED } from '../utils/languages'
 import { setAnalyticsUser } from '../utils/analytics'
 import { sendAutoWelcome } from '../utils/welcome'
 
 const AuthContext = createContext(null)
+
+// Idioma elegido a mano en este teléfono (también antes de iniciar sesión):
+// tiene prioridad sobre la detección por ubicación.
+const LANG_KEY = 'sandbook_language'
+function savedLanguage() {
+  try {
+    const v = localStorage.getItem(LANG_KEY)
+    return v && SUPPORTED.includes(v) ? v : null
+  } catch { return null }
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -132,7 +143,8 @@ export function AuthProvider({ children }) {
           }
           setOnline(firebaseUser.uid, true)
         } else {
-          const { countryCode, language: detectedLang } = await detectUserLocation()
+          const { countryCode, language: autoLang } = await detectUserLocation()
+          const detectedLang = savedLanguage() || autoLang
           const newProfile = {
             uid: firebaseUser.uid,
             displayName: firebaseUser.displayName || 'Lector',
@@ -206,7 +218,8 @@ export function AuthProvider({ children }) {
     await updateProfile(cred.user, { displayName: name })
     // Forzar que onAuthStateChanged recrea el perfil con el displayName correcto
     const ref = doc(db, 'users', cred.user.uid)
-    const { countryCode, language: detectedLang } = await detectUserLocation()
+    const { countryCode, language: autoLang } = await detectUserLocation()
+    const detectedLang = savedLanguage() || autoLang
     const newProfile = {
       uid:         cred.user.uid,
       displayName: name,
@@ -241,9 +254,14 @@ export function AuthProvider({ children }) {
     await signOut(auth)
   }
 
+  // <html lang> y dirección de escritura (el árabe va de derecha a izquierda)
+  useEffect(() => { applyDocumentLanguage(language) }, [language])
+
   // Detect language on startup for guest/unlogged users
   useEffect(() => {
     async function initLanguage() {
+      const saved = savedLanguage()
+      if (saved) { setLanguageState(saved); return }
       const { language: detectedLang } = await detectUserLocation()
       setLanguageState(detectedLang)
     }
@@ -254,6 +272,7 @@ export function AuthProvider({ children }) {
 
   async function changeLanguage(newLang) {
     setLanguageState(newLang)
+    try { localStorage.setItem(LANG_KEY, newLang) } catch {}
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid), { language: newLang })
