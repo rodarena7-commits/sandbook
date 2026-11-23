@@ -1,6 +1,7 @@
 // Palabras comunes reutilizadas en toda la app
 export default {
   es: {
+    common_d_ago: 'hace {n} d',
     common_cancel: 'Cancelar', common_save: 'Guardar', common_delete: 'Eliminar', common_remove: 'Borrar',
     common_close: 'Cerrar', common_saving: 'Guardando…', common_loading: 'Cargando…', common_send: 'Enviar',
     common_add: 'Agregar', common_done: 'Listo', common_edit: 'Editar', common_share: 'Compartir',
@@ -9,6 +10,7 @@ export default {
     common_pages_short: '{n} págs', common_now: 'ahora', common_min_ago: 'hace {n} min', common_h_ago: 'hace {n} h',
   },
   en: {
+    common_d_ago: '{n} d ago',
     common_cancel: 'Cancel', common_save: 'Save', common_delete: 'Delete', common_remove: 'Remove',
     common_close: 'Close', common_saving: 'Saving…', common_loading: 'Loading…', common_send: 'Send',
     common_add: 'Add', common_done: 'Done', common_edit: 'Edit', common_share: 'Share',
@@ -17,6 +19,7 @@ export default {
     common_pages_short: '{n} pp.', common_now: 'now', common_min_ago: '{n} min ago', common_h_ago: '{n} h ago',
   },
   pt: {
+    common_d_ago: 'há {n} d',
     common_cancel: 'Cancelar', common_save: 'Salvar', common_delete: 'Excluir', common_remove: 'Apagar',
     common_close: 'Fechar', common_saving: 'Salvando…', common_loading: 'Carregando…', common_send: 'Enviar',
     common_add: 'Adicionar', common_done: 'Pronto', common_edit: 'Editar', common_share: 'Compartilhar',
@@ -25,6 +28,7 @@ export default {
     common_pages_short: '{n} págs', common_now: 'agora', common_min_ago: 'há {n} min', common_h_ago: 'há {n} h',
   },
   fr: {
+    common_d_ago: 'il y a {n} j',
     common_cancel: 'Annuler', common_save: 'Enregistrer', common_delete: 'Supprimer', common_remove: 'Effacer',
     common_close: 'Fermer', common_saving: 'Enregistrement…', common_loading: 'Chargement…', common_send: 'Envoyer',
     common_add: 'Ajouter', common_done: 'Terminé', common_edit: 'Modifier', common_share: 'Partager',
@@ -33,6 +37,7 @@ export default {
     common_pages_short: '{n} p.', common_now: "à l'instant", common_min_ago: 'il y a {n} min', common_h_ago: 'il y a {n} h',
   },
   de: {
+    common_d_ago: 'vor {n} T.',
     common_cancel: 'Abbrechen', common_save: 'Speichern', common_delete: 'Löschen', common_remove: 'Entfernen',
     common_close: 'Schließen', common_saving: 'Wird gespeichert…', common_loading: 'Wird geladen…', common_send: 'Senden',
     common_add: 'Hinzufügen', common_done: 'Fertig', common_edit: 'Bearbeiten', common_share: 'Teilen',
@@ -41,6 +46,7 @@ export default {
     common_pages_short: '{n} S.', common_now: 'jetzt', common_min_ago: 'vor {n} Min.', common_h_ago: 'vor {n} Std.',
   },
   it: {
+    common_d_ago: '{n} g fa',
     common_cancel: 'Annulla', common_save: 'Salva', common_delete: 'Elimina', common_remove: 'Cancella',
     common_close: 'Chiudi', common_saving: 'Salvataggio…', common_loading: 'Caricamento…', common_send: 'Invia',
     common_add: 'Aggiungi', common_done: 'Fatto', common_edit: 'Modifica', common_share: 'Condividi',
@@ -49,6 +55,7 @@ export default {
     common_pages_short: '{n} pag.', common_now: 'ora', common_min_ago: '{n} min fa', common_h_ago: '{n} h fa',
   },
   ru: {
+    common_d_ago: '{n} д назад',
     common_cancel: 'Отмена', common_save: 'Сохранить', common_delete: 'Удалить', common_remove: 'Стереть',
     common_close: 'Закрыть', common_saving: 'Сохранение…', common_loading: 'Загрузка…', common_send: 'Отправить',
     common_add: 'Добавить', common_done: 'Готово', common_edit: 'Изменить', common_share: 'Поделиться',
@@ -57,6 +64,7 @@ export default {
     common_pages_short: '{n} стр.', common_now: 'сейчас', common_min_ago: '{n} мин назад', common_h_ago: '{n} ч назад',
   },
   zh: {
+    common_d_ago: '{n} 天前',
     common_cancel: '取消', common_save: '保存', common_delete: '删除', common_remove: '移除',
     common_close: '关闭', common_saving: '正在保存…', common_loading: '加载中…', common_send: '发送',
     common_add: '添加', common_done: '完成', common_edit: '编辑', common_share: '分享',
@@ -65,6 +73,7 @@ export default {
     common_pages_short: '{n} 页', common_now: '刚刚', common_min_ago: '{n} 分钟前', common_h_ago: '{n} 小时前',
   },
   ja: {
+    common_d_ago: '{n} 日前',
     common_cancel: 'キャンセル', common_save: '保存', common_delete: '削除', common_remove: '消去',
     common_close: '閉じる', common_saving: '保存中…', common_loading: '読み込み中…', common_send: '送信',
     common_add: '追加', common_done: '完了', common_edit: '編集', common_share: '共有',
@@ -73,6 +82,7 @@ export default {
     common_pages_short: '{n} ページ', common_now: '今', common_min_ago: '{n} 分前', common_h_ago: '{n} 時間前',
   },
   hi: {
+    common_d_ago: '{n} दिन पहले',
     common_cancel: 'रद्द करें', common_save: 'सहेजें', common_delete: 'हटाएँ', common_remove: 'मिटाएँ',
     common_close: 'बंद करें', common_saving: 'सहेजा जा रहा है…', common_loading: 'लोड हो रहा है…', common_send: 'भेजें',
     common_add: 'जोड़ें', common_done: 'हो गया', common_edit: 'बदलें', common_share: 'शेयर करें',
@@ -81,6 +91,7 @@ export default {
     common_pages_short: '{n} पेज', common_now: 'अभी', common_min_ago: '{n} मिनट पहले', common_h_ago: '{n} घंटे पहले',
   },
   ar: {
+    common_d_ago: 'قبل {n} يوم',
     common_cancel: 'إلغاء', common_save: 'حفظ', common_delete: 'حذف', common_remove: 'إزالة',
     common_close: 'إغلاق', common_saving: 'جارٍ الحفظ…', common_loading: 'جارٍ التحميل…', common_send: 'إرسال',
     common_add: 'إضافة', common_done: 'تم', common_edit: 'تعديل', common_share: 'مشاركة',

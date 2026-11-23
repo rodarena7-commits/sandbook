@@ -33,6 +33,7 @@ function Avatar({ photoURL, name, size = 8 }) {
 
 // ── Detalle de un listado ──────────────────────────────────
 function ListingDetail({ listing, myUid, myProfile, onClose, onMessage }) {
+  const { t } = useAuth()
   const { comments, loading } = useListingComments(listing.id)
   const [text, setText]     = useState('')
   const [sending, setSend]  = useState(false)
@@ -59,7 +60,7 @@ function ListingDetail({ listing, myUid, myProfile, onClose, onMessage }) {
         </button>
         <p className="font-bold text-slate-800 flex-1 line-clamp-1">{listing.bookTitle}</p>
         {listing.status === 'sold' && (
-          <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">Vendido</span>
+          <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">{t('mk_sold')}</span>
         )}
       </div>
 
@@ -101,7 +102,7 @@ function ListingDetail({ listing, myUid, myProfile, onClose, onMessage }) {
               onClick={() => onMessage(listing)}
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
             >
-              <MessageCircle size={15} /> Contactar vendedor
+              <MessageCircle size={15} /> {t('mk_contact')}
             </button>
           )}
           {isOwner && listing.status === 'active' && (
@@ -109,7 +110,7 @@ function ListingDetail({ listing, myUid, myProfile, onClose, onMessage }) {
               onClick={() => markAsSold(listing.id)}
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-500 text-white rounded-2xl text-sm font-semibold active:scale-95 transition-all"
             >
-              <Check size={15} /> Marcar como vendido
+              <Check size={15} /> {t('mk_mark_sold')}
             </button>
           )}
           {isOwner && (
@@ -125,11 +126,11 @@ function ListingDetail({ listing, myUid, myProfile, onClose, onMessage }) {
         {/* Comentarios */}
         <div>
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
-            Comentarios ({comments.length})
+            {t('mk_comments', { n: comments.length })}
           </p>
           {loading && <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin text-amber-400" /></div>}
           {!loading && comments.length === 0 && (
-            <p className="text-xs text-slate-400 text-center py-4">Sin comentarios aún. ¡Sé el primero!</p>
+            <p className="text-xs text-slate-400 text-center py-4">{t('mk_no_comments')}</p>
           )}
           <div className="flex flex-col gap-3 mb-4">
             {comments.map(c => (
@@ -159,7 +160,7 @@ function ListingDetail({ listing, myUid, myProfile, onClose, onMessage }) {
         <input
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder="Escribí un comentario…"
+          placeholder={t('mk_comment_placeholder')}
           className="flex-1 px-4 py-2.5 bg-slate-100 rounded-full text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
         />
         <button type="submit" disabled={!text.trim() || sending}
@@ -173,6 +174,7 @@ function ListingDetail({ listing, myUid, myProfile, onClose, onMessage }) {
 
 // ── Formulario para publicar ───────────────────────────────
 function CreateListingSheet({ onSave, onClose }) {
+  const { t } = useAuth()
   const [bookTitle,   setTitle]   = useState('')
   const [bookAuthor,  setAuthor]  = useState('')
   const [description, setDesc]    = useState('')
@@ -215,7 +217,7 @@ function CreateListingSheet({ onSave, onClose }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <ShoppingBag size={18} className="text-amber-500" />
-            <h3 className="font-bold text-slate-800">Publicar libro</h3>
+            <h3 className="font-bold text-slate-800">{t('mk_publish_book')}</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
             <X size={15} />
@@ -225,7 +227,7 @@ function CreateListingSheet({ onSave, onClose }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Imagen */}
           <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">Foto del libro</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">{t('mk_photo')}</label>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
             {bookImage ? (
               <div className="relative">
@@ -239,39 +241,39 @@ function CreateListingSheet({ onSave, onClose }) {
               <button type="button" onClick={() => fileRef.current?.click()}
                 className="w-full h-28 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:border-amber-400 hover:text-amber-500 transition-all">
                 <BookOpen size={22} />
-                <span className="text-xs">Tocá para agregar foto</span>
+                <span className="text-xs">{t('mk_tap_photo')}</span>
               </button>
             )}
           </div>
 
           {/* Título */}
           <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">Título del libro *</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">{t('mk_title')}</label>
             <input value={bookTitle} onChange={e => setTitle(e.target.value)} required
-              placeholder="ej: El nombre del viento"
+              placeholder={t('mk_title_ph')}
               className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400" />
           </div>
 
           {/* Autor */}
           <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">Autor</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">{t('mk_author')}</label>
             <input value={bookAuthor} onChange={e => setAuthor(e.target.value)}
-              placeholder="ej: Patrick Rothfuss"
+              placeholder={t('mk_author_ph')}
               className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400" />
           </div>
 
           {/* Descripción */}
           <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">Descripción</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">{t('mk_desc')}</label>
             <textarea value={description} onChange={e => setDesc(e.target.value)}
               rows={3} maxLength={300}
-              placeholder="Estado del libro, edición, por qué lo vendés…"
+              placeholder={t('mk_desc_ph')}
               className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400 resize-none" />
           </div>
 
           {/* Precio */}
           <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">Precio *</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-1.5">{t('mk_price')}</label>
             <div className="flex gap-2">
               <select value={currency} onChange={e => setCurrency(e.target.value)}
                 className="px-3 py-3 bg-slate-100 rounded-2xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-amber-400">
@@ -286,7 +288,7 @@ function CreateListingSheet({ onSave, onClose }) {
 
           <button type="submit" disabled={!bookTitle.trim() || !price || saving}
             className="w-full py-3.5 bg-amber-500 text-white rounded-2xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2">
-            {saving ? <><Loader2 size={14} className="animate-spin" /> Publicando…</> : <><Tag size={15} /> Publicar</>}
+            {saving ? <><Loader2 size={14} className="animate-spin" /> {t('mk_publishing')}</> : <><Tag size={15} /> {t('mk_publish')}</>}
           </button>
         </form>
       </div>
@@ -296,6 +298,7 @@ function CreateListingSheet({ onSave, onClose }) {
 
 // ── Tarjeta de listado ─────────────────────────────────────
 function ListingCard({ listing, onOpen }) {
+  const { t } = useAuth()
   return (
     <button onClick={() => onOpen(listing)}
       className="flex gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-left active:bg-slate-50 transition-all w-full">
@@ -310,7 +313,7 @@ function ListingCard({ listing, onOpen }) {
         <div className="flex items-start justify-between gap-1">
           <p className="font-semibold text-slate-800 text-sm line-clamp-2 leading-tight">{listing.bookTitle}</p>
           {listing.status === 'sold' && (
-            <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0">Vendido</span>
+            <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0">{t('mk_sold')}</span>
           )}
         </div>
         {listing.bookAuthor && <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{listing.bookAuthor}</p>}
@@ -332,7 +335,7 @@ function ListingCard({ listing, onOpen }) {
 
 // ── Página principal del Marketplace ──────────────────────
 export default function MarketplacePage({ onStartChat }) {
-  const { user, profile } = useAuth()
+  const { user, profile, t } = useAuth()
   const { listings, loading } = useMarketplace()
   const { sendMessage } = useConversations(user?.uid)
   const [showCreate,  setShowCreate]  = useState(false)
@@ -351,7 +354,7 @@ export default function MarketplacePage({ onStartChat }) {
     if (!user || listing.uid === user.uid) return
     const sellerProfile = { displayName: listing.displayName, photoURL: listing.photoURL }
     await sendMessage(user.uid, profile, listing.uid, sellerProfile,
-      `Hola! Vi tu publicación de "${listing.bookTitle}" en el Marketplace de Sandbook. ¿Está disponible?`)
+      t('mk_contact_msg', { title: listing.bookTitle }))
     onStartChat?.({ uid: listing.uid, displayName: listing.displayName, photoURL: listing.photoURL })
     setSelected(null)
   }
@@ -362,14 +365,14 @@ export default function MarketplacePage({ onStartChat }) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 flex-shrink-0">
         <div className="flex items-center gap-2">
           <ShoppingBag size={16} className="text-amber-500" />
-          <p className="font-bold text-slate-800 text-sm">Marketplace</p>
+          <p className="font-bold text-slate-800 text-sm">{t('soc_marketplace')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFilterOwn(v => !v)}
             className={`text-[11px] px-3 py-1 rounded-full font-medium transition-all ${filterOwn ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'}`}
           >
-            Mis publicaciones
+            {t('mk_mine')}
           </button>
           {user && (
             <button onClick={() => setShowCreate(true)}
@@ -388,10 +391,10 @@ export default function MarketplacePage({ onStartChat }) {
           <div className="flex flex-col items-center justify-center py-20 text-center text-slate-400">
             <ShoppingBag size={44} className="mb-4 text-slate-200" />
             <p className="font-semibold text-slate-500">
-              {filterOwn ? 'No publicaste ningún libro aún' : 'El Marketplace está vacío'}
+              {filterOwn ? t('mk_empty_mine') : t('mk_empty')}
             </p>
             <p className="text-xs mt-1">
-              {filterOwn ? 'Tocá + para publicar un libro' : 'Sé el primero en publicar un libro'}
+              {filterOwn ? t('mk_empty_mine_desc') : t('mk_empty_desc')}
             </p>
           </div>
         )}

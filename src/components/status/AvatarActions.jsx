@@ -3,19 +3,21 @@ import { createPortal } from 'react-dom'
 import { CircleDot, Image as ImageIcon, Plus } from 'lucide-react'
 import { useStatuses } from '../../contexts/StatusContext'
 import PhotoViewer from '../ui/PhotoViewer'
+import { useAuth } from '../../contexts/AuthContext'
 
 // Foto de perfil tocable: si la persona tiene estado, pregunta si ver el estado o la foto.
 // En el perfil propio también ofrece agregar un estado.
 export default function AvatarActions({ uid, photoURL, name, isMe = false, children }) {
+  const { t } = useAuth()
   const { hasStatus, openStatuses, openCreate } = useStatuses()
   const [menu, setMenu]       = useState(false)
   const [showPhoto, setPhoto] = useState(false)
 
   const withStatus = hasStatus(uid)
   const options = [
-    withStatus && { key: 'status', label: isMe ? 'Ver mi estado' : 'Ver estado', icon: CircleDot, run: () => openStatuses(uid) },
-    photoURL   && { key: 'photo',  label: 'Ver foto de perfil', icon: ImageIcon, run: () => setPhoto(true) },
-    isMe       && { key: 'add',    label: 'Agregar estado', icon: Plus, run: () => openCreate() },
+    withStatus && { key: 'status', label: isMe ? t('st_view_mine') : t('st_view'), icon: CircleDot, run: () => openStatuses(uid) },
+    photoURL   && { key: 'photo',  label: t('st_view_photo'), icon: ImageIcon, run: () => setPhoto(true) },
+    isMe       && { key: 'add',    label: t('st_add'), icon: Plus, run: () => openCreate() },
   ].filter(Boolean)
 
   function handleTap() {
@@ -26,7 +28,7 @@ export default function AvatarActions({ uid, photoURL, name, isMe = false, child
 
   return (
     <>
-      <button type="button" onClick={handleTap} aria-label="Foto de perfil" className="block rounded-full">
+      <button type="button" onClick={handleTap} aria-label={t('st_profile_photo')} className="block rounded-full">
         {children}
       </button>
 
@@ -34,7 +36,7 @@ export default function AvatarActions({ uid, photoURL, name, isMe = false, child
       {menu && createPortal(
         <div className="fixed inset-0 z-[290] flex items-end bg-black/40" onClick={() => setMenu(false)}>
           <div className="w-full max-w-lg mx-auto bg-white rounded-t-3xl p-4 pb-8" onClick={e => e.stopPropagation()}>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide text-center mb-3">{name || 'Perfil'}</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide text-center mb-3">{name || t('nav_profile')}</p>
             <div className="flex flex-col gap-1.5">
               {options.map(o => (
                 <button key={o.key} onClick={() => { setMenu(false); o.run() }}
@@ -44,7 +46,7 @@ export default function AvatarActions({ uid, photoURL, name, isMe = false, child
                 </button>
               ))}
             </div>
-            <button onClick={() => setMenu(false)} className="w-full mt-3 py-2.5 text-sm text-slate-400">Cancelar</button>
+            <button onClick={() => setMenu(false)} className="w-full mt-3 py-2.5 text-sm text-slate-400">{t('common_cancel')}</button>
           </div>
         </div>,
         document.body

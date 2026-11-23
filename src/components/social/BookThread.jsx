@@ -1,17 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { MessageCircle, Send, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import { useBookThread } from '../../hooks/useBookThread'
+import { useAuth } from '../../contexts/AuthContext'
 
-function timeAgo(ts) {
-  if (!ts?.seconds) return ''
-  const diff = Date.now() - ts.seconds * 1000
-  const m = Math.floor(diff / 60000)
-  if (m < 1)  return 'ahora'
-  if (m < 60) return `${m}m`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h`
-  return `${Math.floor(h / 24)}d`
-}
+import { timeAgo } from '../../utils/timeAgo'
 
 function Avatar({ photoURL, displayName }) {
   const init = (displayName || '?')[0].toUpperCase()
@@ -24,6 +16,7 @@ function Avatar({ photoURL, displayName }) {
 }
 
 export default function BookThread({ ownerUid, bookId, myUid, myProfile, count = 0 }) {
+  const { t, language } = useAuth()
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -57,8 +50,8 @@ export default function BookThread({ ownerUid, bookId, myUid, myProfile, count =
         <MessageCircle size={13} className={open ? 'text-amber-500' : 'text-slate-400'} />
         <span className={`text-xs font-medium ${open ? 'text-amber-600' : 'text-slate-500'}`}>
           {open
-            ? messages.length > 0 ? `${messages.length} comentario${messages.length !== 1 ? 's' : ''}` : 'Sin comentarios aún'
-            : totalCount > 0 ? `${totalCount} comentario${totalCount !== 1 ? 's' : ''}` : 'Comentar'}
+            ? messages.length > 0 ? t(messages.length === 1 ? 'bt_comments_one' : 'bt_comments_many', { n: messages.length }) : t('bt_no_comments')
+            : totalCount > 0 ? t(totalCount === 1 ? 'bt_comments_one' : 'bt_comments_many', { n: totalCount }) : t('bt_comment')}
         </span>
         <span className="ml-auto">
           {open ? <ChevronUp size={13} className="text-slate-400"/> : <ChevronDown size={13} className="text-slate-400"/>}
@@ -77,7 +70,7 @@ export default function BookThread({ ownerUid, bookId, myUid, myProfile, count =
           {/* Messages */}
           {!loading && messages.length === 0 && (
             <p className="text-xs text-slate-400 text-center py-2">
-              Sé el primero en comentar este libro
+              {t('bt_be_first')}
             </p>
           )}
 
@@ -88,7 +81,7 @@ export default function BookThread({ ownerUid, bookId, myUid, myProfile, count =
                 <div className="flex-1 min-w-0 bg-white rounded-2xl rounded-tl-md px-3 py-2 shadow-sm border border-slate-100">
                   <div className="flex items-baseline gap-1.5 mb-0.5">
                     <p className="text-[11px] font-semibold text-slate-700">{msg.fromName}</p>
-                    <p className="text-[9px] text-slate-400">{timeAgo(msg.createdAt)}</p>
+                    <p className="text-[9px] text-slate-400">{timeAgo(msg.createdAt, t, language)}</p>
                   </div>
                   <p className="text-xs text-slate-700 leading-relaxed">{msg.text}</p>
                 </div>
@@ -104,7 +97,7 @@ export default function BookThread({ ownerUid, bookId, myUid, myProfile, count =
               <input
                 value={text}
                 onChange={e => setText(e.target.value)}
-                placeholder="Escribí un comentario…"
+                placeholder={t('mk_comment_placeholder')}
                 maxLength={300}
                 className="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
               />

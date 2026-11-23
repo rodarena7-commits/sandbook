@@ -734,7 +734,7 @@ export default function SocialPage() {
                             }
                           }}
                           className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-90"
-                          title="Eliminar publicación"
+                          title={t('soc_delete_post')}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -862,7 +862,7 @@ function SendPostToUserSheet({ post, followingUsers, allUsers, myUid, myProfile,
     setSending(targetUser.uid)
     try {
       const allowed = await canMessage(myUid, targetUser.uid, myProfile)
-      if (!allowed) { alert('Este usuario no acepta mensajes'); setSending(null); return }
+      if (!allowed) { alert(t('soc_blocked_msgs')); setSending(null); return }
       await sendMessage(myUid, myProfile, targetUser.uid, targetUser, `📖 ${shareText}`)
       onClose()
     } catch { setSending(null) }

@@ -3,6 +3,7 @@ import { X, Eye, Trash2, ChevronDown, Loader2, Volume2, VolumeX } from 'lucide-r
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { base64ChunksToBlob } from '../../utils/videoCompress'
+import { useAuth } from '../../contexts/AuthContext'
 
 // URLs de videos ya armados, para no volver a descargarlos al ir y venir
 const videoCache = new Map()
@@ -21,14 +22,7 @@ async function loadVideoUrl(status) {
 
 const DURATION_MS = 6000
 
-function timeAgo(ts) {
-  const ms = ts?.toMillis?.() || (ts?.seconds || 0) * 1000
-  if (!ms) return 'ahora'
-  const m = Math.floor((Date.now() - ms) / 60000)
-  if (m < 1) return 'ahora'
-  if (m < 60) return `hace ${m} min`
-  return `hace ${Math.floor(m / 60)} h`
-}
+import { timeAgo as timeAgoText } from '../../utils/timeAgo'
 
 function Avatar({ photo, name }) {
   if (photo) return <img src={photo} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover border border-white/30" />
@@ -41,6 +35,7 @@ function Avatar({ photo, name }) {
 
 // Reproduce los estados de un usuario y, si se abrió desde la fila de estados, sigue con el próximo.
 export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onSeen, onDelete, onClose }) {
+  const { t, language } = useAuth()
   const [userIdx, setUserIdx] = useState(startIndex)
   const [itemIdx, setItemIdx] = useState(0)
   const [progress, setProgress] = useState(0)
@@ -120,9 +115,9 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
     if (!item || paused || showViews || (isVideo && !videoError)) return
     let last = performance.now()
     let raf
-    const tick = t => {
-      elapsedRef.current += t - last
-      last = t
+    const tick = now => {
+      elapsedRef.current += now - last
+      last = now
       const p = Math.min(1, elapsedRef.current / DURATION_MS)
       setProgress(p)
       if (p >= 1) next()
@@ -158,7 +153,7 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
   }
 
   async function handleDelete() {
-    if (!item || !window.confirm('¿Borrar este estado?')) return
+    if (!item || !window.confirm(t('st_delete_q'))) return
     setPaused(true)
     await onDelete(item.id)
     setPaused(false)
@@ -182,16 +177,16 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
       <div className="flex items-center gap-2.5 px-3 pt-3 pb-2 relative z-10">
         <Avatar photo={item.photo} name={item.name} />
         <div className="flex-1 min-w-0">
-          <p className="text-white text-sm font-semibold truncate">{mine ? 'Tu estado' : item.name}</p>
-          <p className="text-white/60 text-[11px]">{timeAgo(item.createdAt)}</p>
+          <p className="text-white text-sm font-semibold truncate">{mine ? t('st_yours') : item.name}</p>
+          <p className="text-white/60 text-[11px]">{timeAgoText(item.createdAt, t, language) || t('common_now')}</p>
         </div>
         {mine && (
-          <button onClick={handleDelete} aria-label="Borrar estado"
+          <button onClick={handleDelete} aria-label={t('st_delete')}
             className="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center">
             <Trash2 size={16} />
           </button>
         )}
-        <button onClick={onClose} aria-label="Cerrar"
+        <button onClick={onClose} aria-label={t('common_close')}
           className="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center">
           <X size={18} />
         </button>
@@ -224,7 +219,7 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
                 onEnded={next}
               />
             ) : videoError ? (
-              <p className="text-white/70 text-sm">No se pudo cargar el video.</p>
+              <p className="text-white/70 text-sm">{t('st_video_error')}</p>
             ) : (
               <div className="flex flex-col items-center gap-3">
                 {item.video?.poster && <img src={item.video.poster} alt="" className="max-w-[70%] max-h-[50vh] object-contain opacity-60 rounded-xl" />}
@@ -236,7 +231,7 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
                 onPointerDown={e => e.stopPropagation()}
                 onPointerUp={e => e.stopPropagation()}
                 onClick={() => { const m = !muted; setMuted(m); if (videoRef.current) videoRef.current.muted = m }}
-                aria-label={muted ? 'Activar sonido' : 'Silenciar'}
+                aria-label={muted ? t('st_sound_on') : t('st_mute')}
                 className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 text-white flex items-center justify-center">
                 {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
@@ -267,7 +262,7 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
       {mine && (
         <button onClick={() => setShowViews(true)}
           className="flex items-center justify-center gap-1.5 text-white/80 text-sm py-4">
-          <Eye size={16} /> {views.length} {views.length === 1 ? 'vista' : 'vistas'}
+          <Eye size={16} /> {t(views.length === 1 ? 'st_view_one' : 'st_view_many', { n: views.length })}
         </button>
       )}
 
@@ -275,20 +270,20 @@ export default function StatusViewer({ queue, startIndex = 0, byUser, myUid, onS
         <div className="absolute inset-0 z-20 flex items-end bg-black/50" onClick={() => setShowViews(false)}>
           <div className="w-full max-w-lg mx-auto bg-white rounded-t-3xl p-5 pb-8 max-h-[60vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
-              <p className="font-bold text-slate-800 flex items-center gap-2"><Eye size={16} className="text-amber-500" /> Lo vieron</p>
+              <p className="font-bold text-slate-800 flex items-center gap-2"><Eye size={16} className="text-amber-500" /> {t('st_seen_by')}</p>
               <button onClick={() => setShowViews(false)} className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
                 <ChevronDown size={16} />
               </button>
             </div>
             <div className="overflow-y-auto flex flex-col gap-2">
-              {views.length === 0 && <p className="text-sm text-slate-400 text-center py-6">Todavía nadie lo vio.</p>}
+              {views.length === 0 && <p className="text-sm text-slate-400 text-center py-6">{t('st_nobody_seen')}</p>}
               {views.map((v, i) => (
                 <div key={i} className="flex items-center gap-3">
                   {v.photo
                     ? <img src={v.photo} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover" />
                     : <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center font-bold text-amber-600 text-sm">{(v.name || '?')[0].toUpperCase()}</div>}
-                  <p className="flex-1 text-sm text-slate-700 truncate">{v.name || 'Lector'}</p>
-                  <p className="text-[11px] text-slate-400">{timeAgo({ seconds: (v.at || 0) / 1000 })}</p>
+                  <p className="flex-1 text-sm text-slate-700 truncate">{v.name || t('soc_reader_default')}</p>
+                  <p className="text-[11px] text-slate-400">{timeAgoText({ seconds: (v.at || 0) / 1000 }, t, language)}</p>
                 </div>
               ))}
             </div>

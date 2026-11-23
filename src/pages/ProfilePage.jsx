@@ -10,6 +10,7 @@ import ImagePickerSheet from '../components/ui/ImagePickerSheet'
 import AvatarActions from '../components/status/AvatarActions'
 import StatusRing from '../components/status/StatusRing'
 import { savePhotoWithHistory } from '../hooks/usePhotoHistory'
+import { timeAgo as timeAgoText } from '../utils/timeAgo'
 import SettingsSheet from '../components/profile/SettingsSheet'
 import { respondToLoan } from '../hooks/useLoanRequests'
 import { cleanThumbnail } from '../utils/cleanThumbnail'
@@ -29,6 +30,7 @@ import { useUsers } from '../hooks/useUsers'
 
 // ── Sheet de detalle de autor: bio + carrusel de libros ───────────────
 function AuthorDetailSheet({ author, uid, savedIds, onAddBook, onPhotoSaved, onClose }) {
+  const { t } = useAuth()
   const [photo,       setPhoto]       = useState(author.photoUrl || null)
   const [bio,         setBio]         = useState(null)
   const [books,       setBooks]       = useState([])
@@ -116,7 +118,7 @@ function AuthorDetailSheet({ author, uid, savedIds, onAddBook, onPhotoSaved, onC
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-slate-800 text-base leading-tight">{author.name}</h3>
               {author.topWork && <p className="text-xs text-slate-400 italic mt-0.5 truncate">"{author.topWork}"</p>}
-              {author.workCount > 0 && <p className="text-[10px] text-slate-400 mt-0.5">{author.workCount} obras</p>}
+              {author.workCount > 0 && <p className="text-[10px] text-slate-400 mt-0.5">{t('detail_works', { n: author.workCount })}</p>}
             </div>
             <button onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 flex-shrink-0">
@@ -134,14 +136,14 @@ function AuthorDetailSheet({ author, uid, savedIds, onAddBook, onPhotoSaved, onC
               <>
                 {bio && (
                   <div className="mb-5">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Biografía</p>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('prof_biography')}</p>
                     <p className="text-sm text-slate-600 leading-relaxed">{bio}</p>
                   </div>
                 )}
                 {books.length > 0 && (
                   <div>
                     <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-3">
-                      Libros de {author.name} ({books.length})
+                      {t('prof_books_by', { name: author.name, n: books.length })}
                     </p>
                     <div className="grid grid-cols-3 gap-3">
                       {books.map(b => {
@@ -168,9 +170,9 @@ function AuthorDetailSheet({ author, uid, savedIds, onAddBook, onPhotoSaved, onC
                                   saved ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600 active:scale-95'
                                 }`}
                               >
-                                {saved ? <><Check size={10} /> En tu biblioteca</>
+                                {saved ? <><Check size={10} /> {t('prof_in_library')}</>
                                   : adding === b.bookId ? <Loader2 size={10} className="animate-spin" />
-                                  : <><Plus size={10} /> Agregar</>}
+                                  : <><Plus size={10} /> {t('common_add')}</>}
                               </button>
                             )}
                           </div>
@@ -180,10 +182,10 @@ function AuthorDetailSheet({ author, uid, savedIds, onAddBook, onPhotoSaved, onC
                   </div>
                 )}
                 {booksError && (
-                  <p className="text-xs text-slate-400 text-center py-4">No se pudieron cargar los libros ahora. Probá de nuevo en unos minutos.</p>
+                  <p className="text-xs text-slate-400 text-center py-4">{t('prof_books_error')}</p>
                 )}
                 {!bio && books.length === 0 && !booksError && (
-                  <p className="text-xs text-slate-400 text-center py-8">Sin información disponible</p>
+                  <p className="text-xs text-slate-400 text-center py-8">{t('prof_no_info')}</p>
                 )}
               </>
             )}
@@ -196,7 +198,7 @@ function AuthorDetailSheet({ author, uid, savedIds, onAddBook, onPhotoSaved, onC
           <div className="fixed inset-0 bg-black/40 z-[85]" onClick={() => setShowPicker(false)} />
           <div className="fixed inset-0 z-[86] flex items-end">
             <ImagePickerSheet
-              title={`Foto de ${author.name}`}
+              title={t('detail_author_photo', { name: author.name })}
               onSave={handlePhotoSave}
               onClose={() => setShowPicker(false)}
             />
@@ -209,6 +211,7 @@ function AuthorDetailSheet({ author, uid, savedIds, onAddBook, onPhotoSaved, onC
 
 // ── Avatar de autor favorito — toca para abrir detalle ────────────────
 function FavAuthorAvatar({ author, uid, savedIds, onAddBook, onPhotoSaved }) {
+  const { t } = useAuth()
   const [photo,      setPhoto]      = useState(author.photoUrl || null)
   const [showDetail, setShowDetail] = useState(false)
 
@@ -232,7 +235,7 @@ function FavAuthorAvatar({ author, uid, savedIds, onAddBook, onPhotoSaved }) {
         ) : (
           <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-amber-200 flex flex-col items-center justify-center gap-0.5">
             <BookOpen size={14} className="text-slate-300"/>
-            <span className="text-[7px] text-slate-400">+ foto</span>
+            <span className="text-[7px] text-slate-400">{t('prof_add_photo_small')}</span>
           </div>
         )}
         <p className="text-[9px] text-slate-600 text-center leading-tight mt-1.5 line-clamp-2">{author.name}</p>
@@ -254,6 +257,7 @@ function FavAuthorAvatar({ author, uid, savedIds, onAddBook, onPhotoSaved }) {
 
 // ── User List Screen (full screen) ────────────────────────
 function UserListScreen({ title, uids, myFollowing = [], myUid, myProfile, setMyProfile, onClose }) {
+  const { t } = useAuth()
   const [users, setUsers]       = useState(null)
   const [selected, setSelected] = useState(null)
   const mutualSet = new Set(myFollowing)
@@ -309,7 +313,7 @@ function UserListScreen({ title, uids, myFollowing = [], myUid, myProfile, setMy
         {users?.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-slate-400">
             <p className="text-4xl mb-3">👥</p>
-            <p className="font-semibold text-slate-500 text-sm">Nadie aquí todavía</p>
+            <p className="font-semibold text-slate-500 text-sm">{t('prof_nobody')}</p>
           </div>
         )}
         {users?.map(u => (
@@ -319,8 +323,8 @@ function UserListScreen({ title, uids, myFollowing = [], myUid, myProfile, setMy
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-800 line-clamp-1">{u.displayName || 'Lector'}</p>
               <div className="flex gap-2 text-[10px] text-slate-400 mt-0.5">
-                <span>{(u.followers||[]).length} seguidores</span>
-                {mutualSet.has(u.uid) && <span className="text-amber-500 font-medium">· Mutuo</span>}
+                <span>{t('prof_n_followers', { n: (u.followers||[]).length })}</span>
+                {mutualSet.has(u.uid) && <span className="text-amber-500 font-medium">{t('prof_mutual_tag')}</span>}
               </div>
               {u.bio && <p className="text-[10px] text-slate-400 italic line-clamp-1 mt-0.5">"{u.bio}"</p>}
             </div>
@@ -334,6 +338,7 @@ function UserListScreen({ title, uids, myFollowing = [], myUid, myProfile, setMy
 
 // ── Bio Editor ─────────────────────────────────────────────
 function BioEditor({ bio, uid, onSave }) {
+  const { t } = useAuth()
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(bio || '')
   const [saving, setSaving] = useState(false)
@@ -352,7 +357,7 @@ function BioEditor({ bio, uid, onSave }) {
         <textarea autoFocus value={value} onChange={e => setValue(e.target.value)}
           maxLength={150} rows={3}
           className="w-full px-3 py-2 text-sm text-slate-700 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-amber-400 resize-none"
-          placeholder="Contá algo sobre vos como lector…" />
+          placeholder={t('prof_bio_placeholder')} />
         <div className="flex items-center justify-between mt-1.5 px-1">
           <span className="text-[10px] text-slate-300">{value.length}/150</span>
           <div className="flex gap-2">
@@ -367,7 +372,7 @@ function BioEditor({ bio, uid, onSave }) {
   return (
     <button onClick={() => setEditing(true)} className="w-full text-left group flex items-start gap-2">
       <p className={`text-sm flex-1 leading-relaxed ${bio ? 'text-slate-600' : 'text-slate-300 italic'}`}>
-        {bio || 'Agregá una bio…'}
+        {bio || t('prof_add_bio')}
       </p>
       <Pencil size={12} className="text-slate-300 group-hover:text-amber-400 flex-shrink-0 mt-0.5 transition-colors" />
     </button>
@@ -376,16 +381,8 @@ function BioEditor({ bio, uid, onSave }) {
 
 // ── Notification Item ──────────────────────────────────────
 function NotificationItem({ notif, uid, onRead }) {
-  function timeAgo(ts) {
-    if (!ts?.seconds) return ''
-    const diff = Date.now() - ts.seconds * 1000
-    const m = Math.floor(diff / 60000)
-    if (m < 1) return 'ahora'
-    if (m < 60) return `hace ${m}m`
-    const h = Math.floor(m / 60)
-    if (h < 24) return `hace ${h}h`
-    return `hace ${Math.floor(h / 24)}d`
-  }
+  const { t, language } = useAuth()
+  const timeAgo = ts => timeAgoText(ts, t, language)
   const icon = notif.type === 'recommendation' ? '📖'
     : notif.type === 'loan_request' ? '📚'
     : notif.type === 'new_follower' ? '👤' : '🔔'
@@ -396,18 +393,17 @@ function NotificationItem({ notif, uid, onRead }) {
         <span className="text-xl flex-shrink-0">📚</span>
         <div className="flex-1 min-w-0">
           <p className="text-xs text-slate-700 leading-relaxed mb-2">
-            <span className="font-semibold">{notif.fromName}</span> quiere pedir prestado{' '}
-            <span className="font-semibold">"{notif.bookTitle}"</span>
+            {t('notif_loan', { name: notif.fromName, book: notif.bookTitle })}
             {notif.message && <span className="text-slate-500"> — "{notif.message}"</span>}
           </p>
           <div className="flex gap-2">
             <button onClick={async () => { await respondToLoan(uid, notif.loanRequestId, true); onRead(notif.id) }}
               className="px-3 py-1.5 bg-green-500 text-white rounded-full text-[10px] font-semibold active:scale-95">
-              Aceptar
+              {t('notif_accept')}
             </button>
             <button onClick={async () => { await respondToLoan(uid, notif.loanRequestId, false); onRead(notif.id) }}
               className="px-3 py-1.5 bg-slate-200 text-slate-600 rounded-full text-[10px] font-semibold active:scale-95">
-              Rechazar
+              {t('notif_reject')}
             </button>
           </div>
           <p className="text-[10px] text-slate-400 mt-1.5">{timeAgo(notif.createdAt)}</p>
@@ -423,8 +419,7 @@ function NotificationItem({ notif, uid, onRead }) {
       <span className="text-xl flex-shrink-0">{icon}</span>
       <div className="flex-1 min-w-0">
         <p className="text-xs text-slate-700 leading-relaxed">
-          <span className="font-semibold">{notif.fromName}</span>{' '}
-          {notif.type === 'recommendation' ? 'te recomendó: ' : 'te sigue'}
+          {t(notif.type === 'recommendation' ? 'notif_recommended' : 'notif_follows', { name: notif.fromName })}{' '}
           {notif.message && <span className="text-slate-600">"{notif.message}"</span>}
         </p>
         <p className="text-[10px] text-slate-400 mt-0.5">{timeAgo(notif.createdAt)}</p>
@@ -519,7 +514,7 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 flex-shrink-0">
           <ArrowLeft size={16} />
         </button>
-        <h1 className="flex-1 text-base font-bold text-slate-800">Mi Plan de Lectura</h1>
+        <h1 className="flex-1 text-base font-bold text-slate-800">{t('plans_my')}</h1>
         <button
           onClick={() => setShowPicker(true)}
           className="w-8 h-8 flex items-center justify-center rounded-full bg-amber-500 text-white shadow-sm active:scale-95 transition-all"
@@ -533,8 +528,8 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
         {planBooks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <CalendarDays size={40} className="mb-3 text-slate-200" />
-            <p className="font-semibold text-slate-500 text-sm">Sin planes activos</p>
-            <p className="text-xs mt-1">Tocá + para agregar un libro</p>
+            <p className="font-semibold text-slate-500 text-sm">{t('plans_none')}</p>
+            <p className="text-xs mt-1">{t('plans_none_desc')}</p>
           </div>
         ) : (
           planBooks.map(book => {
@@ -587,7 +582,7 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
                         />
                       </div>
                       <p className={`text-[10px] mt-0.5 ${pct >= 100 ? 'text-green-500 font-medium' : 'text-slate-400'}`}>
-                        {pct >= 100 ? '✅ Completado' : `${pct}% completado`}
+                        {pct >= 100 ? t('plans_completed') : t('plans_pct', { pct })}
                       </p>
                     </>
                   )}
@@ -605,14 +600,14 @@ function PlanScreen({ books, uid, updateStatus, onClose }) {
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowPicker(false)} />
           <div className="relative w-full bg-white rounded-t-3xl shadow-2xl max-h-[75vh] flex flex-col">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100 flex-shrink-0">
-              <h3 className="font-bold text-slate-800">Agregar libro al plan</h3>
+              <h3 className="font-bold text-slate-800">{t('plans_add_book')}</h3>
               <button onClick={() => setShowPicker(false)} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400">
                 <X size={14} />
               </button>
             </div>
             {nonPlanBooks.length === 0 ? (
               <div className="flex flex-col items-center py-12 text-slate-400">
-                <p className="text-sm text-center px-6">Todos los libros de tu biblioteca ya tienen un plan activo</p>
+                <p className="text-sm text-center px-6">{t('plans_all_have')}</p>
               </div>
             ) : (
               <div className="overflow-y-auto flex-1 px-4 py-3 flex flex-col gap-2 pb-8">
@@ -836,7 +831,7 @@ export default function ProfilePage({ onGoToPlan }) {
         <button
           onClick={() => {
             const url = window.location.href
-            const msg = `¡Unite a Sandbook! Leé y compartí libros con amigos: ${url}`
+            const msg = t('prof_invite_msg', { url })
             if (navigator.share) { navigator.share({ title: 'Sandbook', text: msg, url }).catch(() => {}) }
             else window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
           }}

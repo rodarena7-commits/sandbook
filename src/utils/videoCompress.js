@@ -21,7 +21,7 @@ function loadVideo(url) {
     v.playsInline = true
     v.src = url
     v.onloadedmetadata = () => resolve(v)
-    v.onerror = () => reject(new Error('No se pudo leer el video'))
+    v.onerror = () => reject(new Error('st_err_read'))
   })
 }
 
@@ -39,9 +39,10 @@ async function ensureDuration(v) {
   v.currentTime = 0
 }
 
-// onProgress(0..1). Devuelve { blob, mime, duration, poster, trimmed }
+// onProgress(0..1). Devuelve { blob, mime, duration, poster, trimmed }.
+// Los errores traen como mensaje una clave de traducción (st_err_*).
 export async function compressVideo(file, onProgress = () => {}) {
-  if (!canRecordVideo()) throw new Error('Este dispositivo no permite procesar videos')
+  if (!canRecordVideo()) throw new Error('st_err_unsupported')
   const url = URL.createObjectURL(file)
   let audioCtx
   try {
@@ -120,7 +121,7 @@ export async function compressVideo(file, onProgress = () => {}) {
     const recorded = Math.min(duration, video.currentTime || duration)
 
     const blob = new Blob(chunks, { type: recorder.mimeType || mime || 'video/webm' })
-    if (blob.size > MAX_BYTES) throw new Error('El video quedó muy pesado. Probá con uno más corto.')
+    if (blob.size > MAX_BYTES) throw new Error('st_err_too_big')
     return { blob, mime: blob.type, duration: recorded, poster, trimmed: fullDuration > MAX_VIDEO_SECONDS + 0.5 }
   } finally {
     URL.revokeObjectURL(url)

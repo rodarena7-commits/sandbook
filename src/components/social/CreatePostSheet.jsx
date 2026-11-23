@@ -31,6 +31,7 @@ function BookOption({ book, onSelect }) {
 
 // ── Opción de autor en el picker ────────────────────────────
 function AuthorOption({ author, onSelect }) {
+  const { t } = useAuth()
   return (
     <button
       onClick={() => onSelect(author)}
@@ -46,7 +47,7 @@ function AuthorOption({ author, onSelect }) {
       <div className="min-w-0">
         <p className="text-xs font-semibold text-slate-800 line-clamp-1">{author.name}</p>
         {author.topWork && <p className="text-[10px] text-slate-400 italic line-clamp-1">"{author.topWork}"</p>}
-        {author.workCount > 0 && <p className="text-[10px] text-slate-300">{author.workCount} obras</p>}
+        {author.workCount > 0 && <p className="text-[10px] text-slate-300">{t('detail_works', { n: author.workCount })}</p>}
       </div>
     </button>
   )
@@ -54,7 +55,7 @@ function AuthorOption({ author, onSelect }) {
 
 // ── Sheet principal ─────────────────────────────────────────
 export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose, editPost }) {
-  const { user } = useAuth()
+  const { user, t } = useAuth()
   const isEdit = !!editPost
 
   const [text, setText]             = useState(editPost?.text || '')
@@ -133,7 +134,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
             <button onClick={() => { setPicker(null); clearBooks(); setBookSearch('') }}
               className="flex items-center gap-1 text-sm font-medium text-slate-500">
-              <ChevronLeft size={16} /> Volver
+              <ChevronLeft size={16} /> {t('common_back')}
             </button>
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
               <X size={15} />
@@ -144,19 +145,19 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input ref={bookSearchRef} autoFocus value={bookSearch} onChange={e => setBookSearch(e.target.value)}
-                placeholder="Buscar libro por título…"
+                placeholder={t('cp_search_book')}
                 className="w-full pl-9 pr-3 py-2 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400" />
             </div>
             <button type="submit" disabled={!bookSearch.trim() || bookSearching}
               className="px-3 py-2 bg-amber-500 text-white rounded-2xl text-xs font-semibold disabled:opacity-40">
-              Buscar
+              {t('nav_search')}
             </button>
           </form>
 
           <div className="overflow-y-auto flex-1 px-5 py-2">
             {!bookSearch && myBooks.length > 0 && (
               <>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2 mt-1">Mi biblioteca</p>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2 mt-1">{t('cp_my_library')}</p>
                 {myBooks.slice(0, 10).map(b => (
                   <BookOption key={b.id} book={b} onSelect={book => {
                     setSelectedBook(book)
@@ -169,7 +170,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
             {bookSearching && <div className="flex justify-center py-6"><Loader2 size={20} className="animate-spin text-amber-400" /></div>}
             {bookResults.length > 0 && (
               <>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2 mt-2">Resultados</p>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2 mt-2">{t('cp_results')}</p>
                 {bookResults.map(b => (
                   <BookOption key={b.bookId} book={b} onSelect={book => {
                     setSelectedBook(book)
@@ -180,7 +181,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
               </>
             )}
             {!bookSearching && bookResults.length === 0 && bookSearch && (
-              <p className="text-xs text-slate-400 text-center py-8">Sin resultados</p>
+              <p className="text-xs text-slate-400 text-center py-8">{t('co_none')}</p>
             )}
           </div>
         </div>
@@ -196,7 +197,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
             <button onClick={() => { setPicker(null); clearAuthors(); setAuthorSearch('') }}
               className="flex items-center gap-1 text-sm font-medium text-slate-500">
-              <ChevronLeft size={16} /> Volver
+              <ChevronLeft size={16} /> {t('common_back')}
             </button>
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
               <X size={15} />
@@ -208,12 +209,12 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input ref={authorSearchRef} autoFocus value={authorSearch}
                 onChange={e => { setAuthorSearch(e.target.value); setAuthorQuery(e.target.value) }}
-                placeholder="Buscar escritor/a…"
+                placeholder={t('cp_search_author')}
                 className="w-full pl-9 pr-3 py-2 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400" />
             </div>
             <button type="submit" disabled={!authorSearch.trim() || authorSearching}
               className="px-3 py-2 bg-slate-800 text-white rounded-2xl text-xs font-semibold disabled:opacity-40">
-              Buscar
+              {t('nav_search')}
             </button>
           </form>
 
@@ -221,7 +222,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
             {authorSearching && <div className="flex justify-center py-6"><Loader2 size={20} className="animate-spin text-amber-400" /></div>}
             {authorResults.length > 0 && (
               <>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2 mt-1">Resultados</p>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2 mt-1">{t('cp_results')}</p>
                 {authorResults.map((a, i) => (
                   <AuthorOption key={`${a.olid}-${i}`} author={a} onSelect={author => {
                     setSelectedAuthor(author)
@@ -231,10 +232,10 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
               </>
             )}
             {!authorSearching && authorResults.length === 0 && authorSearch && (
-              <p className="text-xs text-slate-400 text-center py-8">Sin resultados</p>
+              <p className="text-xs text-slate-400 text-center py-8">{t('co_none')}</p>
             )}
             {!authorSearch && (
-              <p className="text-xs text-slate-400 text-center py-8">Escribí el nombre del escritor/a</p>
+              <p className="text-xs text-slate-400 text-center py-8">{t('cp_type_author')}</p>
             )}
           </div>
         </div>
@@ -253,7 +254,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
           {/* Header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
             <h3 className="font-bold text-slate-800">
-              {isEdit ? 'Editar publicación' : 'Nueva publicación'}
+              {isEdit ? t('cp_edit_post') : t('cp_new_post')}
             </h3>
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
               <X size={15} />
@@ -264,14 +265,14 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
 
             {/* Texto */}
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Frase o pensamiento</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('cp_quote')}</p>
               <textarea
                 autoFocus
                 value={text}
                 onChange={e => setText(e.target.value)}
                 maxLength={500}
                 rows={5}
-                placeholder='"Las palabras son la fuente del malentendido." — El Principito'
+                placeholder={t('cp_quote_placeholder')}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-800 placeholder-slate-300 outline-none focus:ring-2 focus:ring-amber-400 resize-none leading-relaxed"
               />
               <div className="flex justify-end mt-1">
@@ -281,7 +282,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
 
             {/* Libro de referencia */}
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Libro de referencia</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('cp_ref_book')}</p>
               {selectedBook ? (
                 <div className="flex gap-3 items-center bg-amber-50 rounded-2xl p-3 border border-amber-100">
                   <div className="relative flex-shrink-0">
@@ -296,7 +297,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
                     <button
                       onClick={() => setShowCoverPicker(true)}
                       className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shadow border-2 border-white"
-                      title="Agregar portada"
+                      title={t('cp_add_cover')}
                     >
                       <ImagePlus size={10} className="text-white" />
                     </button>
@@ -309,7 +310,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
                     {!bookThumb && (
                       <button onClick={() => setShowCoverPicker(true)}
                         className="text-[10px] text-amber-500 font-medium mt-1">
-                        + Agregar portada
+                        {t('cp_add_cover_btn')}
                       </button>
                     )}
                   </div>
@@ -324,14 +325,14 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
                   className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-slate-400 hover:border-amber-400 hover:text-amber-500 transition-all"
                 >
                   <BookOpen size={16} />
-                  <span className="text-sm">Anclar un libro</span>
+                  <span className="text-sm">{t('cp_pin_book')}</span>
                 </button>
               )}
             </div>
 
             {/* Escritor */}
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Etiquetar escritor/a</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('cp_tag_author')}</p>
               {selectedAuthor ? (
                 <div className="flex gap-3 items-center bg-slate-50 rounded-2xl p-3 border border-slate-100">
                   <div className="relative flex-shrink-0">
@@ -346,7 +347,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
                     <button
                       onClick={() => setShowAuthorPhotoPicker(true)}
                       className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-600 rounded-full flex items-center justify-center shadow border-2 border-white"
-                      title="Cambiar foto"
+                      title={t('cp_change_photo')}
                     >
                       <ImagePlus size={8} className="text-white" />
                     </button>
@@ -358,7 +359,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
                     )}
                     <button onClick={() => setShowAuthorPhotoPicker(true)}
                       className="text-[10px] text-slate-500 font-medium mt-0.5">
-                      {localAuthorPhoto || selectedAuthor.photoUrl ? 'Cambiar foto' : '+ Agregar foto'}
+                      {localAuthorPhoto || selectedAuthor.photoUrl ? t('cp_change_photo') : t('cp_add_photo')}
                     </button>
                   </div>
                   <button onClick={() => { setSelectedAuthor(null); setLocalAuthorPhoto(null) }} className="text-slate-300 hover:text-slate-500 flex-shrink-0">
@@ -371,7 +372,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
                   className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-slate-400 hover:border-slate-400 hover:text-slate-500 transition-all"
                 >
                   <User size={16} />
-                  <span className="text-sm">Etiquetar un escritor/a</span>
+                  <span className="text-sm">{t('cp_tag_author_btn')}</span>
                 </button>
               )}
             </div>
@@ -382,7 +383,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
               disabled={!text.trim() || publishing}
               className="w-full py-3.5 bg-amber-500 text-white rounded-2xl font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all shadow-sm"
             >
-              {publishing ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Publicar'}
+              {publishing ? t('common_saving') : isEdit ? t('cp_save_changes') : t('soc_publish')}
             </button>
           </div>
         </div>
@@ -394,7 +395,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
           <div className="fixed inset-0 bg-black/40 z-[60]" onClick={() => setShowCoverPicker(false)} />
           <div className="fixed inset-0 z-[61] flex items-end">
             <ImagePickerSheet
-              title={`Portada: ${selectedBook.title}`}
+              title={t('cp_cover_of', { title: selectedBook.title })}
               storagePath={`bookCovers/${selectedBook.bookId}`}
               onSave={async url => {
                 setLocalCover(url)
@@ -414,7 +415,7 @@ export default function CreatePostSheet({ myBooks, onPublish, onUpdate, onClose,
           <div className="fixed inset-0 bg-black/40 z-[60]" onClick={() => setShowAuthorPhotoPicker(false)} />
           <div className="fixed inset-0 z-[61] flex items-end">
             <ImagePickerSheet
-              title={`Foto: ${selectedAuthor.name}`}
+              title={t('cp_photo_of', { name: selectedAuthor.name })}
               storagePath={`authorPhotos/${selectedAuthor.olid || selectedAuthor.name}`}
               onSave={async url => {
                 setLocalAuthorPhoto(url)

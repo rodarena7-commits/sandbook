@@ -44,21 +44,22 @@ function Avatar({ photoURL, displayName, size = 'lg' }) {
 }
 
 function LoanModal({ book, onSend, onClose }) {
+  const { t } = useAuth()
   const [msg, setMsg]     = useState('')
   const [busy, setBusy]   = useState(false)
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center px-6 bg-black/40" onClick={onClose}>
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5" onClick={e=>e.stopPropagation()}>
-        <p className="font-bold text-slate-800 mb-1">Pedir prestado</p>
+        <p className="font-bold text-slate-800 mb-1">{t('up_loan_title')}</p>
         <p className="text-xs text-slate-500 mb-3 line-clamp-1">"{book.title}"</p>
         <textarea value={msg} onChange={e=>setMsg(e.target.value)} rows={3} maxLength={200}
-          placeholder="Mensaje opcional…"
+          placeholder={t('up_loan_msg')}
           className="w-full px-3 py-2.5 bg-slate-100 rounded-2xl text-sm text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400 resize-none mb-3"/>
         <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Cancelar</button>
+          <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">{t('common_cancel')}</button>
           <button disabled={busy} onClick={async()=>{setBusy(true);await onSend(msg);onClose()}}
             className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold disabled:opacity-40">
-            {busy?'Enviando…':'Solicitar'}
+            {busy ? t('up_sending') : t('up_request')}
           </button>
         </div>
       </div>
@@ -67,7 +68,7 @@ function LoanModal({ book, onSend, onClose }) {
 }
 
 export default function UserProfileScreen({ targetUser, isFollowing, onFollow, onUnfollow, onMessage, onBack, getUserBooks }) {
-  const { user: me, profile } = useAuth()
+  const { user: me, profile, t } = useAuth()
   const { reviews, loading: reviewsLoading } = usePublicReviews(targetUser.uid)
   const { authors: favAuthors, loading: authorsLoading } = useFavoriteAuthors(targetUser.uid)
 
@@ -126,14 +127,14 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
   const allBooks = books || []
 
   const BOOK_TABS = [
-    { key:'all',      label:'Todos',  list: allBooks },
+    { key:'all',      label: t('up_all'),  list: allBooks },
     { key:'fav',      label:'⭐',     list: favorites },
     { key:'liked',    label:'👍',     list: liked },
     { key:'disliked', label:'👎',     list: disliked },
     { key:'reading',  label:'📖',    list: reading },
   ]
 
-  const activeBookList = BOOK_TABS.find(t=>t.key===bookTab)?.list || []
+  const activeBookList = BOOK_TABS.find(bt=>bt.key===bookTab)?.list || []
 
   return (
     <div className="fixed inset-0 z-[52] bg-slate-50 flex flex-col w-full max-w-5xl mx-auto overflow-y-auto">
@@ -170,12 +171,12 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
           <div className="flex gap-2">
             <button onClick={handleFollow} disabled={acting}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${isFollowing?'bg-slate-100 text-slate-600':'bg-amber-500 text-white shadow-sm'} disabled:opacity-50`}>
-              {isFollowing ? <><UserMinus size={12}/> Siguiendo</> : <><UserPlus size={12}/> Seguir</>}
+              {isFollowing ? <><UserMinus size={12}/> {t('up_following_btn')}</> : <><UserPlus size={12}/> {t('up_follow')}</>}
             </button>
             {onMessage && (
               <button onClick={()=>onMessage(fullUser)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 active:scale-95">
-                <MessageCircle size={12}/> Mensaje
+                <MessageCircle size={12}/> {t('up_message')}
               </button>
             )}
           </div>
@@ -185,9 +186,9 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
         {fullUser.bio && <p className="text-sm text-slate-600 italic mt-1">"{fullUser.bio}"</p>}
 
         <div className="flex gap-4 mt-2 text-xs text-slate-500">
-          <span><b className="text-slate-800">{(fullUser.following||[]).length}</b> siguiendo</span>
-          <span><b className="text-slate-800">{(fullUser.followers||[]).length}</b> seguidores</span>
-          {books && <span><b className="text-green-500">{books.filter(b=>b.status==='read').length}</b> leídos</span>}
+          <span><b className="text-slate-800">{(fullUser.following||[]).length}</b> {t('up_following_word')}</span>
+          <span><b className="text-slate-800">{(fullUser.followers||[]).length}</b> {t('up_followers_word')}</span>
+          {books && <span><b className="text-green-500">{books.filter(b=>b.status==='read').length}</b> {t('up_read_word')}</span>}
         </div>
 
         {/* Racha de lectura */}
@@ -202,9 +203,9 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
             <div className="mt-3 flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-2xl px-3 py-2">
               <span className="text-lg">🔥</span>
               <div className="flex-1">
-                <p className="text-xs font-bold text-orange-600">{streak} {streak === 1 ? 'día' : 'días'} seguidos</p>
+                <p className="text-xs font-bold text-orange-600">{t(streak === 1 ? 'up_streak_one' : 'up_streak_many', { n: streak })}</p>
                 {fullUser.longestStreak > 1 && (
-                  <p className="text-[10px] text-orange-400">Récord: {fullUser.longestStreak} días</p>
+                  <p className="text-[10px] text-orange-400">{t('up_record', { n: fullUser.longestStreak })}</p>
                 )}
               </div>
             </div>
@@ -214,7 +215,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
         {/* Recommendation input */}
         <div className="flex gap-2 mt-3">
           <input value={recMsg} onChange={e=>setRecMsg(e.target.value)} maxLength={120}
-            placeholder="Recomendarle un libro…"
+            placeholder={t('up_recommend')}
             className="flex-1 px-3 py-2 bg-slate-100 rounded-full text-xs text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"/>
           <button onClick={sendRec} disabled={!recMsg.trim()||sending}
             className="w-9 h-9 bg-amber-500 text-white rounded-full flex items-center justify-center disabled:opacity-40 flex-shrink-0">
@@ -226,15 +227,15 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
       {/* Main tabs */}
       <div className="bg-white flex border-b border-slate-100 flex-shrink-0 sticky top-0 z-10">
         {[
-          { key:'library', label:'Biblioteca' },
-          { key:'read',    label:`Leídos${books?.filter(b=>b.status==='read').length>0?` (${books.filter(b=>b.status==='read').length})`:''}`},
-          { key:'reviews', label:`Reseñas${reviews.length>0?` (${reviews.length})`:''}` },
-          { key:'authors', label:`Escritores${favAuthors.length>0?` (${favAuthors.length})`:''}` },
-          { key:'bible',   label:'📖 Biblia' },
-        ].map(t => (
-          <button key={t.key} onClick={()=>setTab(t.key)}
-            className={`flex-1 py-2.5 text-xs font-semibold transition-all ${tab===t.key?'text-amber-500 border-b-2 border-amber-500':'text-slate-400'}`}>
-            {t.label}
+          { key:'library', label: t('up_tab_library') },
+          { key:'read',    label:`${t('up_tab_read')}${books?.filter(b=>b.status==='read').length>0?` (${books.filter(b=>b.status==='read').length})`:''}`},
+          { key:'reviews', label:`${t('up_tab_reviews')}${reviews.length>0?` (${reviews.length})`:''}` },
+          { key:'authors', label:`${t('up_tab_authors')}${favAuthors.length>0?` (${favAuthors.length})`:''}` },
+          { key:'bible',   label: t('up_tab_bible') },
+        ].map(tb => (
+          <button key={tb.key} onClick={()=>setTab(tb.key)}
+            className={`flex-1 py-2.5 text-xs font-semibold transition-all ${tab===tb.key?'text-amber-500 border-b-2 border-amber-500':'text-slate-400'}`}>
+            {tb.label}
           </button>
         ))}
       </div>
@@ -248,23 +249,23 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
             {!showLibrary ? (
               <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-center">
                 <p className="text-4xl mb-3">🔒</p>
-                <p className="font-semibold text-slate-500">Biblioteca privada</p>
-                <p className="text-xs mt-1">Este usuario eligió no mostrar sus libros</p>
+                <p className="font-semibold text-slate-500">{t('up_private')}</p>
+                <p className="text-xs mt-1">{t('up_private_desc')}</p>
               </div>
             ) : books===null ? (
               <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-amber-400"/></div>
             ) : (
               <>
                 <div className="flex gap-1.5 mb-4 overflow-x-auto scrollbar-none">
-                  {BOOK_TABS.map(t => (
-                    <button key={t.key} onClick={()=>setBookTab(t.key)}
-                      className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${bookTab===t.key?'bg-amber-500 text-white':'bg-slate-100 text-slate-500'}`}>
-                      {t.label} <span className={bookTab===t.key?'text-white/70':'text-slate-400'}>({t.list.length})</span>
+                  {BOOK_TABS.map(bt => (
+                    <button key={bt.key} onClick={()=>setBookTab(bt.key)}
+                      className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${bookTab===bt.key?'bg-amber-500 text-white':'bg-slate-100 text-slate-500'}`}>
+                      {bt.label} <span className={bookTab===bt.key?'text-white/70':'text-slate-400'}>({bt.list.length})</span>
                     </button>
                   ))}
                 </div>
                 {activeBookList.length===0 ? (
-                  <p className="text-xs text-slate-400 text-center py-10">Sin libros en esta sección</p>
+                  <p className="text-xs text-slate-400 text-center py-10">{t('up_section_empty')}</p>
                 ) : (
                   <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
                     {activeBookList.map(b => (
@@ -297,11 +298,11 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
           if (!showLibrary) return (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-center">
               <p className="text-4xl mb-3">🔒</p>
-              <p className="font-semibold text-slate-500">Biblioteca privada</p>
+              <p className="font-semibold text-slate-500">{t('up_private')}</p>
             </div>
           )
           if (readBooks.length === 0) return (
-            <p className="text-xs text-slate-400 text-center py-12">Este usuario no tiene libros leídos todavía</p>
+            <p className="text-xs text-slate-400 text-center py-12">{t('up_no_read')}</p>
           )
           return (
             <div className="flex flex-col gap-3">
@@ -331,7 +332,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
                     </div>
                     <button onClick={() => setLoanBook(b)}
                       className="self-start flex-shrink-0 px-2 py-1 bg-slate-100 rounded-full text-[9px] text-slate-500 font-medium hover:bg-amber-50 hover:text-amber-600 transition-all">
-                      Pedir
+                      {t('up_ask')}
                     </button>
                   </div>
 
@@ -353,7 +354,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
           <>
             {authorsLoading && <div className="flex justify-center py-10"><Loader2 size={22} className="animate-spin text-amber-400"/></div>}
             {!authorsLoading && favAuthors.length===0 && (
-              <p className="text-xs text-slate-400 text-center py-12">No tiene escritores favoritos todavía</p>
+              <p className="text-xs text-slate-400 text-center py-12">{t('up_no_authors')}</p>
             )}
             <div className="flex flex-col gap-3">
               {favAuthors.map(a => (
@@ -370,7 +371,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-800">{a.name}</p>
                     {a.topWork && <p className="text-xs text-slate-400 italic line-clamp-1">"{a.topWork}"</p>}
-                    {a.workCount>0 && <p className="text-[10px] text-slate-300 mt-0.5">{a.workCount} obras</p>}
+                    {a.workCount>0 && <p className="text-[10px] text-slate-300 mt-0.5">{t('detail_works', { n: a.workCount })}</p>}
                   </div>
                 </div>
               ))}
@@ -383,7 +384,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
           <>
             {reviewsLoading && <div className="flex justify-center py-10"><Loader2 size={22} className="animate-spin text-amber-400"/></div>}
             {!reviewsLoading && reviews.length===0 && (
-              <p className="text-xs text-slate-400 text-center py-12">No ha publicado reseñas todavía</p>
+              <p className="text-xs text-slate-400 text-center py-12">{t('up_no_reviews')}</p>
             )}
             <div className="flex flex-col gap-3">
               {reviews.map(r => (
@@ -400,7 +401,7 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
                         <p className="text-[11px] text-amber-500 mt-0.5">
                           {'★'.repeat(r.rating)}{'☆'.repeat(5-r.rating)}
                           <span className="text-slate-400 text-[10px] ml-1">
-                            {['','No le gustó','Estuvo bien','Bueno','Muy bueno','Excelente'][r.rating]}
+                            {r.rating === 1 ? t('up_rating_1') : t(`rating_${r.rating}`)}
                           </span>
                         </p>
                       )}
@@ -418,31 +419,31 @@ export default function UserProfileScreen({ targetUser, isFollowing, onFollow, o
           const bibleBook = books?.find(b => isBibleBook(b) && b.biblePlan)
           if (!books) return <div className="flex justify-center py-10"><Loader2 size={22} className="animate-spin text-amber-400"/></div>
           if (!bibleBook) return (
-            <p className="text-xs text-slate-400 text-center py-12">Este lector no tiene plan bíblico activo</p>
+            <p className="text-xs text-slate-400 text-center py-12">{t('up_no_bible')}</p>
           )
           const pct = Math.round((countCompleted(bibleBook.bibleProgress||{}) / TOTAL_CHAPTERS) * 100)
           return (
             <div className="flex flex-col gap-3">
               <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-semibold text-amber-800">Santa Biblia</p>
+                  <p className="text-sm font-semibold text-amber-800">{t('bible_title')}</p>
                   <p className="text-sm font-bold text-amber-500">{pct}%</p>
                 </div>
                 <div className="w-full h-2 bg-amber-200 rounded-full overflow-hidden mb-2">
                   <div className="h-full bg-amber-500 rounded-full" style={{width:`${pct}%`}}/>
                 </div>
                 <p className="text-xs text-amber-600">
-                  {countCompleted(bibleBook.bibleProgress||{})} de {TOTAL_CHAPTERS} capítulos leídos
+                  {t('bible_read_progress', { done: countCompleted(bibleBook.bibleProgress||{}), total: TOTAL_CHAPTERS })}
                 </p>
                 {bibleBook.currentVerse && (
-                  <p className="text-xs text-slate-500 mt-1.5">📖 Leyendo: {bibleBook.currentVerse}</p>
+                  <p className="text-xs text-slate-500 mt-1.5">{t('up_reading_verse', { verse: bibleBook.currentVerse })}</p>
                 )}
                 {bibleBook.planNote && (
                   <p className="text-xs text-slate-500 italic mt-1">"{bibleBook.planNote}"</p>
                 )}
                 <button onClick={() => setViewBible(bibleBook)}
                   className="mt-3 w-full py-2 bg-amber-500 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all">
-                  Ver plan completo
+                  {t('up_view_plan')}
                 </button>
               </div>
             </div>

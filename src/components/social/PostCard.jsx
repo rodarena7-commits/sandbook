@@ -1,18 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { BookOpen, Heart, Trash2, MoreHorizontal, Pencil, Share2, Send, Repeat2, User, X } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
-function timeAgo(ts) {
-  if (!ts?.seconds) return ''
-  const diff = Date.now() - ts.seconds * 1000
-  const m = Math.floor(diff / 60000)
-  if (m < 1)  return 'ahora'
-  if (m < 60) return `hace ${m}m`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `hace ${h}h`
-  const d = Math.floor(h / 24)
-  if (d < 7)  return `hace ${d}d`
-  return new Date(ts.seconds * 1000).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-}
+import { timeAgo } from '../../utils/timeAgo'
 
 function Avatar({ photoURL, displayName, size = 'md' }) {
   const initials = (displayName || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -73,6 +63,7 @@ function OriginalPostCard({ repostOf }) {
 
 // ── Menú de más opciones ─────────────────────────────────────
 function MoreMenu({ isOwn, onEdit, onShare, onSendToUser, onRepost, onClose }) {
+  const { t } = useAuth()
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
@@ -80,21 +71,21 @@ function MoreMenu({ isOwn, onEdit, onShare, onSendToUser, onRepost, onClose }) {
         {isOwn && (
           <button onClick={() => { onEdit(); onClose() }}
             className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-50">
-            <Pencil size={14} className="text-amber-500" /> Editar
+            <Pencil size={14} className="text-amber-500" /> {t('common_edit')}
           </button>
         )}
         <button onClick={() => { onShare(); onClose() }}
           className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-50">
-          <Share2 size={14} className="text-blue-500" /> Compartir
+          <Share2 size={14} className="text-blue-500" /> {t('common_share')}
         </button>
         <button onClick={() => { onSendToUser(); onClose() }}
           className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-50">
-          <Send size={14} className="text-green-500" /> Enviar a usuario
+          <Send size={14} className="text-green-500" /> {t('post_send')}
         </button>
         {!isOwn && (
           <button onClick={() => { onRepost(); onClose() }}
             className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
-            <Repeat2 size={14} className="text-purple-500" /> Republicar
+            <Repeat2 size={14} className="text-purple-500" /> {t('post_repost')}
           </button>
         )}
       </div>
@@ -112,6 +103,7 @@ function activeStreak(u) {
 
 // ── PostCard principal ───────────────────────────────────────
 export default function PostCard({ post, myUid, authorUser, onLike, onDelete, onUserPress, onEdit, onRepost, onSendToUser }) {
+  const { t, language } = useAuth()
   const liked     = (post.likedBy || []).includes(myUid)
   const isOwn     = post.uid === myUid
   const likeCount = post.likeCount || 0
@@ -140,7 +132,7 @@ export default function PostCard({ post, myUid, authorUser, onLike, onDelete, on
       navigator.share({ title: 'Sandbook', text: shareText + bookInfo }).catch(() => {})
     } else {
       navigator.clipboard?.writeText(shareText + bookInfo)
-        .then(() => alert('Copiado al portapapeles'))
+        .then(() => alert(t('post_copied')))
         .catch(() => {})
     }
   }
@@ -166,11 +158,11 @@ export default function PostCard({ post, myUid, authorUser, onLike, onDelete, on
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            <p className="text-[10px] text-slate-400">{timeAgo(post.createdAt)}</p>
-            {post.editedAt && <p className="text-[10px] text-slate-300">· editado</p>}
+            <p className="text-[10px] text-slate-400">{timeAgo(post.createdAt, t, language)}</p>
+            {post.editedAt && <p className="text-[10px] text-slate-300">{t('post_edited')}</p>}
             {isRepost && (
               <span className="flex items-center gap-0.5 text-[10px] text-purple-400 font-medium">
-                <Repeat2 size={9} /> republicó
+                <Repeat2 size={9} /> {t('post_reposted')}
               </span>
             )}
           </div>
@@ -258,7 +250,7 @@ export default function PostCard({ post, myUid, authorUser, onLike, onDelete, on
         >
           <Heart size={15} className={liked ? 'fill-red-500' : ''} />
           {likeCount > 0 && <span>{likeCount}</span>}
-          <span>Me gusta</span>
+          <span>{t('post_like')}</span>
         </button>
 
         {!isOwn && (
@@ -267,7 +259,7 @@ export default function PostCard({ post, myUid, authorUser, onLike, onDelete, on
             className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-purple-500 transition-all active:scale-90"
           >
             <Repeat2 size={14} />
-            <span>Republicar</span>
+            <span>{t('post_repost')}</span>
           </button>
         )}
       </div>

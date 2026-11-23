@@ -2,16 +2,19 @@ import { useEffect, useRef, useState } from 'react'
 import { X, ChevronLeft, ChevronRight, Loader2, Trash2 } from 'lucide-react'
 import { loadPhotoHistory, deletePhotoFromHistory } from '../../hooks/usePhotoHistory'
 import ZoomableImage from './ZoomableImage'
+import { dateLocale } from '../../utils/locale'
+import { useAuth } from '../../contexts/AuthContext'
 
-function dateLabel(ts) {
+function dateLabel(ts, locale) {
   const ms = ts?.toMillis?.() || (ts?.seconds || 0) * 1000
   if (!ms) return ''
-  return new Date(ms).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
+  return new Date(ms).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 // Foto de perfil en pantalla completa, con las anteriores (flechas o deslizando).
 // canDelete: el dueño del perfil puede borrar fotos viejas de su historial.
 export default function PhotoViewer({ uid, currentUrl, name, canDelete = false, onClose }) {
+  const { t, language } = useAuth()
   const [history, setHistory] = useState(null)
   const [index, setIndex]     = useState(0)
   const touchX = useRef(null)
@@ -47,7 +50,7 @@ export default function PhotoViewer({ uid, currentUrl, name, canDelete = false, 
 
   async function handleDelete() {
     if (!photo || photo.current) return
-    if (!window.confirm('¿Borrar esta foto de tu historial?')) return
+    if (!window.confirm(t('ph_delete_q'))) return
     await deletePhotoFromHistory(uid, photo.id)
     setHistory(h => h.filter(x => x.id !== photo.id))
     setIndex(i => Math.max(0, i - 1))
@@ -68,19 +71,19 @@ export default function PhotoViewer({ uid, currentUrl, name, canDelete = false, 
     >
       <div className="flex items-center gap-3 px-4 pt-12 pb-3 text-white flex-shrink-0">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate">{name || 'Foto de perfil'}</p>
+          <p className="text-sm font-semibold truncate">{name || t('st_profile_photo')}</p>
           <p className="text-[11px] text-white/60">
-            {photo?.current ? 'Foto actual' : photo ? `Usada hasta el ${dateLabel(photo.replacedAt)}` : ''}
-            {photos.length > 1 && ` · ${index + 1} de ${photos.length}`}
+            {photo?.current ? t('ph_current') : photo ? t('ph_used_until', { date: dateLabel(photo.replacedAt, dateLocale(language)) }) : ''}
+            {photos.length > 1 && ` ${t('ph_count', { i: index + 1, n: photos.length })}`}
           </p>
         </div>
         {canDelete && photo && !photo.current && (
-          <button onClick={handleDelete} aria-label="Borrar foto"
+          <button onClick={handleDelete} aria-label={t('ph_delete')}
             className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
             <Trash2 size={16} />
           </button>
         )}
-        <button onClick={onClose} aria-label="Cerrar"
+        <button onClick={onClose} aria-label={t('common_close')}
           className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
           <X size={18} />
         </button>
@@ -90,17 +93,17 @@ export default function PhotoViewer({ uid, currentUrl, name, canDelete = false, 
         {photo ? (
           <ZoomableImage src={photo.url} onZoomChange={setZoomed} />
         ) : (
-          <p className="text-white/50 text-sm">Sin foto de perfil</p>
+          <p className="text-white/50 text-sm">{t('ph_none')}</p>
         )}
 
         {index > 0 && !zoomed && (
-          <button onClick={() => go(-1)} aria-label="Foto anterior"
+          <button onClick={() => go(-1)} aria-label={t('ph_prev')}
             className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center">
             <ChevronLeft size={22} />
           </button>
         )}
         {index < photos.length - 1 && !zoomed && (
-          <button onClick={() => go(1)} aria-label="Foto siguiente"
+          <button onClick={() => go(1)} aria-label={t('ph_next')}
             className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center">
             <ChevronRight size={22} />
           </button>
@@ -121,7 +124,7 @@ export default function PhotoViewer({ uid, currentUrl, name, canDelete = false, 
             ))}
           </div>
         ) : (
-          <p className="text-[11px] text-white/40 text-center">No hay fotos anteriores guardadas</p>
+          <p className="text-[11px] text-white/40 text-center">{t('ph_no_history')}</p>
         )}
       </div>
     </div>

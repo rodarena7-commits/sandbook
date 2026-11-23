@@ -6,6 +6,7 @@ import ImagePickerSheet from '../ui/ImagePickerSheet'
 
 // ── Book Detail Sheet (from author) ───────────────────────
 function AuthorBookSheet({ book, author, allBooks, onClose }) {
+  const { t } = useAuth()
   const otherBooks = allBooks.filter(b => b.bookId !== book.bookId)
 
   return (
@@ -29,7 +30,7 @@ function AuthorBookSheet({ book, author, allBooks, onClose }) {
               <p className="font-bold text-slate-800 leading-tight">{book.title}</p>
               <p className="text-sm text-slate-500 mt-1">{author.name}</p>
               {book.publishedDate && <p className="text-xs text-slate-400 mt-0.5">{book.publishedDate.slice(0,4)}</p>}
-              {book.pageCount > 0 && <p className="text-xs text-slate-400">{book.pageCount} páginas</p>}
+              {book.pageCount > 0 && <p className="text-xs text-slate-400">{t('ac_pages', { n: book.pageCount })}</p>}
             </div>
           </div>
 
@@ -37,7 +38,7 @@ function AuthorBookSheet({ book, author, allBooks, onClose }) {
           {otherBooks.length > 0 && (
             <>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
-                Más libros de {author.name}
+                {t('ac_more_books', { name: author.name })}
               </p>
               <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2">
                 {otherBooks.map(b => (
@@ -61,7 +62,7 @@ function AuthorBookSheet({ book, author, allBooks, onClose }) {
 
 // ── Author Card ────────────────────────────────────────────
 export default function AuthorCard({ author, isFav = false, onToggleFav, onViewPosts }) {
-  const { user } = useAuth()
+  const { user, t } = useAuth()
   const [expanded, setExpanded]         = useState(false)
   const [imgError, setImgError]         = useState(false)
   const [globalPhoto, setGlobalPhoto]   = useState(null)
@@ -93,7 +94,7 @@ export default function AuthorCard({ author, isFav = false, onToggleFav, onViewP
             <button onClick={() => setShowPhotoPicker(true)}
               className="w-16 h-16 rounded-2xl bg-slate-100 flex flex-col items-center justify-center gap-1 hover:bg-amber-50 transition-all">
               <User size={20} className="text-slate-300"/>
-              <span className="text-[8px] text-slate-400">+ foto</span>
+              <span className="text-[8px] text-slate-400">{t('prof_add_photo_small')}</span>
             </button>
           )}
           {user && (author.photoUrl || globalPhoto) && (
@@ -124,7 +125,7 @@ export default function AuthorCard({ author, isFav = false, onToggleFav, onViewP
             <p className="text-xs text-slate-500 mt-1 italic line-clamp-1">"{author.topWork}"</p>
           )}
           {author.workCount > 0 && (
-            <p className="text-[10px] text-slate-400 mt-0.5">{author.workCount} obras</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">{t('detail_works', { n: author.workCount })}</p>
           )}
         </div>
       </div>
@@ -152,15 +153,15 @@ export default function AuthorCard({ author, isFav = false, onToggleFav, onViewP
             <button onClick={() => setExpanded(v => !v)}
               className="flex items-center justify-center gap-1 w-full py-2 text-xs text-amber-500 font-medium border-t border-slate-100 hover:bg-amber-50 transition-all">
               {expanded
-                ? <><ChevronUp size={13}/> Ver menos</>
-                : <><ChevronDown size={13}/> Ver los {author.books.length - 5} libros más</>
+                ? <><ChevronUp size={13}/> {t('detail_less')}</>
+                : <><ChevronDown size={13}/> {t('ac_see_more', { n: author.books.length - 5 })}</>
               }
             </button>
           )}
         </>
       )}
       {!author.books?.length && (
-        <p className="text-xs text-slate-300 text-center px-4 pb-3">Sin libros disponibles</p>
+        <p className="text-xs text-slate-300 text-center px-4 pb-3">{t('ac_no_books')}</p>
       )}
 
       {onViewPosts && (
@@ -169,7 +170,7 @@ export default function AuthorCard({ author, isFav = false, onToggleFav, onViewP
           className="flex items-center justify-center gap-1.5 w-full py-2.5 text-xs text-slate-500 font-medium border-t border-slate-100 hover:bg-slate-50 transition-all"
         >
           <FileText size={12} className="text-amber-500" />
-          Ver publicaciones sobre {author.name.split(' ')[0]}
+          {t('ac_view_posts', { name: author.name.split(' ')[0] })}
         </button>
       )}
     </div>
@@ -180,7 +181,7 @@ export default function AuthorCard({ author, isFav = false, onToggleFav, onViewP
         <div className="fixed inset-0 bg-black/40 z-[75]" onClick={() => setShowPhotoPicker(false)}/>
         <div className="fixed inset-0 z-[76] flex items-end">
           <ImagePickerSheet
-            title={`Foto de ${author.name}`}
+            title={t('detail_author_photo', { name: author.name })}
             storagePath={`authorPhotos/${author.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`}
             onSave={async url => {
               setGlobalPhoto(url)
