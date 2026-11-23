@@ -17,7 +17,8 @@ import { useBookDemo } from '../../hooks/useBookDemo'
 import { useFavoriteAuthors } from '../../hooks/useFavoriteAuthors'
 import { useBookPosts } from '../../hooks/useBookPosts'
 
-const STATUS_LABELS = { reading: 'Leyendo', read: 'Leído', pending: 'Pendiente', library: 'Biblioteca', ebook: 'Ebook', loaned: 'Prestado' }
+// Estados posibles (texto en las traducciones: status_<clave>)
+const STATUS_KEYS = ['reading', 'read', 'pending', 'library', 'ebook', 'loaned']
 const STATUS_COLORS = {
   reading: 'bg-amber-500 text-white',
   read:    'bg-green-500 text-white',
@@ -27,13 +28,13 @@ const STATUS_COLORS = {
   loaned:  'bg-rose-500 text-white',
 }
 const ADD_OPTIONS = [
-  { key: 'reading', label: 'Leyendo ahora',  color: 'bg-amber-500 text-white' },
-  { key: 'pending', label: 'Quiero leer',     color: 'bg-slate-100 text-slate-700 border border-slate-200' },
-  { key: 'read',    label: 'Ya lo leí',       color: 'bg-green-100 text-green-700' },
-  { key: 'library', label: 'Solo guardar',    color: 'bg-blue-100 text-blue-600' },
-  { key: 'ebook',   label: 'Tengo el Ebook (no disponible para préstamo)',  color: 'bg-purple-100 text-purple-600', noLend: true },
+  { key: 'reading', color: 'bg-amber-500 text-white' },
+  { key: 'pending', color: 'bg-slate-100 text-slate-700 border border-slate-200' },
+  { key: 'read',    color: 'bg-green-100 text-green-700' },
+  { key: 'library', color: 'bg-blue-100 text-blue-600' },
+  { key: 'ebook',   color: 'bg-purple-100 text-purple-600', noLend: true },
 ]
-const RATING_LABELS = ['', 'No me gustó', 'Estuvo bien', 'Bueno', 'Muy bueno', 'Excelente']
+// Textos de cada puntaje: rating_1 … rating_5
 
 function largeCover(url) {
   if (!url) return null
@@ -64,6 +65,7 @@ function StarRating({ value, onChange, size = 28, readonly = false }) {
 }
 
 function StatusMenu({ current, onChange }) {
+  const { t } = useAuth()
   const [open, setOpen] = useState(false)
   return (
     <div className="relative">
@@ -71,16 +73,16 @@ function StatusMenu({ current, onChange }) {
         onClick={() => setOpen(v => !v)}
         className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${STATUS_COLORS[current] || STATUS_COLORS.library}`}
       >
-        {STATUS_LABELS[current] || 'Biblioteca'} <ChevronDown size={13} />
+        {t(STATUS_KEYS.includes(current) ? `status_${current}` : 'status_library')} <ChevronDown size={13} />
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute top-full left-0 mt-1 bg-white rounded-2xl shadow-xl border border-slate-100 z-20 overflow-hidden min-w-[150px]">
-            {Object.entries(STATUS_LABELS).map(([key, label]) => (
+            {STATUS_KEYS.map(key => (
               <button key={key} onClick={() => { onChange(key); setOpen(false) }}
                 className={`w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 ${current === key ? 'font-semibold text-amber-600' : 'text-slate-700'}`}>
-                {label}
+                {t(`status_${key}`)}
               </button>
             ))}
           </div>
@@ -91,7 +93,7 @@ function StatusMenu({ current, onChange }) {
 }
 
 function AuthorSection({ authorName }) {
-  const { user } = useAuth()
+  const { user, t } = useAuth()
   const author = useAuthor(authorName)
   const { isFavorite, addFavoriteAuthor, removeFavoriteAuthor } = useFavoriteAuthors(user?.uid)
   const [expanded,       setExpanded]       = useState(false)
@@ -131,7 +133,7 @@ function AuthorSection({ authorName }) {
 
   return (
     <div className="mb-5">
-      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Autor</p>
+      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">{t('detail_author')}</p>
       <div className="flex gap-3 items-start">
         {/* Avatar or upload placeholder */}
         <div className="relative flex-shrink-0 group">
@@ -161,14 +163,14 @@ function AuthorSection({ authorName }) {
                 onClick={toggleFav}
                 disabled={favLoading || !author}
                 className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-90 ${fav ? 'bg-red-100' : 'bg-slate-100 hover:bg-red-50'} disabled:opacity-40`}
-                title={fav ? 'Quitar de favoritos' : 'Agregar a escritores favoritos'}
+                title={fav ? t('detail_unfav') : t('detail_fav_author')}
               >
                 <Heart size={15} className={fav ? 'fill-red-500 text-red-500' : 'text-slate-400'} />
               </button>
             )}
           </div>
           {author?.birthDate && <p className="text-xs text-slate-400 mt-0.5">{author.birthDate}</p>}
-          {author?.workCount > 0 && <p className="text-xs text-slate-400">{author.workCount} obras</p>}
+          {author?.workCount > 0 && <p className="text-xs text-slate-400">{t('detail_works', { n: author.workCount })}</p>}
           {author?.bio && (
             <>
               <p className={`text-xs text-slate-500 leading-relaxed mt-1.5 ${expanded ? '' : 'line-clamp-3'}`}>
@@ -176,16 +178,16 @@ function AuthorSection({ authorName }) {
               </p>
               {author.bio.length > 120 && (
                 <button onClick={() => setExpanded(v => !v)} className="text-xs text-amber-500 mt-1">
-                  {expanded ? 'Ver menos' : 'Ver más'}
+                  {expanded ? t('detail_less') : t('detail_more')}
                 </button>
               )}
             </>
           )}
-          {!author && <p className="text-xs text-slate-300 mt-1">Cargando…</p>}
+          {!author && <p className="text-xs text-slate-300 mt-1">{t('common_loading')}</p>}
           {!photo && author !== null && (
             <button onClick={() => setShowPhotoPicker(true)}
               className="mt-2 flex items-center gap-1 text-[10px] text-amber-500 font-medium">
-              <Upload size={10}/> Agregar foto del autor
+              <Upload size={10}/> {t('detail_add_author_photo')}
             </button>
           )}
         </div>
@@ -197,7 +199,7 @@ function AuthorSection({ authorName }) {
           <div className="fixed inset-0 bg-black/40 z-[75]" onClick={() => setShowPhotoPicker(false)}/>
           <div className="fixed inset-0 z-[76] flex items-end">
             <ImagePickerSheet
-              title={`Foto de ${authorName}`}
+              title={t('detail_author_photo', { name: authorName })}
               storagePath={`authorPhotos/${authorName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`}
               onSave={async url => {
                 setGlobalPhoto(url)
@@ -215,12 +217,13 @@ function AuthorSection({ authorName }) {
 
 // ── Author Books Carousel ──────────────────────────────────
 function AuthorBooksCarousel({ authorName, currentBookId, onOpenRelated }) {
+  const { t } = useAuth()
   const { books, loading } = useAuthorBooks(authorName, currentBookId)
 
   if (loading) {
     return (
       <div className="mb-5">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Más de {authorName}</p>
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('detail_more_by', { name: authorName })}</p>
         <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin text-amber-400"/></div>
       </div>
     )
@@ -230,7 +233,7 @@ function AuthorBooksCarousel({ authorName, currentBookId, onOpenRelated }) {
   return (
     <div className="mb-5">
       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
-        Más de {authorName}
+        {t('detail_more_by', { name: authorName })}
       </p>
       <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 -mx-5 px-5">
         {books.map(b => (
@@ -259,6 +262,7 @@ function AuthorBooksCarousel({ authorName, currentBookId, onOpenRelated }) {
 }
 
 function ReviewsSection({ bookId, bookMeta, myUid, myProfile }) {
+  const { t } = useAuth()
   const { reviews, loading, submitReview, avgRating } = useBookReviews(bookId, bookMeta)
   const [myRating, setMyRating] = useState(0)
   const [comment, setComment] = useState('')
@@ -291,7 +295,7 @@ function ReviewsSection({ bookId, bookMeta, myUid, myProfile }) {
           <p className="text-2xl font-bold text-amber-500">{avgRating.toFixed(1)}</p>
           <div>
             <StarRating value={Math.round(avgRating)} size={14} readonly />
-            <p className="text-[10px] text-slate-400 mt-0.5">{withRating.length} calificacion{withRating.length !== 1 ? 'es' : ''}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">{t(withRating.length === 1 ? 'detail_ratings_one' : 'detail_ratings_many', { n: withRating.length })}</p>
           </div>
         </div>
       )}
@@ -299,17 +303,17 @@ function ReviewsSection({ bookId, bookMeta, myUid, myProfile }) {
       {/* Write review */}
       <div className="mb-5 bg-slate-50 rounded-2xl p-4">
         <p className="text-xs font-semibold text-slate-500 mb-2">
-          {myReview ? 'Tu reseña' : 'Escribí tu opinión'}
+          {myReview ? t('detail_your_review') : t('detail_write_review')}
         </p>
         <StarRating value={myRating} onChange={setMyRating} size={24} />
         {myRating > 0 && (
-          <p className="text-xs text-amber-500 mt-1 mb-2">{RATING_LABELS[myRating]}</p>
+          <p className="text-xs text-amber-500 mt-1 mb-2">{t(`rating_${myRating}`)}</p>
         )}
         <form onSubmit={handleSubmit} className="mt-2">
           <textarea
             value={comment}
             onChange={e => setComment(e.target.value)}
-            placeholder="Contá qué te pareció el libro…"
+            placeholder={t('detail_review_placeholder')}
             rows={3}
             maxLength={500}
             className="w-full px-3 py-2.5 bg-white rounded-xl border border-slate-200 text-sm text-slate-700 placeholder-slate-300 outline-none focus:ring-2 focus:ring-amber-400 resize-none"
@@ -328,9 +332,9 @@ function ReviewsSection({ bookId, bookMeta, myUid, myProfile }) {
       </div>
 
       {/* Others' reviews */}
-      {loading && <p className="text-xs text-slate-300 text-center py-4">Cargando opiniones…</p>}
+      {loading && <p className="text-xs text-slate-300 text-center py-4">{t('detail_loading_reviews')}</p>}
       {!loading && reviews.filter(r => r.uid !== myUid).length === 0 && (
-        <p className="text-xs text-slate-300 text-center py-2">Todavía no hay opiniones de otros lectores</p>
+        <p className="text-xs text-slate-300 text-center py-2">{t('detail_no_reviews')}</p>
       )}
       <div className="flex flex-col gap-3">
         {reviews.filter(r => r.uid !== myUid).map(r => (
@@ -358,6 +362,7 @@ function ReviewsSection({ bookId, bookMeta, myUid, myProfile }) {
 
 // ── Sección de notas privadas ──────────────────────────────
 function PrivateNotesSection({ bookId, initialNotes, uid, onSave }) {
+  const { t } = useAuth()
   const [notes, setNotes] = useState(initialNotes || '')
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -374,13 +379,13 @@ function PrivateNotesSection({ bookId, initialNotes, uid, onSave }) {
     <div className="border-t border-slate-100 pt-5 mb-5">
       <div className="flex items-center gap-2 mb-3">
         <Lock size={12} className="text-slate-400" />
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Notas privadas</p>
-        <span className="text-[9px] text-slate-300 font-normal normal-case">Solo vos podés verlas</span>
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('detail_private_notes')}</p>
+        <span className="text-[9px] text-slate-300 font-normal normal-case">{t('detail_only_you')}</span>
       </div>
       <textarea
         value={notes}
         onChange={e => setNotes(e.target.value)}
-        placeholder="Anotá lo que quieras sobre este libro: páginas favoritas, citas, reflexiones…"
+        placeholder={t('detail_notes_placeholder')}
         rows={5}
         maxLength={2000}
         className="w-full px-3 py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder-slate-300 outline-none focus:ring-2 focus:ring-amber-400 resize-none leading-relaxed"
@@ -393,7 +398,7 @@ function PrivateNotesSection({ bookId, initialNotes, uid, onSave }) {
           className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-800 text-white rounded-full text-xs font-semibold disabled:opacity-40 active:scale-95 transition-all"
         >
           <Save size={11} />
-          {saved ? '¡Guardado!' : saving ? 'Guardando…' : 'Guardar notas'}
+          {saved ? t('detail_saved') : saving ? t('common_saving') : t('detail_save_notes')}
         </button>
       </div>
     </div>
@@ -413,7 +418,7 @@ export default function BookDetailSheet({
   // Nivel de z-index para apilar sheets (0 = base, 1 = relacionado, 2 = relacionado del relacionado...)
   zLevel = 0,
 }) {
-  const { user, profile } = useAuth()
+  const { user, profile, t } = useAuth()
   const [lightbox, setLightbox] = useState(false)
   const [rating, setRating] = useState(book.rating || 0)
   const [rateSaving, setRateSaving] = useState(false)
@@ -554,7 +559,7 @@ export default function BookDetailSheet({
                     {isLibrary && (
                       <button onClick={() => setShowImgPicker(true)}
                         className="flex items-center gap-1 px-2 py-1 bg-amber-500 text-white rounded-full text-[10px] font-medium">
-                        <ImagePlus size={10} /> Agregar
+                        <ImagePlus size={10} /> {t('common_add')}
                       </button>
                     )}
                   </div>
@@ -569,7 +574,7 @@ export default function BookDetailSheet({
                   )}
                   <div className="flex flex-wrap gap-x-3 mt-1.5 text-xs text-slate-400">
                     {book.publishedDate && <span>{book.publishedDate.slice(0, 4)}</span>}
-                    {book.pageCount > 0 && <span>{book.pageCount} pág.</span>}
+                    {book.pageCount > 0 && <span>{t('detail_pages', { n: book.pageCount })}</span>}
                   </div>
 
                   {/* Global stats */}
@@ -584,7 +589,7 @@ export default function BookDetailSheet({
                       {stats.readers > 0 && (
                         <span className="flex items-center gap-1 text-[11px] text-green-500">
                           <Users size={11} />
-                          {stats.readers} {stats.readers === 1 ? 'lo leyó' : 'lo leyeron'}
+                          {t(stats.readers === 1 ? 'detail_read_one' : 'detail_read_many', { n: stats.readers })}
                         </span>
                       )}
                     </div>
@@ -598,7 +603,7 @@ export default function BookDetailSheet({
                   >
                     <Star size={15} className={book.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
                     <span className={book.isFavorite ? 'text-amber-500' : 'text-slate-400'}>
-                      {book.isFavorite ? 'En favoritos' : 'Agregar a favoritos'}
+                      {book.isFavorite ? t('detail_in_favs') : t('detail_add_favs')}
                     </span>
                   </button>
                 ) : (
@@ -606,7 +611,7 @@ export default function BookDetailSheet({
                     onClick={() => setAddOpen(true)}
                     className="mt-3 px-4 py-2 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all w-fit"
                   >
-                    + Agregar
+                    {t('detail_add_btn')}
                   </button>
                 )}
               </div>
@@ -616,21 +621,21 @@ export default function BookDetailSheet({
             {isLibrary && (
               <>
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="text-xs text-slate-400 font-medium">Estado:</span>
+                  <span className="text-xs text-slate-400 font-medium">{t('detail_status')}</span>
                   <StatusMenu current={book.status} onChange={s => onStatusChange?.(book.bookId, s)} />
                 </div>
 
                 {book.status === 'loaned' && (
                   <div className="mb-5 bg-rose-50 border border-rose-100 rounded-2xl p-4 animate-in fade-in duration-200">
                     <p className="text-xs font-semibold text-rose-800 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                      <User size={13} className="text-rose-500" /> ¿A quién se lo prestaste?
+                      <User size={13} className="text-rose-500" /> {t('detail_loaned_to')}
                     </p>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={loanedToInput}
                         onChange={e => setLoanedToInput(e.target.value)}
-                        placeholder="Nombre de la persona…"
+                        placeholder={t('detail_person_name')}
                         className="flex-1 px-3.5 py-2 bg-white rounded-xl border border-rose-200 text-sm text-slate-700 placeholder-slate-300 outline-none focus:ring-2 focus:ring-rose-400"
                       />
                       <button
@@ -638,7 +643,7 @@ export default function BookDetailSheet({
                         disabled={savingLoanedTo}
                         className="px-4 py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-sm active:scale-95 transition-all hover:bg-rose-600 disabled:opacity-50 flex items-center gap-1"
                       >
-                        {savingLoanedTo ? 'Guardando…' : 'Guardar'}
+                        {savingLoanedTo ? t('common_saving') : t('common_save')}
                       </button>
                     </div>
                   </div>
@@ -646,10 +651,10 @@ export default function BookDetailSheet({
 
                 <div className="mb-5">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-                    Mi calificación {rateSaving && <span className="normal-case text-amber-400 font-normal">· guardando…</span>}
+                    {t('detail_my_rating')} {rateSaving && <span className="normal-case text-amber-400 font-normal">{t('detail_saving_lower')}</span>}
                   </p>
                   <StarRating value={rating} onChange={handleRating} size={28} />
-                  {rating > 0 && <p className="text-xs text-slate-400 mt-1">{RATING_LABELS[rating]}</p>}
+                  {rating > 0 && <p className="text-xs text-slate-400 mt-1">{t(`rating_${rating}`)}</p>}
                 </div>
               </>
             )}
@@ -658,16 +663,16 @@ export default function BookDetailSheet({
             {isLibrary && (
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Leyendo con</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('detail_reading_with')}</p>
                   <button
                     onClick={() => setShowCoReaderPicker(true)}
                     className="text-xs text-amber-500 font-medium active:scale-95 transition-all"
                   >
-                    + Agregar
+                    {t('detail_add_btn')}
                   </button>
                 </div>
                 {(book.coReaders || []).length === 0 ? (
-                  <p className="text-xs text-slate-400">Nadie aún. ¿Tenés un compañero de lectura?</p>
+                  <p className="text-xs text-slate-400">{t('detail_no_coreaders')}</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {book.coReaders.map(r => (
@@ -713,7 +718,7 @@ export default function BookDetailSheet({
                 {(isGoogleBook || demoUrl || isAdmin) && (
                   <div className="mb-5">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Vista Previa</p>
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('detail_preview')}</p>
                       {isAdmin && (
                         <button
                           onClick={() => { setEditingDemo(v => !v); setDemoInput(demoUrl || '') }}
@@ -749,7 +754,7 @@ export default function BookDetailSheet({
                           target="_blank" rel="noopener noreferrer"
                           className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-700 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
                         >
-                          <BookOpen size={14} /> Vista previa
+                          <BookOpen size={14} /> {t('detail_preview')}
                         </a>
                       )}
                       {demoUrl && (
@@ -758,7 +763,7 @@ export default function BookDetailSheet({
                           target="_blank" rel="noopener noreferrer"
                           className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
                         >
-                          <FileText size={14} /> Demo / Muestra
+                          <FileText size={14} /> {t('detail_demo')}
                         </a>
                       )}
                     </div>
@@ -766,7 +771,7 @@ export default function BookDetailSheet({
                 )}
 
                 <div className="mb-5">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2.5">Dónde comprar</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2.5">{t('detail_where_buy')}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {book.price != null && book.buyLink && (
                       <a
@@ -818,13 +823,13 @@ export default function BookDetailSheet({
             {/* Description */}
             {book.description && (
               <div className="mb-5">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Sinopsis</p>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('detail_synopsis')}</p>
                 <p className={`text-sm text-slate-600 leading-relaxed ${descExpanded ? '' : 'line-clamp-4'}`}>
                   {book.description}
                 </p>
                 {book.description.length > 200 && (
                   <button onClick={() => setDescExpanded(v => !v)} className="text-xs text-amber-500 mt-1">
-                    {descExpanded ? 'Ver menos' : 'Ver más'}
+                    {descExpanded ? t('detail_less') : t('detail_more')}
                   </button>
                 )}
               </div>
@@ -847,7 +852,7 @@ export default function BookDetailSheet({
             {/* Publicaciones sobre este libro */}
             {bookPosts.length > 0 && (
               <div className="border-t border-slate-100 pt-5 mb-1">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Frases publicadas</p>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">{t('detail_quotes')}</p>
                 <div className="flex flex-col gap-3">
                   {bookPosts.map(post => {
                     const date = post.createdAt?.seconds
@@ -878,7 +883,7 @@ export default function BookDetailSheet({
             )}
 
             <div className="border-t border-slate-100 pt-5 mb-1">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-4">Opiniones</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-4">{t('detail_reviews')}</p>
               <ReviewsSection bookId={book.bookId} bookMeta={book} myUid={user?.uid} myProfile={profile} />
             </div>
 
@@ -889,7 +894,7 @@ export default function BookDetailSheet({
                 className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-sm font-medium w-full active:scale-95 transition-all mt-4"
               >
                 <CalendarDays size={15} className="text-amber-500" />
-                Crear plan de lectura
+                {t('detail_create_plan')}
               </button>
             )}
 
@@ -909,7 +914,7 @@ export default function BookDetailSheet({
                 onClick={handleRemove}
                 className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 text-red-500 rounded-2xl text-sm font-medium w-full active:scale-95 transition-all mt-4"
               >
-                <Trash2 size={15} /> Eliminar de mi biblioteca
+                <Trash2 size={15} /> {t('detail_remove')}
               </button>
             )}
           </div>
@@ -933,7 +938,7 @@ export default function BookDetailSheet({
                 {book.authors?.[0] && <p className="text-xs text-slate-400 mt-0.5">{book.authors[0]}</p>}
               </div>
             </div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Agregar como…</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">{t('detail_add_as')}</p>
             <div className="flex flex-col gap-2">
               {ADD_OPTIONS.map(opt => (
                 <div key={opt.key}>
@@ -942,16 +947,16 @@ export default function BookDetailSheet({
                     onClick={() => handleAdd(opt.key)}
                     className={`w-full py-3 rounded-2xl text-sm font-medium transition-all active:scale-95 ${opt.color} ${adding ? 'opacity-50' : ''}`}
                   >
-                    {opt.label}
+                    {t(`add_${opt.key}`)}
                   </button>
                   {opt.noLend && (
-                    <p className="text-[10px] text-slate-400 text-center mt-0.5">📵 No disponible para préstamo</p>
+                    <p className="text-[10px] text-slate-400 text-center mt-0.5">{t('detail_no_lend')}</p>
                   )}
                 </div>
               ))}
             </div>
             <button onClick={() => setAddOpen(false)} className="w-full mt-3 py-2.5 text-sm text-slate-400">
-              Cancelar
+              {t('common_cancel')}
             </button>
           </div>
         </div>
@@ -978,7 +983,7 @@ export default function BookDetailSheet({
         <>
           <div className="fixed inset-0 bg-black/40 z-[65]" onClick={() => setShowImgPicker(false)} />
           <ImagePickerSheet
-            title="Portada del libro"
+            title={t('detail_cover')}
             storagePath={`users/${user?.uid}/books/${book.bookId}`}
             onSave={async url => {
               setCustomThumb(url)

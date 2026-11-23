@@ -106,15 +106,16 @@ function ShelfMenu({ shelf, onRename, onDelete, onClose }) {
 
 // ── Assign Shelf Modal ─────────────────────────────────────
 function AssignShelfModal({ book, shelves, currentShelfId, onAssign, onClose }) {
+  const { t } = useAuth()
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-6" onClick={onClose}>
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
-        <h3 className="font-bold text-slate-800 mb-1">Mover a estante</h3>
+        <h3 className="font-bold text-slate-800 mb-1">{t('lib_move_to_shelf')}</h3>
         <p className="text-xs text-slate-400 mb-4 line-clamp-1">{book.title}</p>
         <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
           <button onClick={() => onAssign(null)}
             className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm transition-all ${!currentShelfId ? 'bg-amber-50 text-amber-600 font-semibold' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
-            Sin estante
+            {t('lib_no_shelf')}
             {!currentShelfId && <Check size={14} />}
           </button>
           {shelves.map(s => (
@@ -125,7 +126,7 @@ function AssignShelfModal({ book, shelves, currentShelfId, onAssign, onClose }) 
             </button>
           ))}
         </div>
-        <button onClick={onClose} className="w-full mt-3 py-2.5 text-sm text-slate-400">Cancelar</button>
+        <button onClick={onClose} className="w-full mt-3 py-2.5 text-sm text-slate-400">{t('common_cancel')}</button>
       </div>
     </div>
   )
@@ -166,7 +167,7 @@ export default function LibraryPage({ startOnPlan = false, onPlanConsumed }) {
       if (ebook?.fileBlob) {
         setFreeBookViewer({ pdfUrl: URL.createObjectURL(ebook.fileBlob), title: book.title, book })
       } else {
-        alert('No se encontró el archivo en este dispositivo (¿lo importaste desde otro celular?).')
+        alert(t('lib_file_not_found'))
       }
       return
     }

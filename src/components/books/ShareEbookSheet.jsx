@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X, Loader2, Check, Send, Users } from 'lucide-react'
 import { uploadSharedFile } from '../../utils/sharedFiles'
+import { useAuth } from '../../contexts/AuthContext'
 
 function Avatar({ photoURL, displayName }) {
   const initials = (displayName || '?')[0].toUpperCase()
@@ -15,6 +16,7 @@ function Avatar({ photoURL, displayName }) {
 // Envía un ebook local a un seguidor: sube el archivo al servidor propio
 // (no usamos Firebase Storage) y manda un mensaje con el link como adjunto.
 export default function ShareEbookSheet({ ebook, myUid, myProfile, followers, followersLoading, onLoadFollowers, sendMessage, canMessage, onClose }) {
+  const { t } = useAuth()
   const [sendingTo, setSendingTo] = useState(null)
   const [sentTo, setSentTo]       = useState(new Set())
   const [blockedTo, setBlockedTo] = useState(new Set())
@@ -47,7 +49,7 @@ export default function ShareEbookSheet({ ebook, myUid, myProfile, followers, fo
       setSentTo(prev => new Set(prev).add(follower.uid))
     } catch (e) {
       console.error('ShareEbookSheet error:', e)
-      setError('No se pudo enviar el archivo. Probá de nuevo.')
+      setError(t('share_send_error'))
     } finally {
       setSendingTo(null)
     }
@@ -58,7 +60,7 @@ export default function ShareEbookSheet({ ebook, myUid, myProfile, followers, fo
       <div className="w-full max-w-lg mx-auto bg-white rounded-t-3xl shadow-2xl p-5 pb-8 max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between mb-1">
           <h3 className="font-bold text-slate-800 flex items-center gap-2">
-            <Send size={16} className="text-amber-500" /> Enviar a un seguidor
+            <Send size={16} className="text-amber-500" /> {t('eb_send')}
           </h3>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
             <X size={16} />
@@ -76,8 +78,8 @@ export default function ShareEbookSheet({ ebook, myUid, myProfile, followers, fo
           {!followersLoading && followers.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 text-center text-slate-400">
               <Users size={32} className="mb-2 text-slate-200" />
-              <p className="text-sm font-medium">Todavía no tenés seguidores</p>
-              <p className="text-xs mt-1">Cuando alguien te siga vas a poder enviarle tus ebooks acá.</p>
+              <p className="text-sm font-medium">{t('share_no_followers')}</p>
+              <p className="text-xs mt-1">{t('share_no_followers_desc')}</p>
             </div>
           )}
 
@@ -95,12 +97,12 @@ export default function ShareEbookSheet({ ebook, myUid, myProfile, followers, fo
                 <Avatar photoURL={f.photoURL} displayName={f.displayName} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-700 truncate">{f.displayName || 'Lector'}</p>
-                  {isBlocked && <p className="text-[10px] text-red-400">No acepta mensajes tuyos</p>}
+                  {isBlocked && <p className="text-[10px] text-red-400">{t('share_blocked')}</p>}
                 </div>
                 {isSending && <Loader2 size={16} className="animate-spin text-amber-500 flex-shrink-0" />}
                 {isSent && (
                   <span className="flex items-center gap-1 text-[11px] font-bold text-green-600 flex-shrink-0">
-                    <Check size={13} /> Enviado
+                    <Check size={13} /> {t('share_sent')}
                   </span>
                 )}
               </button>
@@ -109,7 +111,7 @@ export default function ShareEbookSheet({ ebook, myUid, myProfile, followers, fo
         </div>
 
         <button onClick={onClose} className="w-full mt-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-sm font-semibold transition-all">
-          Listo
+          {t('common_done')}
         </button>
       </div>
     </div>

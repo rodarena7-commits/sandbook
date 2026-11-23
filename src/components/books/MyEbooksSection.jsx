@@ -77,7 +77,7 @@ function getFileExtension(type, originalName) {
 
 
 export default function MyEbooksSection() {
-  const { user, profile, setProfile } = useAuth();
+  const { user, profile, setProfile, t } = useAuth();
   const { books, addBook } = useBooks(user?.uid);
   const { followerUsers, followerLoading, loadFollowers } = useUsers(user?.uid, profile, setProfile);
   const { sendMessage, canMessage } = useConversations(user?.uid);
@@ -272,7 +272,7 @@ export default function MyEbooksSection() {
 
   const handleShareEbook = async (ebook) => {
     if (!ebook || !ebook.fileBlob) {
-      alert('No se pudo encontrar el archivo para compartir.');
+      alert(t('eb_file_missing'));
       return;
     }
     setSharingId(ebook.id);
@@ -294,9 +294,9 @@ export default function MyEbooksSection() {
         // 3. Compartir nativamente
         await Share.share({
           title: ebook.title,
-          text: `Compartiendo ${ebook.title}`,
+          text: t('eb_sharing', { title: ebook.title }),
           url: writeResult.uri,
-          dialogTitle: 'Compartir Archivo'
+          dialogTitle: t('eb_share_dialog')
         });
       } else {
         // Fallback Web: Utilizar Web Share API si está disponible, de lo contrario descarga directa
@@ -305,7 +305,7 @@ export default function MyEbooksSection() {
           await navigator.share({
             files: [fileObj],
             title: ebook.title,
-            text: `Compartiendo ${ebook.title}`
+            text: t('eb_sharing', { title: ebook.title })
           });
         } else {
           // Descarga directa
@@ -357,7 +357,7 @@ export default function MyEbooksSection() {
         localEbookId: ebook.id,
       });
     } catch (err) {
-      alert('No se pudo agregar a la biblioteca: ' + err.message);
+      alert(t('eb_add_failed', { error: err.message }));
     } finally {
       setAddingToLibraryId(null);
     }
@@ -410,7 +410,7 @@ export default function MyEbooksSection() {
       else if (ext === 'doc' || ext === 'docx') type = 'docx';
       else if (['jpg', 'jpeg', 'png'].includes(ext)) type = 'image';
       else {
-        throw new Error('Formato no soportado. Debe ser PDF, Word o Imagen (JPG, PNG).');
+        throw new Error(t('eb_bad_format'));
       }
 
       let coverUrl = null;
@@ -433,7 +433,7 @@ export default function MyEbooksSection() {
       await saveEbook(newEbook);
       await refreshData();
     } catch (err) {
-      setImportError(err.message || 'Error al importar archivo');
+      setImportError(err.message || t('eb_import_error'));
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -481,7 +481,7 @@ export default function MyEbooksSection() {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Buscar libros o carpetas..."
+            placeholder={t('eb_search')}
             className="w-full pl-9 pr-8 py-2 bg-white rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
           {searchQuery && (
@@ -498,7 +498,7 @@ export default function MyEbooksSection() {
             className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-2xl text-xs font-semibold border border-amber-200 transition-all active:scale-95"
           >
             <FolderPlus size={14} />
-            Nueva Carpeta
+            {t('eb_new_folder')}
           </button>
           
           <button
@@ -511,7 +511,7 @@ export default function MyEbooksSection() {
             ) : (
               <Upload size={14} />
             )}
-            Importar Archivo
+            {t('eb_import')}
           </button>
           
           <input
@@ -540,7 +540,7 @@ export default function MyEbooksSection() {
             onClick={() => setCurrentFolderId(null)}
             className={`hover:text-amber-500 font-semibold ${!currentFolderId ? 'text-amber-600' : 'text-slate-500'}`}
           >
-            Mis Ebooks (Raíz)
+            {t('eb_root')}
           </button>
           {breadcrumbs.map((crumb, idx) => (
             <React.Fragment key={crumb.id}>
@@ -566,9 +566,9 @@ export default function MyEbooksSection() {
           {displayedItems.folders.length === 0 && displayedItems.ebooks.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <span className="text-5xl mb-3">📁</span>
-              <h3 className="font-bold text-slate-700 text-sm mb-1">Esta carpeta está vacía</h3>
+              <h3 className="font-bold text-slate-700 text-sm mb-1">{t('eb_empty_title')}</h3>
               <p className="text-xs text-slate-400 max-w-xs">
-                Importá archivos PDF, Word o fotos (.jpg, .png) o creá subcarpetas para comenzar a organizarte.
+                {t('eb_empty_desc')}
               </p>
             </div>
           )}
@@ -576,7 +576,7 @@ export default function MyEbooksSection() {
           {/* Carpetas */}
           {displayedItems.folders.length > 0 && (
             <div className="mb-6">
-              <h4 className="text-xs font-bold text-slate-400 mb-2.5 uppercase tracking-wider">Carpetas ({displayedItems.folders.length})</h4>
+              <h4 className="text-xs font-bold text-slate-400 mb-2.5 uppercase tracking-wider">{t('eb_folders', { n: displayedItems.folders.length })}</h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {displayedItems.folders.map(folder => (
                   <div 
@@ -594,21 +594,21 @@ export default function MyEbooksSection() {
                       <button 
                         onClick={(e) => { e.stopPropagation(); setRenameModal({ type: 'folder', id: folder.id, name: folder.name }); }}
                         className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
-                        title="Renombrar"
+                        title={t('eb_rename')}
                       >
                         <Pencil size={11} />
                       </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setMoveModal({ type: 'folder', id: folder.id, name: folder.name }); }}
                         className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-amber-500"
-                        title="Mover"
+                        title={t('eb_move')}
                       >
                         <Move size={11} />
                       </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: 'folder', id: folder.id, name: folder.name }); }}
                         className="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-500"
-                        title="Eliminar"
+                        title={t('common_delete')}
                       >
                         <Trash2 size={11} />
                       </button>
@@ -622,7 +622,7 @@ export default function MyEbooksSection() {
           {/* Ebooks */}
           {displayedItems.ebooks.length > 0 && (
             <div>
-              <h4 className="text-xs font-bold text-slate-400 mb-2.5 uppercase tracking-wider">Documentos ({displayedItems.ebooks.length})</h4>
+              <h4 className="text-xs font-bold text-slate-400 mb-2.5 uppercase tracking-wider">{t('eb_docs', { n: displayedItems.ebooks.length })}</h4>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
                 {displayedItems.ebooks.map(ebook => (
                   <div key={ebook.id} className="flex flex-col group relative">
@@ -657,7 +657,7 @@ export default function MyEbooksSection() {
                       {/* Botón de lectura rápida hover */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                         <span className="flex items-center gap-1 px-3 py-1.5 bg-white text-slate-800 rounded-full text-xs font-bold shadow-sm">
-                          <Eye size={12} /> Leer
+                          <Eye size={12} /> {t('eb_read')}
                         </span>
                       </div>
                     </div>
@@ -675,7 +675,7 @@ export default function MyEbooksSection() {
                           <button
                             onClick={(e) => { e.stopPropagation(); setShareToFollowerEbook(ebook); }}
                             className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition-all"
-                            title="Enviar a un seguidor"
+                            title={t('eb_send')}
                           >
                             <Send size={11} />
                           </button>
@@ -683,7 +683,7 @@ export default function MyEbooksSection() {
                             onClick={(e) => { e.stopPropagation(); handleAddToLibrary(ebook); }}
                             className={`p-1 hover:bg-slate-100 rounded transition-all ${libraryBookIdByEbook.has(ebook.id) ? 'text-green-600' : 'text-slate-400 hover:text-amber-600'}`}
                             disabled={addingToLibraryId === ebook.id}
-                            title={libraryBookIdByEbook.has(ebook.id) ? 'Ya está en tu biblioteca' : 'Agregar a mi biblioteca'}
+                            title={libraryBookIdByEbook.has(ebook.id) ? t('eb_in_library') : t('eb_add_library')}
                           >
                             {addingToLibraryId === ebook.id ? (
                               <Loader2 size={11} className="animate-spin text-amber-500" />
@@ -697,7 +697,7 @@ export default function MyEbooksSection() {
                             onClick={(e) => { e.stopPropagation(); handleShareEbook(ebook); }}
                             className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-amber-600 transition-all"
                             disabled={sharingId === ebook.id}
-                            title="Compartir (fuera de la app)"
+                            title={t('eb_share_out')}
                           >
                             {sharingId === ebook.id ? (
                               <Loader2 size={11} className="animate-spin text-amber-500" />
@@ -708,7 +708,7 @@ export default function MyEbooksSection() {
                           <button
                             onClick={(e) => { e.stopPropagation(); setRenameModal({ type: 'ebook', id: ebook.id, name: ebook.title }); }}
                             className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
-                            title="Renombrar"
+                            title={t('eb_rename')}
                           >
                             <Pencil size={11} />
                           </button>
@@ -716,7 +716,7 @@ export default function MyEbooksSection() {
                             <button
                               onClick={(e) => { e.stopPropagation(); setCoverModal({ ebookId: ebook.id, title: ebook.title, coverUrl: ebook.coverUrl }); }}
                               className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
-                              title="Cambiar Portada"
+                              title={t('eb_change_cover')}
                             >
                               <Image size={11} />
                             </button>
@@ -724,14 +724,14 @@ export default function MyEbooksSection() {
                           <button
                             onClick={(e) => { e.stopPropagation(); setMoveModal({ type: 'ebook', id: ebook.id, name: ebook.title }); }}
                             className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-amber-500"
-                            title="Mover de Carpeta"
+                            title={t('eb_move_folder')}
                           >
                             <Move size={11} />
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: 'ebook', id: ebook.id, name: ebook.title }); }}
                             className="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-500"
-                            title="Eliminar"
+                            title={t('common_delete')}
                           >
                             <Trash2 size={11} />
                           </button>
@@ -752,7 +752,7 @@ export default function MyEbooksSection() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
               <FolderPlus size={16} className="text-amber-500" />
-              Nueva Carpeta
+              {t('eb_new_folder')}
             </h3>
             <FolderForm 
               initialName="" 
@@ -769,7 +769,7 @@ export default function MyEbooksSection() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
               <Pencil size={16} className="text-amber-500" />
-              {renameModal.type === 'folder' ? 'Renombrar Carpeta' : 'Renombrar Archivo'}
+              {renameModal.type === 'folder' ? t('eb_rename_folder') : t('eb_rename_file')}
             </h3>
             <FolderForm 
               initialName={renameModal.name || ''} 
@@ -784,24 +784,23 @@ export default function MyEbooksSection() {
       {deleteConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="font-bold text-slate-800 text-sm mb-2">Confirmar Eliminación</h3>
+            <h3 className="font-bold text-slate-800 text-sm mb-2">{t('eb_confirm_delete')}</h3>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              ¿Estás seguro de que querés eliminar {deleteConfirm.type === 'folder' ? 'la carpeta' : 'el archivo'}{' '}
-              <strong className="text-slate-700">"{deleteConfirm.name}"</strong>?
-              {deleteConfirm.type === 'folder' && ' Los elementos contenidos se moverán a la carpeta superior.'}
+              {t(deleteConfirm.type === 'folder' ? 'eb_delete_folder_q' : 'eb_delete_file_q', { name: deleteConfirm.name })}
+              {deleteConfirm.type === 'folder' && ' ' + t('eb_delete_folder_note')}
             </p>
             <div className="flex gap-2">
               <button 
                 onClick={() => setDeleteConfirm(null)}
                 className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-xs font-semibold transition-all"
               >
-                Cancelar
+                {t('common_cancel')}
               </button>
               <button 
                 onClick={handleDeleteConfirm}
                 className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-2xl text-xs font-semibold transition-all"
               >
-                Eliminar
+                {t('common_delete')}
               </button>
             </div>
           </div>
@@ -812,15 +811,15 @@ export default function MyEbooksSection() {
       {moveModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
-            <h3 className="font-bold text-slate-800 text-sm mb-1">Organizar / Mover</h3>
-            <p className="text-[10px] text-slate-400 mb-4 line-clamp-1">Moviendo: {moveModal.name}</p>
+            <h3 className="font-bold text-slate-800 text-sm mb-1">{t('eb_organize')}</h3>
+            <p className="text-[10px] text-slate-400 mb-4 line-clamp-1">{t('eb_moving', { name: moveModal.name })}</p>
             
             <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
               <button 
                 onClick={() => handleMoveItem(null)}
                 className="flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold"
               >
-                📁 Raíz (Mis Ebooks)
+                {t('eb_root_option')}
               </button>
               
               {folders
@@ -841,7 +840,7 @@ export default function MyEbooksSection() {
               onClick={() => setMoveModal(null)} 
               className="w-full mt-4 py-2.5 text-xs text-slate-400 hover:text-slate-600 font-medium"
             >
-              Cancelar
+              {t('common_cancel')}
             </button>
           </div>
         </div>
@@ -851,7 +850,7 @@ export default function MyEbooksSection() {
       {coverModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-6">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="font-bold text-slate-800 text-sm mb-1">Personalizar Portada</h3>
+            <h3 className="font-bold text-slate-800 text-sm mb-1">{t('eb_customize_cover')}</h3>
             <p className="text-[10px] text-slate-400 mb-4 truncate">{coverModal.title}</p>
             
             <CoverForm 
@@ -908,6 +907,7 @@ export default function MyEbooksSection() {
 
 // ── COMPONENTE INTERNO: FORMULARIO DE CARPETA ─────────────────
 function FolderForm({ initialName, onSave, onClose }) {
+  const { t } = useAuth();
   const [name, setName] = useState(initialName);
   const inputRef = useRef(null);
 
@@ -927,7 +927,7 @@ function FolderForm({ initialName, onSave, onClose }) {
         type="text"
         value={name}
         onChange={e => setName(e.target.value)}
-        placeholder="Nombre de la carpeta..."
+        placeholder={t('eb_folder_name')}
         maxLength={30}
         className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
       />
@@ -937,14 +937,14 @@ function FolderForm({ initialName, onSave, onClose }) {
           onClick={onClose}
           className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-xs font-semibold"
         >
-          Cancelar
+          {t('common_cancel')}
         </button>
         <button 
           type="submit" 
           disabled={!name.trim()}
           className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white rounded-2xl text-xs font-bold transition-all"
         >
-          Guardar
+          {t('common_save')}
         </button>
       </div>
     </form>
@@ -953,6 +953,7 @@ function FolderForm({ initialName, onSave, onClose }) {
 
 // ── COMPONENTE INTERNO: CONFIGURAR PORTADA ──────────────────
 function CoverForm({ initialUrl, onSave, onUpload, onClose }) {
+  const { t } = useAuth();
   const [url, setUrl] = useState(initialUrl.startsWith('data:') ? '' : initialUrl);
   const fileInputRef = useRef(null);
 
@@ -965,13 +966,13 @@ function CoverForm({ initialUrl, onSave, onUpload, onClose }) {
     <div className="flex flex-col gap-4">
       {/* Opción Subir Archivo local */}
       <div>
-        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Subir desde dispositivo</label>
+        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{t('eb_upload_device')}</label>
         <button
           onClick={() => fileInputRef.current?.click()}
           className="w-full py-3 bg-slate-50 hover:bg-slate-100 border border-dashed border-slate-300 rounded-2xl flex items-center justify-center gap-2 text-xs font-semibold text-slate-600 transition-all active:scale-98"
         >
           <Upload size={14} className="text-slate-400" />
-          Seleccionar imagen
+          {t('eb_select_image')}
         </button>
         <input 
           type="file" 
@@ -984,14 +985,14 @@ function CoverForm({ initialUrl, onSave, onUpload, onClose }) {
 
       <div className="flex items-center my-1">
         <hr className="flex-1 border-slate-100" />
-        <span className="text-[10px] text-slate-400 font-bold uppercase mx-3">O</span>
+        <span className="text-[10px] text-slate-400 font-bold uppercase mx-3">{t('eb_or')}</span>
         <hr className="flex-1 border-slate-100" />
       </div>
 
       {/* Opción URL */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">URL de la Portada</label>
+          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{t('eb_cover_url')}</label>
           <input
             type="url"
             value={url}
@@ -1007,13 +1008,13 @@ function CoverForm({ initialUrl, onSave, onUpload, onClose }) {
             onClick={onClose}
             className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-xs font-semibold"
           >
-            Cancelar
+            {t('common_cancel')}
           </button>
           <button 
             type="submit" 
             className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-xs font-bold transition-all"
           >
-            Guardar
+            {t('common_save')}
           </button>
         </div>
       </form>
@@ -1024,6 +1025,7 @@ function CoverForm({ initialUrl, onSave, onUpload, onClose }) {
 // ── COMPONENTE INTERNO: MODAL LECTOR PREMIUM (WORD / IMAGEN) ──
 // Los PDF ya no pasan por acá: se abren con PdfViewerSheet (ver handleOpenEbook).
 function EbookReaderModal({ ebook, onClose }) {
+  const { t } = useAuth();
   const [loading, setLoading] = useState(true);
   const [contentHtml, setContentHtml] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -1041,7 +1043,7 @@ function EbookReaderModal({ ebook, onClose }) {
         setPdfUrl(objectUrl);
         setLoading(false);
       } catch (err) {
-        setErrorMsg('No se pudo cargar la imagen');
+        setErrorMsg(t('eb_image_error'));
         setLoading(false);
       }
     } else {
@@ -1050,7 +1052,7 @@ function EbookReaderModal({ ebook, onClose }) {
       reader.onload = function(e) {
         const arrayBuffer = e.target.result;
         if (!window.mammoth) {
-          setErrorMsg('Librería de lectura de Word no cargada. Reintentá en unos segundos.');
+          setErrorMsg(t('eb_word_not_loaded'));
           setLoading(false);
           return;
         }
@@ -1062,12 +1064,12 @@ function EbookReaderModal({ ebook, onClose }) {
           })
           .catch((err) => {
             console.error(err);
-            setErrorMsg('Error al convertir documento Word a HTML.');
+            setErrorMsg(t('eb_word_error'));
             setLoading(false);
           });
       };
       reader.onerror = () => {
-        setErrorMsg('Error al leer el archivo desde el dispositivo');
+        setErrorMsg(t('eb_read_error'));
         setLoading(false);
       };
       reader.readAsArrayBuffer(ebook.fileBlob);
@@ -1095,7 +1097,7 @@ function EbookReaderModal({ ebook, onClose }) {
           onClick={onClose}
           className="flex items-center gap-1 px-3 py-1.5 bg-black/10 hover:bg-black/20 rounded-full text-xs font-bold transition-all"
         >
-          <ArrowLeft size={13} /> Volver
+          <ArrowLeft size={13} /> {t('common_back')}
         </button>
 
         <span className="text-xs font-bold truncate max-w-[50%] text-center">
@@ -1127,28 +1129,28 @@ function EbookReaderModal({ ebook, onClose }) {
               <button 
                 onClick={() => setTheme('light')}
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${theme === 'light' ? 'bg-white text-slate-800 shadow' : ''}`}
-                title="Día"
+                title={t('eb_theme_day')}
               >
                 <Sun size={12} />
               </button>
               <button 
                 onClick={() => setTheme('sepia')}
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${theme === 'sepia' ? 'bg-[#f4ecd8] text-[#5b4636] shadow' : ''}`}
-                title="Sepia"
+                title={t('eb_theme_sepia')}
               >
                 S
               </button>
               <button 
                 onClick={() => setTheme('dark')}
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${theme === 'dark' ? 'bg-slate-800 text-slate-300 shadow' : ''}`}
-                title="Noche"
+                title={t('eb_theme_night')}
               >
                 <Moon size={12} />
               </button>
             </div>
           </div>
         ) : (
-          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Visualizador de Foto</span>
+          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">{t('eb_photo_viewer')}</span>
         )}
       </div>
 
@@ -1157,7 +1159,7 @@ function EbookReaderModal({ ebook, onClose }) {
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <Loader2 size={32} className="animate-spin text-amber-500" />
-            <span className="text-xs font-semibold opacity-60">Preparando documento...</span>
+            <span className="text-xs font-semibold opacity-60">{t('eb_preparing')}</span>
           </div>
         )}
 
@@ -1169,7 +1171,7 @@ function EbookReaderModal({ ebook, onClose }) {
               onClick={onClose}
               className="mt-4 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full text-xs font-semibold"
             >
-              Cerrar visor
+              {t('eb_close_viewer')}
             </button>
           </div>
         )}

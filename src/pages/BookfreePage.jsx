@@ -27,6 +27,7 @@ async function resolvePdfUrl(book) {
 }
 
 function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId, onSave, isSaved }) {
+  const { t } = useAuth()
   const badge = SOURCE_BADGE[book.source]
   const canPdf = book.source !== 'google'
   const isResolving   = resolvingId === book.id
@@ -69,7 +70,7 @@ function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId, on
             <button
               onClick={() => onSave(book)}
               className={`p-1.5 rounded-full active:scale-90 transition-all ${isSaved ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}
-              title={isSaved ? 'Quitar de tu biblioteca' : 'Guardar en tu biblioteca'}
+              title={isSaved ? t('free_remove') : t('free_save')}
             >
               {isSaved ? <BookmarkCheck size={13} /> : <BookmarkPlus size={13} />}
             </button>
@@ -78,7 +79,7 @@ function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId, on
                 onClick={() => onDownload(book)}
                 disabled={isDownloading}
                 className="p-1.5 rounded-full bg-slate-100 text-slate-500 disabled:opacity-40"
-                title="Descargar PDF"
+                title={t('free_download')}
               >
                 {isDownloading ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
               </button>

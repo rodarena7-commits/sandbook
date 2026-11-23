@@ -5,12 +5,13 @@ import { Share } from '@capacitor/share'
 import BookCoverUpload from './BookCoverUpload'
 import PeopleListSheet from './PeopleListSheet'
 import { useBookStats } from '../../hooks/useBookStats'
+import { useAuth } from '../../contexts/AuthContext'
 
-async function shareBook(book) {
-  const text = `📚 "${book.title}"${book.authors?.[0] ? ` de ${book.authors[0]}` : ''} — lo tengo en mi biblioteca de Sandbook`
+async function shareBook(book, t) {
+  const text = t('book_share_text', { title: book.title, author: book.authors?.[0] ? t('book_share_by', { author: book.authors[0] }) : '' })
   try {
     if (Capacitor.isNativePlatform()) {
-      await Share.share({ title: 'Sandbook', text, dialogTitle: 'Compartir libro' })
+      await Share.share({ title: 'Sandbook', text, dialogTitle: t('book_share_dialog') })
     } else if (navigator.share) {
       await navigator.share({ title: 'Sandbook', text })
     } else {
@@ -19,14 +20,8 @@ async function shareBook(book) {
   } catch { /* usuario canceló el share, ignorar */ }
 }
 
-const STATUS_LABELS = {
-  reading: 'Leyendo',
-  read:    'Leído',
-  pending: 'Pendiente',
-  library: 'Biblioteca',
-  ebook:   'Ebook',
-  loaned:  'Prestado',
-}
+// Estados posibles (el texto sale de las traducciones: status_<clave>)
+const STATUS_KEYS = ['reading', 'read', 'pending', 'library', 'ebook', 'loaned']
 
 const STATUS_COLORS = {
   reading: 'bg-amber-100 text-amber-700',
@@ -38,6 +33,7 @@ const STATUS_COLORS = {
 }
 
 export default function BookCard({ book, onStatusChange, onToggleFavorite, onRemove, onReaction, onSelect, onOpenPlan, onStartPlan, onUpdateLoanedTo }) {
+  const { t } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
   const [showLoanedName, setShowLoanedName] = useState(false)
   const [showLikes, setShowLikes]     = useState(false)
@@ -93,7 +89,7 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
                 setShowLoanedName(v => !v);
               }}
               className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-md hover:bg-rose-600 transition-all active:scale-90"
-              title="Libro prestado"
+              title={t('book_loaned')}
             >
               <User size={13} />
             </button>
@@ -101,11 +97,11 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
               <>
                 <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setShowLoanedName(false); }} />
                 <div className="absolute left-0 top-8 bg-slate-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-xl shadow-lg whitespace-nowrap z-20 border border-slate-800 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <span>Prestado a: {book.loanedTo || 'Persona sin nombre'}</span>
+                  <span>{t('book_loaned_to', { name: book.loanedTo || t('book_no_name') })}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const name = prompt('¿A quién le prestaste este libro?', book.loanedTo || '');
+                      const name = prompt(t('book_loaned_prompt'), book.loanedTo || '');
                       if (name !== null) {
                         onUpdateLoanedTo?.(book.bookId, name.trim());
                       }
@@ -138,7 +134,7 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
         <button
           onClick={e => { e.stopPropagation(); onRemove(book.bookId) }}
           className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-sm active:scale-90 transition-all"
-          title="Quitar de la biblioteca"
+          title={t('book_remove_library')}
         >
           <Bookmark size={12} className="fill-amber-400 text-amber-400" />
         </button>
@@ -157,22 +153,22 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
             onClick={() => setShowMenu(v => !v)}
             className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium w-full justify-between ${STATUS_COLORS[book.status] || STATUS_COLORS.library}`}
           >
-            <span>{STATUS_LABELS[book.status] || 'Biblioteca'}</span>
+            <span>{t(STATUS_KEYS.includes(book.status) ? `status_${book.status}` : 'status_library')}</span>
             <ChevronDown size={9} />
           </button>
 
           {showMenu && (
             <div className="absolute bottom-full left-0 mb-1 bg-white rounded-xl shadow-lg border border-slate-100 z-20 w-32 overflow-hidden">
-              {Object.entries(STATUS_LABELS).map(([key, label]) => (
+              {STATUS_KEYS.map(key => (
                 <button key={key} onClick={() => handleStatusChange(key)}
                   className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 ${book.status === key ? 'font-semibold text-amber-600' : 'text-slate-700'}`}>
-                  {label}
+                  {t(`status_${key}`)}
                 </button>
               ))}
               <div className="border-t border-slate-100" />
               <button onClick={() => { setShowMenu(false); onRemove(book.bookId) }}
                 className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 flex items-center gap-1.5">
-                <Trash2 size={10} /> Eliminar
+                <Trash2 size={10} /> {t('common_delete')}
               </button>
             </div>
           )}
@@ -214,9 +210,9 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
         {/* Compartir · Me gusta (izq.) · Lectores actuales (der.) */}
         <div className="flex items-center gap-1 pt-1 border-t border-slate-50 mt-0.5">
           <button
-            onClick={e => { e.stopPropagation(); shareBook(book) }}
+            onClick={e => { e.stopPropagation(); shareBook(book, t) }}
             className="p-1 rounded-full text-slate-400 hover:text-slate-600"
-            title="Compartir"
+            title={t('common_share')}
           >
             <Share2 size={10} />
           </button>
@@ -224,7 +220,7 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
           <button
             onClick={e => { e.stopPropagation(); setShowLikes(true) }}
             className="flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[9px] text-slate-400 hover:text-rose-500"
-            title="Ver quién le gustó"
+            title={t('book_who_liked')}
           >
             <Heart size={9} className={likedBy.length > 0 ? 'fill-rose-400 text-rose-400' : ''} />
             {likedBy.length > 0 && <span className="font-semibold">{likedBy.length}</span>}
@@ -233,7 +229,7 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
           <button
             onClick={e => { e.stopPropagation(); setShowReaders(true) }}
             className="ml-auto flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[9px] text-slate-400 hover:text-green-600"
-            title="Ver quién lo está leyendo"
+            title={t('book_who_reading')}
           >
             {readingBy.length > 0 && <span className="font-semibold">{readingBy.length}</span>}
             <Users size={9} className={readingBy.length > 0 ? 'text-green-500' : ''} />
@@ -245,18 +241,18 @@ export default function BookCard({ book, onStatusChange, onToggleFavorite, onRem
 
       {showLikes && (
         <PeopleListSheet
-          title="Les gusta este libro"
+          title={t('book_likes_title')}
           uids={likedBy}
-          emptyText="Todavía nadie le puso me gusta"
+          emptyText={t('book_likes_empty')}
           onClose={() => setShowLikes(false)}
         />
       )}
 
       {showReaders && (
         <PeopleListSheet
-          title="Lo están leyendo"
+          title={t('book_readers_title')}
           uids={readingBy}
-          emptyText="Nadie lo está leyendo por ahora"
+          emptyText={t('book_readers_empty')}
           onClose={() => setShowReaders(false)}
           onStartPlan={onStartPlan ? () => { setShowReaders(false); onStartPlan(book) } : undefined}
         />

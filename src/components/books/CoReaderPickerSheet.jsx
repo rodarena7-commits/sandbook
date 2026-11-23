@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { X, Search, User } from 'lucide-react'
 import { useAllUsers } from '../../hooks/useAllUsers'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function CoReaderPickerSheet({ myUid, existingUids = [], onSelect, onClose }) {
+  const { t } = useAuth()
   const { users, loading } = useAllUsers(myUid)
   const [search, setSearch] = useState('')
 
@@ -16,7 +18,7 @@ export default function CoReaderPickerSheet({ myUid, existingUids = [], onSelect
     <div className="fixed inset-0 z-[70] flex items-end">
       <div className="w-full max-w-5xl mx-auto bg-white rounded-t-3xl shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
-          <h3 className="font-bold text-slate-800">Leer con…</h3>
+          <h3 className="font-bold text-slate-800">{t('co_title')}</h3>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
             <X size={16} />
           </button>
@@ -29,16 +31,16 @@ export default function CoReaderPickerSheet({ myUid, existingUids = [], onSelect
               autoFocus
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar usuario…"
+              placeholder={t('co_search')}
               className="w-full pl-9 pr-4 py-2.5 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
         </div>
 
         <div className="overflow-y-auto flex-1 px-4 py-3">
-          {loading && <p className="text-xs text-slate-400 text-center py-6">Cargando usuarios…</p>}
+          {loading && <p className="text-xs text-slate-400 text-center py-6">{t('co_loading')}</p>}
           {!loading && filtered.length === 0 && (
-            <p className="text-xs text-slate-400 text-center py-6">Sin resultados</p>
+            <p className="text-xs text-slate-400 text-center py-6">{t('co_none')}</p>
           )}
           <div className="flex flex-col gap-1">
             {filtered.map(u => (
@@ -56,7 +58,7 @@ export default function CoReaderPickerSheet({ myUid, existingUids = [], onSelect
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-800">{u.displayName || 'Usuario'}</p>
-                  {u.online && <p className="text-[10px] text-green-500">● En línea</p>}
+                  {u.online && <p className="text-[10px] text-green-500">{t('co_online')}</p>}
                 </div>
               </button>
             ))}

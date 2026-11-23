@@ -3,10 +3,12 @@ import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, Loader2, Exter
 import * as pdfjsLib from 'pdfjs-dist'
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { resolveViewUrl, downloadPdf } from '../../utils/freeBookFile'
+import { useAuth } from '../../contexts/AuthContext'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl
 
 export default function PdfViewerSheet({ url, title, onClose, onStartPlan }) {
+  const { t } = useAuth()
   const canvasRef = useRef(null)
   const pdfRef    = useRef(null)
   const renderTaskRef = useRef(null)
@@ -33,7 +35,7 @@ export default function PdfViewerSheet({ url, title, onClose, onStartPlan }) {
     }).catch(err => {
       if (cancelled) return
       console.error('PdfViewerSheet load error:', err)
-      setError('No se pudo abrir el PDF. Probá verlo en la fuente original.')
+      setError(t('pdf_open_error'))
       setLoading(false)
     })
     return () => {
@@ -90,7 +92,7 @@ export default function PdfViewerSheet({ url, title, onClose, onStartPlan }) {
           <button
             onClick={onStartPlan}
             className="flex items-center gap-1 px-2.5 py-1.5 bg-white/10 text-white rounded-full text-[11px] font-semibold flex-shrink-0"
-            title="Plan de lectura"
+            title={t('plan_title')}
           >
             <CalendarDays size={12} />
           </button>
@@ -109,7 +111,7 @@ export default function PdfViewerSheet({ url, title, onClose, onStartPlan }) {
         {loading && (
           <div className="flex flex-col items-center justify-center h-full text-white/80 pt-20">
             <Loader2 size={32} className="animate-spin mb-3" />
-            <p className="text-sm">Abriendo PDF…</p>
+            <p className="text-sm">{t('pdf_opening')}</p>
           </div>
         )}
         {error && (
@@ -119,7 +121,7 @@ export default function PdfViewerSheet({ url, title, onClose, onStartPlan }) {
               href={url} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-4 py-2.5 bg-white/10 rounded-2xl text-sm font-semibold"
             >
-              <ExternalLink size={14} /> Abrir en el navegador
+              <ExternalLink size={14} /> {t('pdf_open_browser')}
             </a>
           </div>
         )}

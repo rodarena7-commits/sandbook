@@ -17,7 +17,7 @@ export default function BookCoverUpload({
   bookId, src, title = '', className = '',
   isOwnBook = false, onUpdated,
 }) {
-  const { user } = useAuth()
+  const { user, t } = useAuth()
   const [localSrc, setLocalSrc]     = useState(null)
   const [imgError, setImgError]     = useState(false)
   const [showPicker, setShowPicker] = useState(false)
@@ -58,7 +58,7 @@ export default function BookCoverUpload({
               onClick={e => { e.stopPropagation(); setShowPicker(true) }}
               className="flex items-center gap-1 px-2 py-1 bg-amber-500 rounded-full text-white text-[9px] font-semibold shadow-sm active:scale-95 transition-all"
             >
-              <Camera size={9} /> Foto
+              <Camera size={9} /> {t('detail_photo_btn')}
             </button>
           )}
         </div>
@@ -69,7 +69,7 @@ export default function BookCoverUpload({
           <div className="fixed inset-0 bg-black/40 z-[75]" onClick={() => setShowPicker(false)} />
           <div className="fixed inset-0 z-[76] flex items-end">
             <ImagePickerSheet
-              title="Portada del libro"
+              title={t('detail_cover')}
               storagePath={`bookCovers/${bookId}`}
               onSave={handleSave}
               onClose={() => setShowPicker(false)}

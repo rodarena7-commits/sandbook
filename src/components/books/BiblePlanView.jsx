@@ -5,6 +5,7 @@ import {
   saveBookProgress, saveBibleMeta, deleteBiblePlan,
   countCompleted, TOTAL_CHAPTERS,
 } from '../../hooks/useBibleProgress'
+import { useAuth } from '../../contexts/AuthContext'
 
 const OT_COUNT = 39 // Old Testament books
 
@@ -14,6 +15,7 @@ function debounce(fn, ms) {
 
 // ── Single Bible Book Section ──────────────────────────────
 function BibleBookSection({ bookIdx, bookData, progress, uid, bookId }) {
+  const { t } = useAuth()
   const [open, setOpen] = useState(false)
   const [showNote, setShowNote] = useState(false)
 
@@ -48,7 +50,7 @@ function BibleBookSection({ bookIdx, bookData, progress, uid, bookId }) {
             <p className={`text-sm font-semibold ${doneCount === totalChaps ? 'line-through text-slate-400' : 'text-slate-800'}`}>
               {bookData.name}
             </p>
-            <p className="text-[10px] text-slate-400">{doneCount}/{totalChaps} capítulos</p>
+            <p className="text-[10px] text-slate-400">{t('bible_chapters_done', { done: doneCount, total: totalChaps })}</p>
           </div>
         </button>
 
@@ -65,7 +67,7 @@ function BibleBookSection({ bookIdx, bookData, progress, uid, bookId }) {
       {showNote && (
         <div className="px-3 pb-2">
           <textarea defaultValue={note} rows={2} maxLength={300}
-            placeholder={`Notas sobre ${bookData.name}…`}
+            placeholder={t('bible_notes_about', { book: bookData.name })}
             onBlur={e => saveNote(e.target.value)}
             className="w-full px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl text-xs text-slate-700 placeholder-slate-300 outline-none focus:ring-2 focus:ring-amber-300 resize-none"/>
         </div>
@@ -95,6 +97,7 @@ function BibleBookSection({ bookIdx, bookData, progress, uid, bookId }) {
 
 // ── Testament Section ──────────────────────────────────────
 function TestamentSection({ title, books, startIdx, progress, uid, bookId }) {
+  const { t } = useAuth()
   const [open, setOpen] = useState(true)
 
   const totalChaps = books.reduce((s, b) => s + b.chapters.length, 0)
@@ -106,10 +109,10 @@ function TestamentSection({ title, books, startIdx, progress, uid, bookId }) {
         className="w-full flex items-center justify-between px-4 py-3 bg-amber-500 rounded-2xl mb-2 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-white">{title}</span>
-          <span className="text-xs text-white/70">{books.length} libros</span>
+          <span className="text-xs text-white/70">{t('bible_books_n', { n: books.length })}</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-white font-medium">{doneChaps}/{totalChaps} caps</span>
+          <span className="text-xs text-white font-medium">{t('bible_caps', { done: doneChaps, total: totalChaps })}</span>
           {open ? <ChevronUp size={15} className="text-white"/> : <ChevronDown size={15} className="text-white"/>}
         </div>
       </button>
@@ -134,6 +137,7 @@ function TestamentSection({ title, books, startIdx, progress, uid, bookId }) {
 
 // ── Main View ──────────────────────────────────────────────
 export default function BiblePlanView({ book, uid, onClose, onDelete, readonly = false }) {
+  const { t } = useAuth()
   const progress     = book.bibleProgress || {}
   const completed    = countCompleted(progress)
   const pct          = Math.round((completed / TOTAL_CHAPTERS) * 100)
@@ -162,8 +166,8 @@ export default function BiblePlanView({ book, uid, onClose, onDelete, readonly =
           <ArrowLeft size={16}/>
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white">Santa Biblia</p>
-          <p className="text-[10px] text-white/70">66 libros · {TOTAL_CHAPTERS} capítulos</p>
+          <p className="text-sm font-bold text-white">{t('bible_title')}</p>
+          <p className="text-[10px] text-white/70">{t('bible_header', { n: TOTAL_CHAPTERS })}</p>
         </div>
         {!readonly && (
           <button onClick={() => setShowDelete(true)} className="text-white/60 hover:text-white p-1 flex-shrink-0">
@@ -175,14 +179,14 @@ export default function BiblePlanView({ book, uid, onClose, onDelete, readonly =
       {/* Progress */}
       <div className="bg-white px-4 py-3 flex-shrink-0 border-b border-slate-100">
         <div className="flex items-center justify-between mb-1.5">
-          <p className="text-xs text-slate-400">{completed} de {TOTAL_CHAPTERS} capítulos leídos</p>
+          <p className="text-xs text-slate-400">{t('bible_read_progress', { done: completed, total: TOTAL_CHAPTERS })}</p>
           <p className="text-xs font-bold text-amber-500">{pct}%</p>
         </div>
         <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
           <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }}/>
         </div>
         <p className="text-[10px] text-slate-400 mt-1">
-          {bibleBooks.filter((_, i) => (progress[i]?.completed?.length || 0) === bibleBooks[i].chapters.length).length} libros completados de 66
+          {t('bible_books_completed', { n: bibleBooks.filter((_, i) => (progress[i]?.completed?.length || 0) === bibleBooks[i].chapters.length).length })}
         </p>
       </div>
 
@@ -194,7 +198,7 @@ export default function BiblePlanView({ book, uid, onClose, onDelete, readonly =
             <input
               value={currentVerse}
               onChange={e => { setCurrentVerse(e.target.value); saveVerseDb(e.target.value) }}
-              placeholder="Versículo actual (ej: Juan 3:16)"
+              placeholder={t('bible_verse_placeholder')}
               className="bg-transparent text-sm text-slate-700 outline-none flex-1 placeholder-slate-400"
             />
           </div>
@@ -204,7 +208,7 @@ export default function BiblePlanView({ book, uid, onClose, onDelete, readonly =
               value={planNote}
               onChange={e => { setPlanNote(e.target.value); saveNoteDb(e.target.value) }}
               rows={2} maxLength={400}
-              placeholder="Nota general de tu lectura…"
+              placeholder={t('bible_note_placeholder')}
               className="bg-transparent text-sm text-slate-700 outline-none w-full resize-none placeholder-slate-300 leading-relaxed"
             />
           </div>
@@ -232,7 +236,7 @@ export default function BiblePlanView({ book, uid, onClose, onDelete, readonly =
       {/* Bible books */}
       <div className="overflow-y-auto flex-1 px-4 py-4">
         <TestamentSection
-          title="Antiguo Testamento"
+          title={t('bible_ot')}
           books={OT}
           startIdx={0}
           progress={progress}
@@ -240,7 +244,7 @@ export default function BiblePlanView({ book, uid, onClose, onDelete, readonly =
           bookId={book.bookId}
         />
         <TestamentSection
-          title="Nuevo Testamento"
+          title={t('bible_nt')}
           books={NT}
           startIdx={OT_COUNT}
           progress={progress}
@@ -254,11 +258,11 @@ export default function BiblePlanView({ book, uid, onClose, onDelete, readonly =
       {showDelete && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-6 bg-black/40">
           <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl">
-            <p className="font-bold text-slate-800 mb-1">Eliminar plan bíblico</p>
-            <p className="text-sm text-slate-500 mb-4">Se borrará todo el progreso. No se puede deshacer.</p>
+            <p className="font-bold text-slate-800 mb-1">{t('bible_delete_title')}</p>
+            <p className="text-sm text-slate-500 mb-4">{t('bible_delete_desc')}</p>
             <div className="flex gap-2">
-              <button onClick={() => setShowDelete(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Cancelar</button>
-              <button onClick={handleDelete} className="flex-1 py-3 bg-red-500 text-white rounded-2xl text-sm font-semibold">Eliminar</button>
+              <button onClick={() => setShowDelete(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">{t('common_cancel')}</button>
+              <button onClick={handleDelete} className="flex-1 py-3 bg-red-500 text-white rounded-2xl text-sm font-semibold">{t('common_delete')}</button>
             </div>
           </div>
         </div>

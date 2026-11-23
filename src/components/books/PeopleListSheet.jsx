@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { X, User, Loader2, CalendarDays } from 'lucide-react'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../firebase'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function PeopleListSheet({ title, uids, onClose, emptyText, onSelectUser, onStartPlan }) {
+  const { t } = useAuth()
   const [profiles, setProfiles] = useState([])
   const [loading, setLoading]   = useState(true)
 
@@ -70,7 +72,7 @@ export default function PeopleListSheet({ title, uids, onClose, emptyText, onSel
             onClick={onStartPlan}
             className="mt-3 flex-shrink-0 flex items-center justify-center gap-2 w-full py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all"
           >
-            <CalendarDays size={15} /> Crear mi plan de lectura
+            <CalendarDays size={15} /> {t('people_create_plan')}
           </button>
         )}
       </div>

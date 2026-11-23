@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { X, Camera } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function BarcodeScanner({ onScan, onClose }) {
+  const { t } = useAuth()
   const [error, setError] = useState(null)
   const [started, setStarted] = useState(false)
   const scannerRef = useRef(null)
@@ -30,7 +32,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
       () => {}
     )
       .then(() => setStarted(true))
-      .catch(() => setError('No se pudo acceder a la cámara. Revisá los permisos.'))
+      .catch(() => setError(t('scan_camera_error')))
 
     return () => {
       if (!didScan.current) scanner.stop().catch(() => {})
@@ -41,7 +43,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
     <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-4 z-10">
-        <p className="text-white font-semibold">Escanear ISBN</p>
+        <p className="text-white font-semibold">{t('scan_title')}</p>
         <button
           onClick={onClose}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white"
@@ -71,7 +73,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
       )}
 
       <p className="absolute bottom-12 text-white/50 text-xs text-center px-8">
-        Apuntá la cámara al código de barras del libro
+        {t('scan_hint')}
       </p>
     </div>
   )
