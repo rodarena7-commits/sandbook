@@ -18,7 +18,7 @@ function blobToDataUrl(blob) {
 export function useVoiceRecorder() {
   const [recording, setRecording] = useState(false)
   const [seconds, setSeconds]     = useState(0)
-  const [error, setError]         = useState('')
+  const [error, setError]         = useState('')   // clave de traducción (voice_*)
 
   const recorderRef  = useRef(null)
   const streamRef    = useRef(null)
@@ -45,7 +45,7 @@ export function useVoiceRecorder() {
   const start = useCallback(async () => {
     setError('')
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setError('Tu dispositivo no permite grabar audio.')
+      setError('voice_unsupported')
       return false
     }
     try {
@@ -69,8 +69,8 @@ export function useVoiceRecorder() {
       console.error('useVoiceRecorder start error:', e)
       release()
       setError(e?.name === 'NotAllowedError'
-        ? 'Permití el acceso al micrófono para grabar.'
-        : 'No se pudo iniciar la grabación.')
+        ? 'voice_perm'
+        : 'voice_start_failed')
       return false
     }
   }, [release])

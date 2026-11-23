@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { X, Upload, Link, Loader2, Image } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 // Comprime y devuelve base64 para guardar directo en Firestore (sin Firebase Storage).
 // max 800px, JPEG 75% → ~80-180KB como base64 → bien bajo el límite de 1MB de Firestore.
@@ -30,6 +31,7 @@ function formatSize(bytes) {
 
 // storagePath se mantiene como prop para compatibilidad pero ya no se usa.
 export default function ImagePickerSheet({ title, storagePath: _storagePath, onSave, onClose }) {
+  const { t } = useAuth()
   const [mode,         setMode]         = useState(null)   // 'upload' | 'url'
   const [url,          setUrl]          = useState('')
   const [preview,      setPreview]      = useState(null)
@@ -43,7 +45,7 @@ export default function ImagePickerSheet({ title, storagePath: _storagePath, onS
   function handleFileChange(e) {
     const f = e.target.files?.[0]
     if (!f) return
-    if (!f.type.startsWith('image/')) { setError('Solo imágenes'); return }
+    if (!f.type.startsWith('image/')) { setError(t('img_only_images')); return }
     setFile(f)
     setFileSize(f.size)
     setPreview(URL.createObjectURL(f))
@@ -56,10 +58,10 @@ export default function ImagePickerSheet({ title, storagePath: _storagePath, onS
     try {
       let finalUrl = ''
       if (mode === 'upload' && file) {
-        setUploadStatus('Comprimiendo imagen…')
+        setUploadStatus(t('img_compressing'))
         const base64 = await compressToBase64(file)
-        if (!base64) throw new Error('No se pudo procesar la imagen')
-        setUploadStatus('Guardando…')
+        if (!base64) throw new Error(t('img_process_error'))
+        setUploadStatus(t('common_saving'))
         finalUrl = base64
       } else if (mode === 'url') {
         if (!url.trim()) return
@@ -69,7 +71,7 @@ export default function ImagePickerSheet({ title, storagePath: _storagePath, onS
       onClose()
     } catch (e) {
       console.error('ImagePickerSheet error:', e)
-      setError(`No se pudo guardar la imagen (${e?.message ?? 'error desconocido'})`)
+      setError(t('img_save_error', { msg: e?.message ?? t('img_unknown_error') }))
     } finally {
       setUploading(false)
       setUploadStatus('')
@@ -97,8 +99,8 @@ export default function ImagePickerSheet({ title, storagePath: _storagePath, onS
                 <Upload size={18} className="text-white" />
               </div>
               <div>
-                <p className="font-semibold text-slate-800 text-sm">Subir imagen</p>
-                <p className="text-xs text-slate-400">Desde tu galería o cámara</p>
+                <p className="font-semibold text-slate-800 text-sm">{t('img_upload')}</p>
+                <p className="text-xs text-slate-400">{t('img_upload_d')}</p>
               </div>
             </button>
             <button onClick={() => setMode('url')}
@@ -107,8 +109,8 @@ export default function ImagePickerSheet({ title, storagePath: _storagePath, onS
                 <Link size={18} className="text-white" />
               </div>
               <div>
-                <p className="font-semibold text-slate-800 text-sm">URL de imagen</p>
-                <p className="text-xs text-slate-400">Pegá un enlace de imagen</p>
+                <p className="font-semibold text-slate-800 text-sm">{t('img_url')}</p>
+                <p className="text-xs text-slate-400">{t('img_url_d')}</p>
               </div>
             </button>
           </div>
@@ -127,7 +129,7 @@ export default function ImagePickerSheet({ title, storagePath: _storagePath, onS
                 </button>
                 {fileSize && (
                   <span className="absolute bottom-2 left-2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full">
-                    {formatSize(fileSize)} → se comprimirá automáticamente
+                    {formatSize(fileSize)} → {t('img_will_compress')}
                   </span>
                 )}
               </div>
@@ -135,17 +137,17 @@ export default function ImagePickerSheet({ title, storagePath: _storagePath, onS
               <button onClick={() => fileRef.current?.click()}
                 className="w-full h-36 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-amber-400 hover:text-amber-400 transition-all">
                 <Image size={28} />
-                <span className="text-xs">Tocá para elegir imagen</span>
+                <span className="text-xs">{t('img_tap_pick')}</span>
               </button>
             )}
             {error && <p className="text-xs text-red-400 text-center">{error}</p>}
             <div className="flex gap-2">
-              <button onClick={() => setMode(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Volver</button>
+              <button onClick={() => setMode(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">{t('common_back')}</button>
               <button onClick={handleSave} disabled={!canSave || uploading}
                 className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2">
                 {uploading
-                  ? <><Loader2 size={14} className="animate-spin" /> {uploadStatus || 'Procesando…'}</>
-                  : 'Guardar'}
+                  ? <><Loader2 size={14} className="animate-spin" /> {uploadStatus || t('img_processing')}</>
+                  : t('common_save')}
               </button>
             </div>
           </div>
@@ -155,18 +157,18 @@ export default function ImagePickerSheet({ title, storagePath: _storagePath, onS
         {mode === 'url' && (
           <div className="flex flex-col gap-4">
             <input value={url} onChange={e => { setUrl(e.target.value); setError(null) }}
-              placeholder="https://ejemplo.com/imagen.jpg"
+              placeholder={t('img_url_placeholder')}
               className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400" />
             {url.trim() && (
               <img src={url} alt="" className="w-full h-40 object-cover rounded-2xl"
-                onError={() => setError('URL no válida o sin acceso')} />
+                onError={() => setError(t('img_url_invalid'))} />
             )}
             {error && <p className="text-xs text-red-400 text-center">{error}</p>}
             <div className="flex gap-2">
-              <button onClick={() => setMode(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">Volver</button>
+              <button onClick={() => setMode(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">{t('common_back')}</button>
               <button onClick={handleSave} disabled={!canSave || uploading}
                 className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2">
-                {uploading ? <><Loader2 size={14} className="animate-spin" /> Guardando…</> : 'Guardar'}
+                {uploading ? <><Loader2 size={14} className="animate-spin" /> {t('common_saving')}</> : t('common_save')}
               </button>
             </div>
           </div>

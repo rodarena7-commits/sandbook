@@ -115,7 +115,7 @@ export function useGoogleBooks() {
     try {
       setResults(await searchBooks(trimmed, type))
     } catch {
-      setError('La búsqueda no está disponible en este momento. Probá de nuevo en unos minutos.')
+      setError('search_unavailable')   // clave de traducción
       setResults([])
     } finally {
       setLoading(false)

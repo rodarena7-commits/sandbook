@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Download } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
+import { useAuth } from '../../contexts/AuthContext'
 
 const DISMISSED_KEY = 'sandbook_install_banner_dismissed'
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=sandbook.myapp'
@@ -13,6 +14,7 @@ function isAndroidBrowser() {
 // enlaza directo a la ficha de Play Store, mucho más confiable que esperar el
 // evento "beforeinstallprompt" del navegador (que no dispara en todos los casos).
 export default function InstallAppBanner() {
+  const { t } = useAuth()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -36,8 +38,8 @@ export default function InstallAppBanner() {
         <Download size={16} className="text-white" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-slate-800">Instalá la app</p>
-        <p className="text-[10px] text-slate-500 leading-tight">Sandbook en Google Play, sin el navegador</p>
+        <p className="text-xs font-semibold text-slate-800">{t('inst_banner_title')}</p>
+        <p className="text-[10px] text-slate-500 leading-tight">{t('inst_banner_desc')}</p>
       </div>
       <a
         href={PLAY_STORE_URL}
@@ -46,7 +48,7 @@ export default function InstallAppBanner() {
         onClick={dismiss}
         className="px-3 py-1.5 bg-amber-500 text-white rounded-full text-[11px] font-semibold flex-shrink-0 active:scale-95 transition-all"
       >
-        Instalar
+        {t('inst_install')}
       </a>
       <button onClick={dismiss} className="text-slate-300 flex-shrink-0">
         <X size={14} />

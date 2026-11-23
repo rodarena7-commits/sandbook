@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Phone, PhoneOff } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 // Tono simple con WebAudio. Si el navegador bloquea el audio (sin interacción previa) no pasa nada:
 // igual se vibra y se ve la pantalla.
@@ -37,6 +38,7 @@ function useRingtone() {
 }
 
 export default function IncomingCallOverlay({ callerName, callerPhoto, onAccept, onDecline }) {
+  const { t } = useAuth()
   useRingtone()
   const initial = (callerName || '?')[0].toUpperCase()
 
@@ -52,23 +54,23 @@ export default function IncomingCallOverlay({ callerName, callerPhoto, onAccept,
           </div>
         )}
         <p className="text-white text-xl font-semibold mt-2">{callerName || 'Lector'}</p>
-        <p className="text-white/60 text-sm">Videollamada entrante…</p>
+        <p className="text-white/60 text-sm">{t('call_incoming')}</p>
       </div>
 
       <div className="flex items-center gap-16">
         <div className="flex flex-col items-center gap-2">
-          <button onClick={onDecline} aria-label="Rechazar"
+          <button onClick={onDecline} aria-label={t('call_decline')}
             className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center active:scale-90 transition-all shadow-lg">
             <PhoneOff size={26} />
           </button>
-          <span className="text-white/70 text-xs">Rechazar</span>
+          <span className="text-white/70 text-xs">{t('call_decline')}</span>
         </div>
         <div className="flex flex-col items-center gap-2">
-          <button onClick={onAccept} aria-label="Atender"
+          <button onClick={onAccept} aria-label={t('call_accept')}
             className="w-16 h-16 rounded-full bg-green-500 text-white flex items-center justify-center active:scale-90 transition-all shadow-lg animate-bounce">
             <Phone size={26} />
           </button>
-          <span className="text-white/70 text-xs">Atender</span>
+          <span className="text-white/70 text-xs">{t('call_accept')}</span>
         </div>
       </div>
     </div>

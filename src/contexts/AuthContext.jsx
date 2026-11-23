@@ -200,7 +200,7 @@ export function AuthProvider({ children }) {
       const googleUser = await GoogleAuth.signIn()
       const idToken = googleUser?.authentication?.idToken
       if (!idToken) {
-        throw new Error('No se recibió el token de Google. Intentá de nuevo.')
+        throw new Error('login_err_no_token')   // clave de traducción
       }
       const credential = GoogleAuthProvider.credential(idToken)
       await signInWithCredential(auth, credential)

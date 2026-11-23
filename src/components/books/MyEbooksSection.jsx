@@ -197,7 +197,7 @@ export default function MyEbooksSection() {
       setFolderModal(null);
       await refreshData();
     } catch (err) {
-      alert('Error al guardar la carpeta: ' + err.message);
+      alert(t('eb_error', { msg: err.message }));
     }
   };
 
@@ -224,7 +224,7 @@ export default function MyEbooksSection() {
       setRenameModal(null);
       await refreshData();
     } catch (err) {
-      alert('Error al renombrar: ' + err.message);
+      alert(t('eb_error', { msg: err.message }));
     }
   };
 
@@ -239,7 +239,7 @@ export default function MyEbooksSection() {
       setDeleteConfirm(null);
       await refreshData();
     } catch (err) {
-      alert('Error al eliminar: ' + err.message);
+      alert(t('eb_error', { msg: err.message }));
     }
   };
 
@@ -266,7 +266,7 @@ export default function MyEbooksSection() {
       setMoveModal(null);
       await refreshData();
     } catch (err) {
-      alert('Error al mover elemento: ' + err.message);
+      alert(t('eb_error', { msg: err.message }));
     }
   };
 
@@ -322,7 +322,7 @@ export default function MyEbooksSection() {
     } catch (err) {
       console.error('Error al compartir:', err);
       if (err.message && !err.message.includes('Share canceled') && !err.message.includes('canceled')) {
-        alert('Error al compartir: ' + err.message);
+        alert(t('eb_error', { msg: err.message }));
       }
     } finally {
       setSharingId(null);
@@ -453,7 +453,7 @@ export default function MyEbooksSection() {
       setCoverModal(null);
       await refreshData();
     } catch (err) {
-      alert('Error al guardar portada: ' + err.message);
+      alert(t('eb_error', { msg: err.message }));
     }
   };
 

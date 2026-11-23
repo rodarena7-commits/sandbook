@@ -7,7 +7,8 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useUsers } from '../hooks/useUsers'
-import { useFeed } from '../hooks/useFeed'
+import { useFeed, feedAction } from '../hooks/useFeed'
+import { timeAgo } from '../utils/timeAgo'
 import { usePosts } from '../hooks/usePosts'
 import { useBooks } from '../hooks/useBooks'
 import { useConversations } from '../hooks/useConversations'
@@ -62,16 +63,18 @@ function Avatar({ uid, photoURL, displayName, size = 'md', online = false }) {
 
 // ── Feed Item ──────────────────────────────────────────────
 function FeedItem({ item, onUserPress }) {
+  const { t, language } = useAuth()
+  const added = item.book.addedAt ? { seconds: new Date(item.book.addedAt).getTime() / 1000 } : null
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <button onClick={() => onUserPress(item.user)}
         className="flex items-center gap-2.5 px-3 pt-3 pb-2 w-full text-left hover:bg-slate-50">
         <Avatar uid={item.user.uid} photoURL={item.user.photoURL} displayName={item.user.displayName} size="sm" />
         <div className="flex-1 min-w-0">
-          <span className="text-xs font-semibold text-slate-800">{item.user.displayName||'Lector'}</span>
-          <span className="text-xs text-slate-400"> {item.action}</span>
+          <span className="text-xs font-semibold text-slate-800">{item.user.displayName || t('soc_reader_default')}</span>
+          <span className="text-xs text-slate-400"> {feedAction(item.book, t)}</span>
         </div>
-        <span className="text-[10px] text-slate-300 flex-shrink-0">{item.time}</span>
+        <span className="text-[10px] text-slate-300 flex-shrink-0">{timeAgo(added, t, language)}</span>
       </button>
       <div className="flex gap-3 items-center px-3 pb-3">
         {item.book.thumbnail

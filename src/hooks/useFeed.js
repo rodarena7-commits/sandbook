@@ -5,24 +5,12 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase'
 
-function timeAgo(iso) {
-  if (!iso) return ''
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1)  return 'ahora'
-  if (m < 60) return `hace ${m}m`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `hace ${h}h`
-  const d = Math.floor(h / 24)
-  if (d < 7)  return `hace ${d}d`
-  return new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-}
-
-function buildAction(book) {
-  if (book.status === 'reading') return 'está leyendo'
-  if (book.status === 'read')    return book.rating > 0 ? `terminó y le dio ${book.rating}★` : 'terminó'
-  if (book.status === 'pending') return 'quiere leer'
-  return 'agregó a su biblioteca'
+// Texto de la acción en el idioma de quien lee (t de useAuth)
+export function feedAction(book, t) {
+  if (book.status === 'reading') return t('feed_reading')
+  if (book.status === 'read')    return book.rating > 0 ? t('feed_finished_rated', { n: book.rating }) : t('feed_finished')
+  if (book.status === 'pending') return t('feed_wants')
+  return t('feed_added')
 }
 
 export function useFeed(myUid, followingUids = []) {
@@ -56,8 +44,6 @@ export function useFeed(myUid, followingUids = []) {
             key: `${uid}-${book.id}`,
             user: profile,
             book,
-            action: buildAction(book),
-            time: timeAgo(book.addedAt),
             addedAt: book.addedAt || '',
           })
         })

@@ -12,26 +12,9 @@ import { useBookCover } from '../hooks/useBookCover'
 import BarcodeScanner from '../components/books/BarcodeScanner'
 import BookDetailSheet from '../components/books/BookDetailSheet'
 
-const SEARCH_TYPES = [
-  { key: 'title',  label: 'Título' },
-  { key: 'author', label: 'Autor' },
-  { key: 'isbn',   label: 'ISBN' },
-]
+// Textos: search_type_<key> y search_placeholder_<key>
+const SEARCH_TYPES = [{ key: 'title' }, { key: 'author' }, { key: 'isbn' }]
 
-const PLACEHOLDERS = {
-  title:  'Buscá por título…',
-  author: 'Nombre del autor…',
-  isbn:   'Código ISBN (10 o 13 dígitos)…',
-}
-
-const STATUS_LABELS = {
-  reading: 'Leyendo',
-  read:    'Leído',
-  pending: 'Pendiente',
-  library: 'Biblioteca',
-  ebook:   'Ebook',
-  loaned:  'Prestado',
-}
 
 // ── IDs de afiliado ───────────────────────────────────────────────────
 const AMAZON_TAG    = '7772603777-21'  // Amazon España (afiliados.amazon.es)
@@ -363,7 +346,7 @@ export default function SearchPage({ onGoToPlan, widgetAction, onWidgetActionCon
         )}
 
         {error && (
-          <div className="text-center py-10 text-sm text-red-400 px-4">{error}</div>
+          <div className="text-center py-10 text-sm text-red-400 px-4">{t(error)}</div>
         )}
 
         {!loading && results.length === 0 && !error && query.trim() && (

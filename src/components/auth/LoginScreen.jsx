@@ -3,19 +3,20 @@ import { BookOpen, Loader2, Mail, Lock, User, Eye, EyeOff, ChevronLeft } from 'l
 import { useAuth } from '../../contexts/AuthContext'
 import InstallAppBanner from '../ui/InstallAppBanner'
 
-const ERROR_MESSAGES = {
-  'auth/email-already-in-use':   'Ese email ya está registrado. Iniciá sesión.',
-  'auth/invalid-email':          'Email inválido.',
-  'auth/weak-password':          'La contraseña debe tener al menos 6 caracteres.',
-  'auth/user-not-found':         'No existe una cuenta con ese email.',
-  'auth/wrong-password':         'Contraseña incorrecta.',
-  'auth/invalid-credential':     'Email o contraseña incorrectos.',
-  'auth/too-many-requests':      'Demasiados intentos. Esperá unos minutos.',
-  'auth/network-request-failed': 'Sin conexión. Verificá tu internet.',
+// Código de Firebase → clave de traducción
+const ERROR_KEYS = {
+  'auth/email-already-in-use':   'login_err_email_in_use',
+  'auth/invalid-email':          'login_err_invalid_email',
+  'auth/weak-password':          'login_err_weak_password',
+  'auth/user-not-found':         'login_err_user_not_found',
+  'auth/wrong-password':         'login_err_wrong_password',
+  'auth/invalid-credential':     'login_err_invalid_credential',
+  'auth/too-many-requests':      'login_err_too_many',
+  'auth/network-request-failed': 'login_err_network',
 }
 
-function friendlyError(code) {
-  return ERROR_MESSAGES[code] || 'Ocurrió un error. Intentá de nuevo.'
+function friendlyError(code, t) {
+  return t(ERROR_KEYS[code] || 'login_err_generic')
 }
 
 // ── Vista principal (botones de método) ───────────────────
@@ -77,7 +78,7 @@ function EmailForm({ onBack, onRegister, onLogin }) {
       if (mode === 'register') await onRegister(name.trim(), email.trim(), password)
       else                     await onLogin(email.trim(), password)
     } catch (err) {
-      setError(friendlyError(err.code))
+      setError(friendlyError(err.code, t))
     }
     setLoading(false)
   }
@@ -171,7 +172,8 @@ export default function LoginScreen() {
     try { await loginWithGoogle() }
     catch (err) { 
       console.error("Google login error:", err);
-      setError('No se pudo iniciar sesión con Google: ' + (err.message || JSON.stringify(err))); 
+      const msg = err?.message?.startsWith('login_err_') ? t(err.message) : (err.message || JSON.stringify(err))
+      setError(t('login_err_google', { msg }))
     }
     setLoading(null)
   }
@@ -179,7 +181,7 @@ export default function LoginScreen() {
   async function handleAnon() {
     setLoading('anon'); setError('')
     try { await loginAnonymously() }
-    catch { setError('No se pudo continuar como invitado.') }
+    catch { setError(t('login_err_guest')) }
     setLoading(null)
   }
 

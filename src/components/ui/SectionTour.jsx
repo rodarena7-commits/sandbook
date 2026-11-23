@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { X, ChevronRight } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 const KEY_PREFIX = 'sandbook_tour_v1_'
 // El recorrido por secciones espera a que terminen el tutorial general y el onboarding
@@ -29,8 +30,9 @@ function prereqsDone() {
 
 // Recorrido guiado de una sección: oscurece la pantalla, resalta cada botón real (data-tour="...")
 // y explica para qué sirve. Se muestra una sola vez por sección.
-// steps: [{ target?: '[data-tour="x"]', title, desc }]  — sin target es una tarjeta centrada.
+// steps: [{ target?: '[data-tour="x"]', title, desc }] (title/desc: claves de traducción) — sin target es una tarjeta centrada.
 export default function SectionTour({ id, steps }) {
+  const { t } = useAuth()
   const seenKey = KEY_PREFIX + id
   const [list, setList]     = useState(null)   // pasos que se van a mostrar; null = inactivo
   const [index, setIndex]   = useState(0)
@@ -116,7 +118,7 @@ export default function SectionTour({ id, steps }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[250]" role="dialog" aria-label="Guía de la sección">
+    <div className="fixed inset-0 z-[250]" role="dialog" aria-label={t('tour_aria')}>
       {/* Bloquea toques en la app mientras dura la guía */}
       <div className="absolute inset-0" onClick={e => e.stopPropagation()} />
 
@@ -141,13 +143,13 @@ export default function SectionTour({ id, steps }) {
         style={tipStyle}
       >
         <div className="flex items-start justify-between gap-3 mb-1.5">
-          <h3 className="font-bold text-slate-800 text-sm leading-tight">{step.title}</h3>
-          <button onClick={finish} aria-label="Cerrar guía"
+          <h3 className="font-bold text-slate-800 text-sm leading-tight">{t(step.title)}</h3>
+          <button onClick={finish} aria-label={t('tour_close')}
             className="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-100 text-slate-400">
             <X size={12} />
           </button>
         </div>
-        <p className="text-[13px] text-slate-600 leading-relaxed">{step.desc}</p>
+        <p className="text-[13px] text-slate-600 leading-relaxed">{t(step.desc)}</p>
 
         <div className="flex items-center justify-between mt-4">
           <span className="text-[11px] font-medium text-slate-400 tabular-nums">{index + 1} / {list.length}</span>
@@ -155,16 +157,16 @@ export default function SectionTour({ id, steps }) {
             {index > 0 ? (
               <button onClick={() => setIndex(i => i - 1)}
                 className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
-                Atrás
+                {t('tut_back')}
               </button>
             ) : (
               <button onClick={finish} className="px-3 py-1.5 text-slate-400 rounded-full text-xs font-medium">
-                Saltar
+                {t('tour_skip')}
               </button>
             )}
             <button onClick={() => (last ? finish() : setIndex(i => i + 1))}
               className="px-4 py-1.5 bg-amber-500 text-white rounded-full text-xs font-semibold shadow-sm active:scale-95 transition-all flex items-center gap-1">
-              {last ? '¡Entendido!' : 'Siguiente'}
+              {last ? t('tour_got_it') : t('tut_next')}
               {!last && <ChevronRight size={13} />}
             </button>
           </div>

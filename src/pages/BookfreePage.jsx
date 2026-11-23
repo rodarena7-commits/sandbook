@@ -62,7 +62,7 @@ function FreeBookItem({ book, onRead, resolvingId, onDownload, downloadingId, on
           )}
           {book.formatLabel && (
             <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border bg-slate-50 text-slate-600 border-slate-100">
-              {book.formatLabel}
+              {book.formatLabel.startsWith('free_') ? t(book.formatLabel) : book.formatLabel}
             </span>
           )}
 
@@ -324,7 +324,7 @@ export default function BookfreePage() {
         )}
 
         {error && !loading && (
-          <div className="text-center py-10 text-sm text-red-400 px-4">{error}</div>
+          <div className="text-center py-10 text-sm text-red-400 px-4">{t(error)}</div>
         )}
 
         {!loading && !error && results.length === 0 && query.trim() && (

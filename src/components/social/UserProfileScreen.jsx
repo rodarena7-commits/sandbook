@@ -20,8 +20,6 @@ import BookThread from './BookThread'
 import AvatarActions from '../status/AvatarActions'
 import StatusRing from '../status/StatusRing'
 
-const STATUS_LABELS = { reading:'Leyendo', read:'Leído', pending:'Pendiente', library:'Biblioteca', ebook:'Ebook', loaned:'Prestado' }
-
 function BookLikeButton({ bookId, ownerUid, myUid }) {
   const { count, liked, loading, toggle } = useBookLikes(bookId, ownerUid, myUid)
   return (

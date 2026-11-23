@@ -6,6 +6,7 @@ import { db } from '../firebase'
 import { ICE_SERVERS, getCallMedia } from '../utils/webrtc'
 import CallScreen from '../components/chat/CallScreen'
 import IncomingCallOverlay from '../components/chat/IncomingCallOverlay'
+import { useAuth } from './AuthContext'
 
 const CallContext = createContext(null)
 
@@ -18,6 +19,7 @@ const STALE_MS        = 60000   // ignoramos llamadas "ringing" más viejas (que
 //   calls/{id}/calleeCandidates/*   candidatos ICE del que atiende
 // El video/audio viaja directo entre los teléfonos (o por el relay TURN).
 export function CallProvider({ user, profile, children }) {
+  const { t } = useAuth()
   const [call, setCall]         = useState(null)   // { id, role, peer, phase, reason }
   const [incoming, setIncoming] = useState(null)
   const [localStream, setLocalStream]   = useState(null)
@@ -60,7 +62,7 @@ export function CallProvider({ user, profile, children }) {
     setCameraOff(false)
   }
 
-  // reason: texto a mostrar un momento ("Rechazó la llamada"); sin reason se cierra directo.
+  // reason: clave de traducción a mostrar un momento (call_declined…); sin reason se cierra directo.
   function finish(reason) {
     if (!callIdRef.current) return
     releaseResources()
@@ -96,7 +98,7 @@ export function CallProvider({ user, profile, children }) {
         setCall(c => (c && c.phase === 'connected' ? { ...c, phase: 'reconnecting' } : c))
       } else if (pc.connectionState === 'failed') {
         updateDoc(doc(db, 'calls', callId), { status: 'ended' }).catch(() => {})
-        finish('No se pudo conectar')
+        finish('call_connect_failed')
       }
     }
     return pc
@@ -128,7 +130,7 @@ export function CallProvider({ user, profile, children }) {
       stream = await getCallMedia()
     } catch (e) {
       console.error('startCall media error:', e)
-      showNotice('Permití el acceso a la cámara y al micrófono para hacer videollamadas.')
+      showNotice('call_perm_start')
       return
     }
 
@@ -162,20 +164,20 @@ export function CallProvider({ user, profile, children }) {
           await flushPending()
           setCall(c => (c && c.phase === 'calling' ? { ...c, phase: 'connecting' } : c))
         }
-        if (d.status === 'declined') finish('Rechazó la llamada')
-        else if (d.status === 'ended') finish('Llamada finalizada')
+        if (d.status === 'declined') finish('call_declined')
+        else if (d.status === 'ended') finish('call_ended')
       }))
       unsubsRef.current.push(listenCandidates(callId, 'calleeCandidates'))
 
       timeoutRef.current = setTimeout(() => {
         if (answeredRef.current) return
         updateDoc(callDoc, { status: 'missed' }).catch(() => {})
-        finish('No contestó')
+        finish('call_no_answer')
       }, RING_TIMEOUT_MS)
     } catch (e) {
       console.error('startCall error:', e)
       finish(null)
-      showNotice('No se pudo iniciar la videollamada.')
+      showNotice('call_start_failed')
     }
   }
 
@@ -189,7 +191,7 @@ export function CallProvider({ user, profile, children }) {
     // Puede que el que llamaba ya haya cortado
     try {
       const snap = await getDoc(callDoc)
-      if (!snap.exists() || snap.data().status !== 'ringing') { showNotice('La llamada ya terminó.'); return }
+      if (!snap.exists() || snap.data().status !== 'ringing') { showNotice('call_already_ended'); return }
     } catch { return }
 
     let stream
@@ -198,7 +200,7 @@ export function CallProvider({ user, profile, children }) {
     } catch (e) {
       console.error('acceptCall media error:', e)
       updateDoc(callDoc, { status: 'declined' }).catch(() => {})
-      showNotice('Permití el acceso a la cámara y al micrófono para atender.')
+      showNotice('call_perm_accept')
       return
     }
 
@@ -215,19 +217,19 @@ export function CallProvider({ user, profile, children }) {
 
       unsubsRef.current.push(listenCandidates(inc.id, 'callerCandidates'))
       unsubsRef.current.push(onSnapshot(callDoc, snap => {
-        if (snap.data()?.status === 'ended') finish('Llamada finalizada')
+        if (snap.data()?.status === 'ended') finish('call_ended')
       }))
       await flushPending()
       // Si nunca llega a conectar, no dejamos la pantalla colgada
       timeoutRef.current = setTimeout(() => {
         updateDoc(callDoc, { status: 'ended' }).catch(() => {})
-        finish('No se pudo conectar')
+        finish('call_connect_failed')
       }, RING_TIMEOUT_MS)
     } catch (e) {
       console.error('acceptCall error:', e)
       updateDoc(callDoc, { status: 'ended' }).catch(() => {})
       finish(null)
-      showNotice('No se pudo atender la videollamada.')
+      showNotice('call_accept_failed')
     }
   }
 
@@ -287,7 +289,7 @@ export function CallProvider({ user, profile, children }) {
       {children}
       {notice && (
         <div className="fixed top-4 left-4 right-4 z-[500] max-w-md mx-auto bg-slate-900 text-white text-xs font-medium text-center rounded-2xl px-4 py-3 shadow-lg">
-          {notice}
+          {t(notice)}
         </div>
       )}
       {incoming && !call && (

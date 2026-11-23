@@ -195,7 +195,7 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
                           onChange={e => setEditDayPage(e.target.value)}
                           autoFocus
                           className="w-full px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-300"
-                          placeholder={isBible ? 'Versículo' : t('common_page')}
+                          placeholder={isBible ? t('plan_verse') : t('common_page')}
                         />
                       </div>
                       <button
@@ -217,7 +217,7 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
                         <p className="text-xs font-semibold text-slate-700 capitalize">{formatDate(date, locale)}</p>
                         {data.endPage > 0 && (
                           <p className="text-[11px] text-slate-400 mt-0.5">
-                            {isBible ? `Versículo: ${data.endPage}` : t('plan_marker_at', { n: data.endPage })}
+                            {isBible ? t('plan_verse_at', { n: data.endPage }) : t('plan_marker_at', { n: data.endPage })}
                           </p>
                         )}
                       </div>
@@ -271,10 +271,10 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
                   min="0" inputMode={isBible ? 'text' : 'numeric'}
                   value={newNotePage}
                   onChange={e => setNewNotePage(e.target.value)}
-                  placeholder={isBible ? 'Versículo' : t('plan_page_short')}
+                  placeholder={isBible ? t('plan_verse') : t('plan_page_short')}
                   className={`${isBible ? 'w-32' : 'w-20'} px-2 py-1 bg-white border border-amber-200 rounded-xl text-xs text-slate-700 outline-none focus:ring-2 focus:ring-amber-300`}
                 />
-                <span className="text-xs text-slate-400">{isBible ? 'versículo' : t('plan_page_word')}</span>
+                <span className="text-xs text-slate-400">{isBible ? t('plan_verse_word') : t('plan_page_word')}</span>
               </div>
               <textarea
                 value={newNoteText}
@@ -309,7 +309,7 @@ export default function RelaxPlanView({ book, uid, onClose, onDelete, isBible: i
               <PenLine size={20} className="text-slate-200 mx-auto mb-2" />
               <p className="text-xs text-slate-400">
                 {isBible
-                  ? 'Anotá reflexiones o versículos destacados con su referencia bíblica'
+                  ? t('plan_bible_notes_empty')
                   : t('plan_notes_empty')}
               </p>
             </div>

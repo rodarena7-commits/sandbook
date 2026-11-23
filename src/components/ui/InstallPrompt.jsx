@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 const DISMISSED_KEY = 'sandbook_install_dismissed'
 
 export default function InstallPrompt() {
-  const { appConfig } = useAuth()
+  const { appConfig, t } = useAuth()
   const [prompt,  setPrompt]  = useState(null)
   const [visible, setVisible] = useState(false)
 
@@ -51,17 +51,17 @@ export default function InstallPrompt() {
         {/* Logo + título */}
         <div className="flex flex-col items-center text-center mb-5">
           <img src={logoSrc} alt="Sandbook" className="w-20 h-20 rounded-2xl shadow-md mb-3 object-cover" />
-          <h2 className="text-lg font-bold text-slate-800">Instalá Sandbook</h2>
+          <h2 className="text-lg font-bold text-slate-800">{t('inst_title')}</h2>
           <p className="text-sm text-slate-500 mt-1">
-            Agregala a tu pantalla de inicio para acceder más rápido, sin abrir el navegador.
+            {t('inst_desc')}
           </p>
         </div>
 
         {/* Beneficios */}
         <div className="flex flex-col gap-2 mb-5">
           {[
-            { icon: Smartphone, text: 'Funciona como una app nativa' },
-            { icon: Download,   text: 'Sin conexión: accedé a tu biblioteca offline' },
+            { icon: Smartphone, text: t('inst_native') },
+            { icon: Download,   text: t('inst_offline') },
           ].map(({ icon: Icon, text }) => (
             <div key={text} className="flex items-center gap-3 bg-slate-50 rounded-2xl px-3 py-2.5">
               <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -76,11 +76,11 @@ export default function InstallPrompt() {
         <div className="flex gap-2">
           <button onClick={dismiss}
             className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-medium">
-            Ahora no
+            {t('inst_not_now')}
           </button>
           <button onClick={handleInstall}
             className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2">
-            <Download size={15} /> Instalar
+            <Download size={15} /> {t('inst_install')}
           </button>
         </div>
       </div>

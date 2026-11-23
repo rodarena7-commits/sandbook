@@ -78,6 +78,7 @@ export function useConversations(uid) {
         [toUid]:   toProfile?.photoURL   || null,
       },
       lastMessage,
+      lastKind: attachment?.kind || 'text',
       lastAt: serverTimestamp(),
       unread: { [toUid]: increment(1) },
     }, { merge: true })

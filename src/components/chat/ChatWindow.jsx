@@ -8,6 +8,7 @@ import { TOURS } from '../../utils/tourSteps'
 import { useMessages } from '../../hooks/useMessages'
 import { getConvId } from '../../hooks/useConversations'
 import { useVoiceRecorder, MAX_VOICE_SECONDS } from '../../hooks/useVoiceRecorder'
+import { useAuth } from '../../contexts/AuthContext'
 
 const PdfViewerSheet = lazy(() => import('../ui/PdfViewerSheet'))
 
@@ -68,6 +69,7 @@ function VoiceBubble({ attachment, isMe }) {
 }
 
 function CallCard({ attachment, isMe }) {
+  const { t } = useAuth()
   return (
     <button
       onClick={() => window.open(attachment.url, '_blank', 'noopener,noreferrer')}
@@ -79,14 +81,15 @@ function CallCard({ attachment, isMe }) {
         <Video size={16} className={isMe ? 'text-white' : 'text-amber-500'} />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-semibold">Videollamada</p>
-        <p className={`text-[10px] mt-0.5 ${isMe ? 'text-white/70' : 'text-slate-400'}`}>Tocá para unirte</p>
+        <p className="text-xs font-semibold">{t('chat_video_call')}</p>
+        <p className={`text-[10px] mt-0.5 ${isMe ? 'text-white/70' : 'text-slate-400'}`}>{t('chat_tap_join')}</p>
       </div>
     </button>
   )
 }
 
 function AttachmentCard({ attachment, isMe, onOpen }) {
+  const { t } = useAuth()
   return (
     <button
       onClick={onOpen}
@@ -98,9 +101,9 @@ function AttachmentCard({ attachment, isMe, onOpen }) {
         <FileText size={16} className={isMe ? 'text-white' : 'text-amber-500'} />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-semibold line-clamp-2">{attachment.title || 'Archivo compartido'}</p>
+        <p className="text-xs font-semibold line-clamp-2">{attachment.title || t('chat_shared_file')}</p>
         <p className={`text-[10px] flex items-center gap-1 mt-0.5 ${isMe ? 'text-white/70' : 'text-slate-400'}`}>
-          <BookOpenText size={10} /> Abrir ebook
+          <BookOpenText size={10} /> {t('chat_open_ebook')}
         </p>
       </div>
     </button>
@@ -137,6 +140,7 @@ function Avatar({ photoURL, displayName, size = 8 }) {
 }
 
 export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSend, onBack }) {
+  const { t } = useAuth()
   const convId = getConvId(myUid, otherUser.uid)
   const { messages, loading } = useMessages(convId)
   const [text, setText] = useState('')
@@ -169,7 +173,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
       await onSend('', attachment)
     } catch (err) {
       console.error('ChatWindow sendAttachment error:', err)
-      setSendError('No se pudo enviar. Probá de nuevo.')
+      setSendError(t('chat_send_error'))
     } finally {
       setSending(false)
     }
@@ -207,14 +211,14 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
         </AvatarActions>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-slate-800 text-sm">{otherUser.displayName || 'Lector'}</p>
-          {!canSend && <p className="text-[10px] text-slate-400 flex items-center gap-1"><Lock size={9} /> No acepta mensajes</p>}
+          {!canSend && <p className="text-[10px] text-slate-400 flex items-center gap-1"><Lock size={9} /> {t('chat_no_messages')}</p>}
         </div>
         <button
           data-tour="chat-link"
           onClick={startLinkCall}
           disabled={!canSend || sending || voice.recording}
-          aria-label="Enviar enlace de videollamada"
-          title="Enviar enlace de videollamada (Jitsi)"
+          aria-label={t('chat_send_link')}
+          title={t('chat_send_link_title')}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 disabled:opacity-40 active:scale-90 transition-all"
         >
           <Link2 size={16} />
@@ -223,7 +227,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
           data-tour="chat-call"
           onClick={() => startCall({ uid: otherUser.uid, displayName: otherUser.displayName, photoURL: otherUser.photoURL || null })}
           disabled={!canSend || callActive || voice.recording}
-          aria-label="Videollamada"
+          aria-label={t('chat_video_call')}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-amber-50 text-amber-500 disabled:opacity-40 active:scale-90 transition-all"
         >
           <Video size={17} />
@@ -237,8 +241,8 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
         {!loading && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center flex-1 text-slate-400 text-center">
             <p className="text-3xl mb-2">💬</p>
-            <p className="text-sm font-medium text-slate-500">Empezá la conversación</p>
-            {!canSend && <p className="text-xs mt-1 text-slate-400 flex items-center gap-1"><Lock size={10} /> Esta persona no acepta mensajes</p>}
+            <p className="text-sm font-medium text-slate-500">{t('chat_start')}</p>
+            {!canSend && <p className="text-xs mt-1 text-slate-400 flex items-center gap-1"><Lock size={10} /> {t('chat_person_no_messages')}</p>}
           </div>
         )}
 
@@ -276,11 +280,11 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
 
       {/* Input */}
       {(voice.error || sendError) && (
-        <p className="bg-white text-xs text-red-400 text-center px-4 pt-2 flex-shrink-0">{voice.error || sendError}</p>
+        <p className="bg-white text-xs text-red-400 text-center px-4 pt-2 flex-shrink-0">{voice.error ? t(voice.error) : sendError}</p>
       )}
       {voice.recording ? (
         <div className="bg-white border-t border-slate-100 px-4 py-3 flex items-center gap-3 flex-shrink-0">
-          <button onClick={() => voice.cancel()} aria-label="Cancelar grabación"
+          <button onClick={() => voice.cancel()} aria-label={t('chat_cancel_rec')}
             className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 active:scale-90 transition-all flex-shrink-0">
             <Trash2 size={16} />
           </button>
@@ -290,7 +294,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
               {formatDuration(voice.seconds)} <span className="text-red-300">/ {formatDuration(MAX_VOICE_SECONDS)}</span>
             </span>
           </div>
-          <button onClick={finishRecording} aria-label="Enviar mensaje de voz"
+          <button onClick={finishRecording} aria-label={t('chat_send_voice')}
             className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white active:scale-90 transition-all shadow-sm flex-shrink-0">
             <Send size={15} />
           </button>
@@ -302,7 +306,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
             value={text}
             onChange={e => setText(e.target.value)}
             disabled={!canSend}
-            placeholder={canSend ? 'Escribí un mensaje…' : 'No acepta mensajes'}
+            placeholder={canSend ? t('chat_placeholder') : t('chat_no_messages')}
             className="flex-1 px-4 py-2.5 bg-slate-100 rounded-full text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-50"
           />
           {text.trim() ? (
@@ -318,7 +322,7 @@ export default function ChatWindow({ myUid, myProfile, otherUser, canSend, onSen
               type="button"
               onClick={() => voice.start()}
               disabled={sending || !canSend}
-              aria-label="Grabar mensaje de voz"
+              aria-label={t('chat_record_voice')}
               className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white disabled:opacity-40 active:scale-90 transition-all shadow-sm flex-shrink-0"
             >
               {sending ? <Loader2 size={16} className="animate-spin" /> : <Mic size={16} />}

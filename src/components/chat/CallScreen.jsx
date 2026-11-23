@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 function formatElapsed(ms) {
   const s = Math.max(0, Math.floor(ms / 1000))
@@ -34,6 +35,7 @@ export default function CallScreen({
   call, localStream, remoteStream, connectedAt, muted, cameraOff,
   onToggleMute, onToggleCamera, onHangup,
 }) {
+  const { t } = useAuth()
   const remoteRef = useRef(null)
   const localRef  = useRef(null)
   const [now, setNow] = useState(Date.now())
@@ -48,14 +50,14 @@ export default function CallScreen({
     const el = remoteRef.current
     if (!el) return
     const update = () => setRemoteHasVideo(
-      !!remoteStream && remoteStream.getVideoTracks().some(t => t.readyState === 'live' && !t.muted)
+      !!remoteStream && remoteStream.getVideoTracks().some(tr => tr.readyState === 'live' && !tr.muted)
     )
     update()
     const tracks = remoteStream?.getVideoTracks() || []
-    tracks.forEach(t => { t.onmute = update; t.onunmute = update; t.onended = update })
+    tracks.forEach(tr => { tr.onmute = update; tr.onunmute = update; tr.onended = update })
     el.addEventListener('playing', update)
     return () => {
-      tracks.forEach(t => { t.onmute = null; t.onunmute = null; t.onended = null })
+      tracks.forEach(tr => { tr.onmute = null; tr.onunmute = null; tr.onended = null })
       el.removeEventListener('playing', update)
     }
   }, [remoteStream])
@@ -68,10 +70,10 @@ export default function CallScreen({
 
   const ended = call.phase === 'ended'
   const status =
-    ended ? call.reason
-    : call.phase === 'calling' ? 'Llamando…'
-    : call.phase === 'connecting' ? 'Conectando…'
-    : call.phase === 'reconnecting' ? 'Reconectando…'
+    ended ? t(call.reason)
+    : call.phase === 'calling' ? t('call_calling')
+    : call.phase === 'connecting' ? t('call_connecting')
+    : call.phase === 'reconnecting' ? t('call_reconnecting')
     : connectedAt ? formatElapsed(now - connectedAt) : ''
 
   return (
@@ -98,14 +100,14 @@ export default function CallScreen({
       <div className="mt-auto relative pb-10 pt-8 flex items-center justify-center gap-5 bg-gradient-to-t from-black/60 to-transparent">
         {!ended && (
           <>
-            <ControlButton onClick={onToggleMute} active={muted} label={muted ? 'Activar micrófono' : 'Silenciar'}>
+            <ControlButton onClick={onToggleMute} active={muted} label={muted ? t('call_unmute') : t('call_mute')}>
               {muted ? <MicOff size={22} /> : <Mic size={22} />}
             </ControlButton>
-            <button onClick={onHangup} aria-label="Cortar"
+            <button onClick={onHangup} aria-label={t('call_hangup')}
               className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center active:scale-90 transition-all shadow-lg">
               <PhoneOff size={26} />
             </button>
-            <ControlButton onClick={onToggleCamera} active={cameraOff} label={cameraOff ? 'Activar cámara' : 'Apagar cámara'}>
+            <ControlButton onClick={onToggleCamera} active={cameraOff} label={cameraOff ? t('call_cam_on') : t('call_cam_off')}>
               {cameraOff ? <VideoOff size={22} /> : <Video size={22} />}
             </ControlButton>
           </>

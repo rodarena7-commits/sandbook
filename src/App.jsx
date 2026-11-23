@@ -23,7 +23,7 @@ import { TOURS } from './utils/tourSteps'
 import { trackScreen } from './utils/analytics'
 
 function AppContent() {
-  const { user, profile, loading } = useAuth()
+  const { user, profile, loading, t } = useAuth()
   const { hasSeenTutorial } = useTutorial()
   const { widgetAction, clearWidgetAction } = useWidgetAction()
   const [activeTab, setActiveTab]   = useState('library')
@@ -88,15 +88,15 @@ function AppContent() {
           <div className="flex items-center gap-2.5">
             <span className="text-base flex-shrink-0 animate-bounce">✨</span>
             <div className="text-left min-w-0">
-              <p className="text-xs font-bold text-white leading-tight">¡Nueva versión disponible!</p>
-              <p className="text-[10px] text-slate-300 truncate">Actualizá Sandbook para ver las últimas mejoras.</p>
+              <p className="text-xs font-bold text-white leading-tight">{t('upd_title')}</p>
+              <p className="text-[10px] text-slate-300 truncate">{t('upd_desc')}</p>
             </div>
           </div>
           <button
             onClick={handleUpdateApp}
             className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-[11px] font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 whitespace-nowrap shadow-sm ml-2"
           >
-            Actualizar ahora
+            {t('upd_now')}
           </button>
         </div>
       )}

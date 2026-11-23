@@ -6,12 +6,8 @@ import { resetSectionTours } from '../ui/SectionTour'
 import { useAuth } from '../../contexts/AuthContext'
 import { LANGUAGES } from '../../utils/languages'
 
-const MESSAGING_OPTIONS = [
-  { key: 'everyone',  label: 'Todos',                  desc: 'Cualquier usuario puede escribirte' },
-  { key: 'followers', label: 'Solo seguidores',         desc: 'Quienes te siguen pueden escribirte' },
-  { key: 'following', label: 'Solo usuarios que sigo',  desc: 'Solo quienes vos seguís' },
-  { key: 'nobody',    label: 'Nadie',                   desc: 'Nadie puede enviarte mensajes' },
-]
+// Textos: set_msg_<key> y set_msg_<key>_d
+const MESSAGING_OPTIONS = ['everyone', 'followers', 'following', 'nobody'].map(key => ({ key }))
 
 function Toggle({ value, onChange, label, description, icon: Icon }) {
   return (
@@ -83,7 +79,7 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
 
           {/* Username */}
           <div className="py-4 border-b border-slate-100">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Nombre de usuario</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">{t('set_username')}</p>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -91,7 +87,7 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
                   value={displayName}
                   onChange={e => { setDisplayName(e.target.value); setNameSaved(false) }}
                   maxLength={40}
-                  placeholder="Tu nombre"
+                  placeholder={t('set_your_name')}
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-100 rounded-2xl text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-amber-400"
                 />
               </div>
@@ -100,26 +96,26 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
                 disabled={!displayName.trim() || displayName === profile?.displayName || savingName}
                 className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all disabled:opacity-40 flex items-center gap-1.5 ${nameSaved ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'}`}
               >
-                {nameSaved ? <><Check size={14} /> Guardado</> : 'Guardar'}
+                {nameSaved ? <><Check size={14} /> {t('set_saved')}</> : t('common_save')}
               </button>
             </div>
           </div>
 
           {/* Privacy */}
           <div className="py-4 border-b border-slate-100">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Privacidad</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">{t('set_privacy')}</p>
             <Toggle
               value={showLibrary}
               onChange={v => handleToggle('showLibrary', v, setShowLibrary)}
-              label="Mostrar libros leídos"
-              description="Otros usuarios pueden ver tu biblioteca"
+              label={t('set_show_library')}
+              description={t('set_show_library_d')}
               icon={showLibrary ? Eye : EyeOff}
             />
             <Toggle
               value={notifsEnabled}
               onChange={v => handleToggle('notificationsEnabled', v, setNotifsEnabled)}
-              label="Notificaciones"
-              description="Recibir recomendaciones y mensajes"
+              label={t('set_notifications')}
+              description={t('set_notifications_d')}
               icon={notifsEnabled ? Bell : BellOff}
             />
           </div>
@@ -142,14 +138,11 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
                 </button>
               ))}
             </div>
-            {language !== 'es' && (
-              <p className="text-[10px] text-slate-400 mt-2">{t('set_language_partial')}</p>
-            )}
           </div>
 
           {/* Guías */}
           <div className="py-4 border-b border-slate-100">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Guías de la app</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">{t('set_guides')}</p>
             <button
               onClick={() => { resetSectionTours(); setToursReset(true) }}
               disabled={toursReset}
@@ -159,9 +152,9 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
                 {toursReset ? <Check size={16} className="text-green-600" /> : <HelpCircle size={16} className="text-amber-600" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-800">{toursReset ? 'Listo' : 'Volver a ver las guías'}</p>
+                <p className="text-sm font-semibold text-slate-800">{toursReset ? t('common_done') : t('set_guides_again')}</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  {toursReset ? 'Las verás de nuevo al entrar a cada sección.' : 'Muestra otra vez la explicación de los botones de cada sección.'}
+                  {toursReset ? t('set_guides_done_d') : t('set_guides_again_d')}
                 </p>
               </div>
             </button>
@@ -170,7 +163,7 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
           {/* Messaging privacy */}
           <div className="py-4">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
-              <span className="flex items-center gap-1.5"><MessageCircle size={11} /> ¿Quién puede enviarte mensajes?</span>
+              <span className="flex items-center gap-1.5"><MessageCircle size={11} /> {t('set_who_messages')}</span>
             </p>
             <div className="flex flex-col gap-1.5">
               {MESSAGING_OPTIONS.map(opt => (
@@ -182,8 +175,8 @@ export default function SettingsSheet({ profile, uid, onUpdate, onClose }) {
                     {msgPrivacy === opt.key && <div className="w-2 h-2 bg-amber-500 rounded-full" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${msgPrivacy === opt.key ? 'text-amber-700' : 'text-slate-700'}`}>{opt.label}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{opt.desc}</p>
+                    <p className={`text-sm font-medium ${msgPrivacy === opt.key ? 'text-amber-700' : 'text-slate-700'}`}>{t(`set_msg_${opt.key}`)}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{t(`set_msg_${opt.key}_d`)}</p>
                   </div>
                 </button>
               ))}

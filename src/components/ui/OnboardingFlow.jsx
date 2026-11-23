@@ -11,6 +11,7 @@ const SEEN_KEY = 'sandbook_onboarding_v1'
 
 // ── Tarjeta de autor con foto + biografía expandible ──────
 function AuthorResult({ author, onAdd }) {
+  const { t } = useAuth()
   const olid     = author.key?.replace('/authors/', '')
   const coverUrl = olid ? `https://covers.openlibrary.org/a/olid/${olid}-M.jpg` : null
 
@@ -75,7 +76,7 @@ function AuthorResult({ author, onAdd }) {
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-slate-800 text-sm">{author.name}</p>
           {author.top_work  && <p className="text-xs text-slate-400 italic truncate">"{author.top_work}"</p>}
-          {author.work_count > 0 && <p className="text-[10px] text-slate-400">{author.work_count} obras</p>}
+          {author.work_count > 0 && <p className="text-[10px] text-slate-400">{t('onb_works', { n: author.work_count })}</p>}
         </div>
         {added && <Check size={14} className="text-green-500 shrink-0" />}
       </button>
@@ -92,10 +93,10 @@ function AuthorResult({ author, onAdd }) {
           {!added ? (
             <button onClick={handleAdd}
               className="w-full py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all">
-              Agregar a favoritos
+              {t('onb_add_fav')}
             </button>
           ) : (
-            <p className="text-center text-xs text-green-600 font-semibold py-1">¡Guardado en tu perfil! ✨</p>
+            <p className="text-center text-xs text-green-600 font-semibold py-1">{t('onb_saved')}</p>
           )}
         </div>
       )}
@@ -105,6 +106,7 @@ function AuthorResult({ author, onAdd }) {
 
 // ── Tarjeta de libro igual que SearchPage ─────────────────
 function BookResult({ book, onAdd, added }) {
+  const { t } = useAuth()
   return (
     <div className="flex gap-3 bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
       <div className="flex-shrink-0">
@@ -132,12 +134,12 @@ function BookResult({ book, onAdd, added }) {
         <div className="flex justify-end mt-2">
           {added ? (
             <span className="flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium">
-              <Check size={11} /> En tu biblioteca
+              <Check size={11} /> {t('onb_in_library')}
             </span>
           ) : (
             <button onClick={() => onAdd(book)}
               className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 text-white rounded-full text-xs font-semibold shadow-sm active:scale-95 transition-all">
-              + Agregar
+              {t('onb_add')}
             </button>
           )}
         </div>
@@ -148,7 +150,7 @@ function BookResult({ book, onAdd, added }) {
 
 // ── Componente principal ───────────────────────────────────
 export default function OnboardingFlow() {
-  const { user }             = useAuth()
+  const { user, t }          = useAuth()
   const { addFavoriteAuthor } = useFavoriteAuthors(user?.uid)
   const { results: bookResults, loading: bookLoading, search: searchBooks } = useGoogleBooks()
 
@@ -216,12 +218,12 @@ export default function OnboardingFlow() {
           </button>
           <div className="text-4xl mb-2">{isAuthorStep ? '✍️' : '📖'}</div>
           <h2 className="text-base font-bold text-white">
-            {isAuthorStep ? 'Agrega a tu Escritor favorito' : 'Agrega tu libro que más te gusta'}
+            {isAuthorStep ? t('onb_author_title') : t('onb_book_title')}
           </h2>
           <p className="text-white/80 text-xs mt-1">
             {isAuthorStep
-              ? 'Tocá un autor para ver su biografía y seguirlo'
-              : 'Buscá igual que en la sección Buscar'}
+              ? t('onb_author_desc')
+              : t('onb_book_desc')}
           </p>
         </div>
 
@@ -248,7 +250,7 @@ export default function OnboardingFlow() {
                   debounce(q => searchBooks(q, 'title'), e.target.value)
                 }
               }}
-              placeholder={isAuthorStep ? 'Nombre del escritor…' : 'Título o autor del libro…'}
+              placeholder={isAuthorStep ? t('onb_author_ph') : t('onb_book_ph')}
               className={`w-full pl-9 pr-8 py-2.5 bg-slate-100 rounded-2xl text-sm outline-none focus:ring-2 ${isAuthorStep ? 'focus:ring-rose-300' : 'focus:ring-amber-300'}`}
             />
             {(isAuthorStep ? authorLoading : bookLoading) && (
@@ -265,7 +267,7 @@ export default function OnboardingFlow() {
                   <AuthorResult key={a.key} author={a} onAdd={addFavoriteAuthor} />
                 ))
               : <p className="text-xs text-slate-400 text-center py-8">
-                  {authorQ ? `Sin resultados para "${authorQ}"` : 'Escribí el nombre de un escritor para buscarlo'}
+                  {authorQ ? t('onb_no_results', { q: authorQ }) : t('onb_author_hint')}
                 </p>
           ) : (
             bookResults.length > 0
@@ -273,7 +275,7 @@ export default function OnboardingFlow() {
                   <BookResult key={b.bookId} book={b} onAdd={handleAddBook} added={addedBooks.has(b.bookId)} />
                 ))
               : <p className="text-xs text-slate-400 text-center py-8">
-                  Buscá un libro para guardarlo en tu biblioteca
+                  {t('onb_book_hint')}
                 </p>
           )}
         </div>
@@ -282,17 +284,17 @@ export default function OnboardingFlow() {
         <div className="flex gap-2 px-5 pb-5 pt-2 flex-shrink-0">
           <button onClick={finish}
             className="flex-1 py-3 bg-slate-100 text-slate-500 rounded-2xl text-sm font-medium">
-            Saltar
+            {t('tour_skip')}
           </button>
           {isAuthorStep ? (
             <button onClick={() => setStep(1)}
               className="flex-1 py-3 bg-rose-500 text-white rounded-2xl text-sm font-semibold flex items-center justify-center gap-1">
-              Siguiente <ChevronRight size={15} />
+              {t('tut_next')} <ChevronRight size={15} />
             </button>
           ) : (
             <button onClick={finish}
               className="flex-1 py-3 bg-amber-500 text-white rounded-2xl text-sm font-semibold">
-              ¡Empezar!
+              {t('tut_start')}
             </button>
           )}
         </div>

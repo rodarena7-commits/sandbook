@@ -26,6 +26,17 @@ function Avatar({ photoURL, displayName }) {
   )
 }
 
+
+// El último mensaje se guarda en el idioma de quien lo mandó; los adjuntos se muestran en el idioma de quien lee
+function lastPreview(conv, t) {
+  const kind = conv.lastKind
+    || (conv.lastMessage === '🎤 Mensaje de voz' ? 'voice' : conv.lastMessage === '📹 Videollamada' ? 'call' : null)
+  if (kind === 'voice') return `🎤 ${t('chat_voice_msg')}`
+  if (kind === 'call') return `📹 ${t('chat_video_call')}`
+  if (conv.lastMessage === '📎 Archivo compartido') return `📎 ${t('chat_shared_file')}`
+  return conv.lastMessage || '…'
+}
+
 export default function MessagesPage() {
   const { user, profile, t } = useAuth()
   const { convs, loading, canMessage, sendMessage, markRead } = useConversations(user?.uid)
@@ -105,7 +116,7 @@ export default function MessagesPage() {
                   <span className="text-[10px] text-slate-400">{timeAgo(conv.lastAt, t)}</span>
                 </div>
                 <p className={`text-xs line-clamp-1 ${unread > 0 ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
-                  {conv.lastMessage || '…'}
+                  {lastPreview(conv, t)}
                 </p>
               </div>
               {unread > 0 && (

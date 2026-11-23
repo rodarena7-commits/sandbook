@@ -67,7 +67,7 @@ function mapGoogleFreeItem(item) {
     // del usuario: sólo se ofrece "Ver" (lector propio de Google), nunca descarga.
     pdfUrl: null,
     hasPdf: false,
-    formatLabel: pdfAvailable ? 'Vista con PDF' : 'Vista previa',
+    formatLabel: pdfAvailable ? 'free_view_pdf' : 'free_preview',   // clave de traducción
   }
 }
 
@@ -182,10 +182,10 @@ export function useFreeBooks() {
       const merged = settled.flatMap(r => r.status === 'fulfilled' ? r.value : [])
       setResults(merged)
       if (merged.length === 0 && settled.every(r => r.status === 'rejected')) {
-        setError('No se pudieron cargar los resultados')
+        setError('free_load_error')
       }
     } catch {
-      setError('No se pudieron cargar los resultados')
+      setError('free_load_error')
       setResults([])
     } finally {
       setLoading(false)
